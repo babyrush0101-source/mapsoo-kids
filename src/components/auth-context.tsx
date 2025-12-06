@@ -1,19 +1,33 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '../utils/supabase/client';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import type { User } from '@supabase/supabase-js';
+import { supabase } from '../utils/supabase/client';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  signup: (
+    email: string,
+    password: string,
+    name?: string
+  ) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   handleRedirectCallback: () => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (updates: any) => Promise<void>;
+  updateProfile: (updates: Record<string, unknown>) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,25 +36,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 初始化 & 监听登录状态变化
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let isMounted = true;
+
+    const initSession = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (error) {
+          console.error('Failed to get initial session:', error);
+          setCurrentUser(null);
+        } else {
+          setCurrentUser(session?.user ?? null);
+        }
+      } catch (e) {
+        console.error('Unexpected error while getting initial session:', e);
+        if (isMounted) setCurrentUser(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
       setCurrentUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -51,11 +96,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || '登录失败 / Login failed' };
+      return {
+        success: false,
+        error: err?.message || '登录失败 / Login failed',
+      };
     }
   };
 
-  const signup = async (email: string, password: string, name?: string): Promise<{ success: boolean; error?: string }> => {
+  const signup = async (
+    email: string,
+    password: string,
+    name?: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -71,27 +123,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: error.message };
       }
 
-      // Check if email confirmation is required
+      // 需要邮箱确认的情况（Supabase 默认行为）
       if (data.user && !data.session) {
-        return { 
-          success: true, 
-          error: '请查收邮箱确认注册 / Please check your email to confirm' 
+        return {
+          success: true,
+          error: '请查收邮箱确认注册 / Please check your email to confirm',
         };
       }
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || '注册失败 / Signup failed' };
+      return {
+        success: false,
+        error: err?.message || '注册失败 / Signup failed',
+      };
     }
   };
 
-  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+  const loginWithGoogle = async (): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
+            // offline + consent = 能拿到 refresh token（如果 Google 端配置允许）
             access_type: 'offline',
             prompt: 'consent',
           },
@@ -102,29 +161,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: error.message };
       }
 
+      // NOTE: 对于 OAuth，浏览器会跳转到 Google，再回到 redirectTo
+      // 这里不需要立即设置 currentUser，回调页里会通过 getSession 刷新
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || 'Google 登录失败 / Google login failed' };
+      return {
+        success: false,
+        error: err?.message || 'Google 登录失败 / Google login failed',
+      };
     }
   };
 
+  // 别名，方便在别处调用
   const signInWithGoogle = loginWithGoogle;
 
+  // 在 /auth/callback 页面调用，用来把 code 换成 session 并更新上下文
   const handleRedirectCallback = async (): Promise<void> => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
+    // Supabase v2: getSession 会在有 code 时自动完成 exchange
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error('Error in handleRedirectCallback:', error);
+      throw error;
+    }
+
     if (session) {
       setCurrentUser(session.user);
+    } else {
+      setCurrentUser(null);
     }
   };
 
-
   const logout = async () => {
-    await supabase.auth.signOut();
-    setCurrentUser(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Failed to sign out:', error);
+      }
+    } finally {
+      setCurrentUser(null);
+    }
   };
 
-  const updateProfile = async (updates: any) => {
+  const updateProfile = async (updates: Record<string, unknown>) => {
     if (!currentUser) return;
 
     const { error } = await supabase.auth.updateUser({
@@ -135,11 +217,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Failed to update profile:', error);
       throw error;
     }
+
+    // 同步本地 currentUser.user_metadata
+    setCurrentUser((prev) =>
+      prev
+        ? ({
+            ...prev,
+            user_metadata: {
+              ...(prev.user_metadata ?? {}),
+              ...updates,
+            },
+          } as User)
+        : prev
+    );
   };
 
-  // Check if user is admin (customize this logic based on your needs)
-  const isAdmin = currentUser?.email === 'admin@baseul.com' || 
-                  currentUser?.user_metadata?.role === 'admin';
+  const refreshUser = async () => {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Failed to refresh user:', error);
+        return;
+      }
+      setCurrentUser(data.user ?? null);
+    } catch (e) {
+      console.error('Unexpected error while refreshing user:', e);
+    }
+  };
+
+  // Admin 判定逻辑（可按需调整）
+  const isAdmin =
+    !!currentUser &&
+    (currentUser.email === 'admin@baseul.com' ||
+      currentUser.user_metadata?.role === 'admin');
 
   const value: AuthContextType = {
     currentUser,
@@ -153,12 +263,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     handleRedirectCallback,
     logout,
     updateProfile,
+    refreshUser,
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }
 
