@@ -1,36 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase/client';
 import { useNavigation } from '../components/navigation-context';
-import { useAuth } from '../components/auth-context';
 
 export function AuthCallbackPage() {
   const { navigate } = useNavigation();
-  const { handleRedirectCallback } = useAuth();
   const [status, setStatus] = useState('登录中... / Logging in...');
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const run = async () => {
       try {
-        // Use the context handler if available, or fallback to direct Supabase call
-        if (handleRedirectCallback) {
-            await handleRedirectCallback();
-        } else {
-            const { error } = await supabase.auth.getSession();
-            if (error) throw error;
+        const url = window.location.href;
+
+        // 核心：从 OAuth 回调 URL 交换 code，创建登录 session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+
+        if (error) {
+          console.error('OAuth callback error:', error);
+          setStatus('登录失败 / Login failed');
+          setTimeout(() => navigate('home'), 1500);
+          return;
         }
-        
+
         setStatus('登录成功！/ Login successful!');
-        // Redirect to profile as requested
-        setTimeout(() => navigate('profile'), 1000);
+        setTimeout(() => navigate('profile'), 500);
       } catch (err) {
-        console.error('Auth callback error:', err);
+        console.error('Auth callback exception:', err);
         setStatus('登录失败 / Login failed');
-        setTimeout(() => navigate('home'), 2000);
+        setTimeout(() => navigate('home'), 1500);
       }
     };
 
-    handleCallback();
-  }, [navigate, handleRedirectCallback]);
+    run();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
