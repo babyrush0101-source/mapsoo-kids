@@ -7,6 +7,8 @@ import { useTheme } from './theme-context';
 import { useAdmin } from './admin/admin-context';
 import { useAuth } from './auth-context';
 import { ProductWaitlist } from './ProductWaitlist';
+import { supabase } from '../utils/supabase/client';
+import { toast } from "sonner@2.0.3";
 
 // Product Images
 import imgGrowth from 'figma:asset/e18a92ced248d352c4c7d105a2ffe6847f6886fe.png';
@@ -77,7 +79,7 @@ interface ProductData {
 
 export function ProductDetail({ type }: { type: 'early' | 'growth' | 'explore' }) {
   const { setView } = useNavigation();
-  const { t } = useLanguage();
+  const { t, region } = useLanguage();
   const { theme } = useTheme();
   const { content } = useAdmin();
   const { currentUser, isLoggedIn } = useAuth();
@@ -233,14 +235,56 @@ export function ProductDetail({ type }: { type: 'early' | 'growth' | 'explore' }
   const themeColor = type === 'early' ? 'cyan' : type === 'growth' ? 'purple' : 'blue';
   const gradient = type === 'early' ? 'from-cyan-400 to-cyan-600' : type === 'growth' ? 'from-purple-400 to-purple-600' : 'from-blue-400 to-blue-600';
 
-  const handleJoin = (e?: React.FormEvent) => {
+  const handleJoin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     // For logged-in users, use their email; for guests, use the form email
     const userEmail = isLoggedIn ? currentUser?.email : email;
     if(userEmail) {
-      setJoined(true);
       // TODO: Save to waitlist with user info
-      console.log('User joined waitlist:', { email: userEmail, product: type, addMemory });
+      console.log('🔵 Product Waitlist submitting...', { email: userEmail, product: type, add_memory: addMemory });
+      
+      try {
+        const { error } = await supabase
+          .from('waitlist')
+          .insert([{
+            email: userEmail,
+            product: type,
+            source: `product-${type}`,
+            locale: region || 'CN',
+            referrer: document.referrer || '',
+            status: 'new',
+            add_memory: addMemory
+          }]);
+
+        if (error) {
+           console.error('❌ Supabase product waitlist error:', error);
+           toast.error(t('waitlist.error') || 'Submission failed');
+           return;
+        }
+
+        setJoined(true);
+        console.log('🟢 Supabase product waitlist success');
+        
+        const successTitle = region === 'CN' ? '加入成功！' : 'You’re in!';
+        const successMsg = region === 'CN' 
+          ? '我们会第一时间通知你最新进展。' 
+          : 'We’ll update you as soon as new features are ready.';
+
+        toast.custom((t) => (
+          <div className="relative rounded-2xl p-[1px] bg-gradient-to-r from-purple-500/50 via-blue-500/50 to-cyan-500/50 shadow-2xl shadow-purple-500/10">
+             <div className="bg-slate-950 rounded-2xl p-5 flex flex-col gap-1.5 text-center min-w-[280px]">
+               <h3 className="text-white font-bold text-base">{successTitle}</h3>
+               <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+                 {successMsg}
+               </p>
+             </div>
+          </div>
+        ), { duration: 2500 });
+
+      } catch (err) {
+        console.error('Waitlist exception:', err);
+        toast.error('Submission failed');
+      }
     }
   };
 

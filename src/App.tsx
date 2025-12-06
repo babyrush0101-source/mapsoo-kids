@@ -35,7 +35,8 @@ import { AdminHomeEditor } from './components/admin/AdminHomeEditor';
 import { AdminBlogEditor } from './components/admin/AdminBlogEditor';
 import { AuthModalProvider, useAuthModal } from './components/auth/auth-modal-context';
 import { AuthModal } from './components/auth/AuthModal';
-import { AuthCallback } from './components/auth/AuthCallback';
+import { AuthCallbackPage } from './pages/auth-callback';
+import { Toaster } from "./components/ui/sonner";
 
 function AppContent() {
   const { currentView, viewParams } = useNavigation();
@@ -43,7 +44,7 @@ function AppContent() {
 
   // Auth Callback View (Google OAuth redirect)
   if (currentView === 'auth-callback') {
-    return <AuthCallback />;
+    return <AuthCallbackPage />;
   }
 
   // Auth Views (No Navbar/Footer) - Removed login page, now using modal
@@ -108,6 +109,7 @@ function AppContent() {
 
   return (
     <LayoutWrapper>
+      <Toaster />
       <Navbar />
       <WelcomeToast />
       <DataDebugTool />
@@ -137,6 +139,7 @@ function AppContent() {
 }
 
 export default function App() {
+  console.log("App build triggered - " + new Date().toISOString());
   return (
     <ErrorBoundary>
       <ThemeProvider>

@@ -21,7 +21,7 @@ export function AuthCallback() {
 
         if (session) {
           setStatus('登录成功！/ Login successful!');
-          setTimeout(() => navigate('home'), 1000);
+          setTimeout(() => navigate('profile'), 1000);
         } else {
           setStatus('未找到会话 / No session found');
           setTimeout(() => navigate('home'), 2000);

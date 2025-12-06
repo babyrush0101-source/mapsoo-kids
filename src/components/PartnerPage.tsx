@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from './language-context';
+import { useAuth } from './auth-context';
+import { supabase } from '../utils/supabase/client';
+import { toast } from "sonner@2.0.3";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -8,6 +11,7 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { motion } from "motion/react";
 import { MapPin, Check } from 'lucide-react';
+import { useNavigation } from './navigation-context';
 
 // China provinces (excluding direct municipalities which are listed separately)
 const chinaProvinces = [
@@ -29,18 +33,120 @@ const globalRegions = [
 
 export function PartnerPage() {
   const { t, region } = useLanguage();
+  const { currentUser } = useAuth();
+  const { navigate } = useNavigation();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   
+  // Form states
+  const [role, setRole] = useState('');
+  const [details, setDetails] = useState('');
+  const [contact, setContact] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.email) {
+      setContact(currentUser.email);
+    }
+  }, [currentUser]);
+
   const isChinese = region === 'CN';
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, type: 'team' | 'distributor') => {
     e.preventDefault();
-    // Submit logic placeholder
-    alert(`Application Submitted! Region: ${selectedRegion} (Mock)`);
+    setLoading(true);
+
+    try {
+      const isTeam = type === 'team';
+      const submissionType = isTeam ? 'Partner' : 'Distributor';
+      const submissionContact = currentUser?.email || contact;
+      const submissionDescription = details;
+      
+      const { error } = await supabase
+        .from("partner_applications")
+        .insert([
+          {
+            type: submissionType,
+            role: isTeam ? role : null,
+            region: !isTeam ? selectedRegion : null,
+            description: submissionDescription,
+            contact: submissionContact,
+            locale: region,
+            source: "partner_page",
+            status: "pending",
+          }
+        ]);
+
+      if (error) throw error;
+
+      // Show success toast
+      const successTitle = isChinese ? '加入成功！' : 'You’re in!';
+      const successMsg = isChinese 
+        ? '我们会第一时间通知你最新进展。' 
+        : 'We’ll update you as soon as new features are ready.';
+
+      toast.custom((t) => (
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-r from-purple-500/50 via-blue-500/50 to-cyan-500/50 shadow-2xl shadow-purple-500/10">
+           <div className="bg-slate-950 rounded-2xl p-5 flex flex-col gap-1.5 text-center min-w-[280px]">
+             <h3 className="text-white font-bold text-base">{successTitle}</h3>
+             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+               {successMsg}
+             </p>
+           </div>
+        </div>
+      ), { duration: 2500 });
+
+      setIsSuccess(true);
+      
+      // Reset form
+      if (type === 'team') setRole('');
+      if (type === 'distributor') setSelectedRegion('');
+      setDetails('');
+      if (!currentUser) setContact('');
+
+    } catch (error) {
+      console.error('Partner submission error:', error);
+      toast.error(isChinese ? '提交失败，请重试' : 'Submission failed, please try again');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const SuccessView = () => (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center py-12 text-center"
+    >
+      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mb-8 shadow-2xl shadow-green-500/30">
+        <Check className="w-12 h-12 text-white" strokeWidth={3} />
+      </div>
+      
+      <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+        {isChinese ? '提交成功！' : 'Submission Successful!'}
+      </h2>
+      
+      <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-md leading-relaxed">
+        {isChinese 
+          ? '我们已经收到你的合作申请，会在 3 个工作日内联系你。'
+          : 'We’ve received your partnership application and will get back to you within 3 business days.'}
+      </p>
+      
+      <Button 
+        onClick={() => navigate('home')}
+        className="min-w-[200px] h-14 text-lg font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 rounded-2xl shadow-xl transition-all hover:scale-105"
+      >
+        {isChinese ? '返回首页' : 'Return Home'}
+      </Button>
+    </motion.div>
+  );
 
   const inputClasses = "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
   const labelClasses = "text-base text-slate-900 dark:text-slate-200";
+
+  const detailsPlaceholder = isChinese 
+    ? "是什么让你对我们感兴趣？请介绍一下你的优势..."
+    : "What interests you about us? Please introduce your advantages...";
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-4 md:px-8 bg-slate-50 dark:bg-slate-950">
@@ -62,9 +168,10 @@ export function PartnerPage() {
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.1 }}
-           className="bg-white dark:bg-slate-900 rounded-3xl p-8 md:p-12 shadow-xl border border-slate-200 dark:border-slate-800"
+           className="bg-white dark:bg-slate-900 rounded-3xl p-8 md:p-12 shadow-xl border border-slate-200 dark:border-slate-800 min-h-[500px] flex flex-col justify-center"
          >
-            {isChinese ? (
+           {isSuccess ? <SuccessView /> : (
+             isChinese ? (
               // Chinese version: Show both tabs
               <Tabs defaultValue="team" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-8 h-14 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
@@ -73,10 +180,10 @@ export function PartnerPage() {
                 </TabsList>
                 
                 <TabsContent value="team" className="mt-0">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={(e) => handleSubmit(e, 'team')} className="space-y-6">
                     <div className="space-y-2">
                       <Label className={labelClasses}>{t('partner.form.role')}</Label>
-                      <Select required>
+                      <Select required value={role} onValueChange={setRole}>
                         <SelectTrigger className={`h-12 ${inputClasses}`}>
                           <SelectValue placeholder={t('partner.form.role')} />
                         </SelectTrigger>
@@ -91,22 +198,35 @@ export function PartnerPage() {
                     
                     <div className="space-y-2">
                       <Label className={labelClasses}>{t('partner.form.exp')}</Label>
-                      <Textarea required placeholder="" className={`min-h-[150px] resize-none text-base p-4 ${inputClasses}`} />
+                      <Textarea 
+                        required 
+                        placeholder={detailsPlaceholder} 
+                        className={`min-h-[150px] resize-none text-base p-4 ${inputClasses}`}
+                        value={details}
+                        onChange={(e) => setDetails(e.target.value)}
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label className={labelClasses}>{t('partner.form.contact')}</Label>
-                      <Input required placeholder="" className={`h-12 text-base ${inputClasses}`} />
+                      <Input 
+                        required 
+                        placeholder="Email / Phone" 
+                        className={`h-12 text-base ${inputClasses}`}
+                        value={contact}
+                        disabled={!!currentUser}
+                        onChange={(e) => setContact(e.target.value)}
+                      />
                     </div>
 
-                    <Button type="submit" className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-blue-500/20 border-0">
-                      {t('partner.form.submit')}
+                    <Button type="submit" disabled={loading} className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-blue-500/20 border-0">
+                      {loading ? '提交中...' : t('partner.form.submit')}
                     </Button>
                   </form>
                 </TabsContent>
                 
                 <TabsContent value="distributor" className="mt-0">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={(e) => handleSubmit(e, 'distributor')} className="space-y-6">
                     {/* China Map Region Selector */}
                     <div className="space-y-2">
                       <Label className={labelClasses}>{t('partner.form.region')}</Label>
@@ -159,23 +279,36 @@ export function PartnerPage() {
                     
                     <div className="space-y-2">
                       <Label className={labelClasses}>{t('partner.form.exp')}</Label>
-                      <Textarea required placeholder="" className={`min-h-[150px] resize-none text-base p-4 ${inputClasses}`} />
+                      <Textarea 
+                        required 
+                        placeholder={detailsPlaceholder} 
+                        className={`min-h-[150px] resize-none text-base p-4 ${inputClasses}`}
+                        value={details}
+                        onChange={(e) => setDetails(e.target.value)}
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label className={labelClasses}>{t('partner.form.contact')}</Label>
-                      <Input required placeholder="" className={`h-12 text-base ${inputClasses}`} />
+                      <Input 
+                        required 
+                        placeholder="Email / Phone" 
+                        className={`h-12 text-base ${inputClasses}`}
+                        value={contact}
+                        disabled={!!currentUser}
+                        onChange={(e) => setContact(e.target.value)}
+                      />
                     </div>
 
-                    <Button type="submit" className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-purple-500/20 border-0">
-                      {t('partner.form.submit')}
+                    <Button type="submit" disabled={loading} className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-purple-500/20 border-0">
+                      {loading ? '提交中...' : t('partner.form.submit')}
                     </Button>
                   </form>
                 </TabsContent>
               </Tabs>
             ) : (
               // English/Other languages: Only show distributor form
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={(e) => handleSubmit(e, 'distributor')} className="space-y-6">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                     {t('partner.tab.distributor')}
@@ -232,19 +365,33 @@ export function PartnerPage() {
                 
                 <div className="space-y-2">
                   <Label className={labelClasses}>{t('partner.form.exp')}</Label>
-                  <Textarea required placeholder="" className={`min-h-[150px] resize-none text-base p-4 ${inputClasses}`} />
+                  <Textarea 
+                    required 
+                    placeholder={detailsPlaceholder} 
+                    className={`min-h-[150px] resize-none text-base p-4 ${inputClasses}`}
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label className={labelClasses}>{t('partner.form.contact')}</Label>
-                  <Input required placeholder="" className={`h-12 text-base ${inputClasses}`} />
+                  <Input 
+                    required 
+                    placeholder="Email / Phone" 
+                    className={`h-12 text-base ${inputClasses}`}
+                    value={contact}
+                    disabled={!!currentUser}
+                    onChange={(e) => setContact(e.target.value)}
+                  />
                 </div>
 
-                <Button type="submit" className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-purple-500/20 border-0">
-                  {t('partner.form.submit')}
+                <Button type="submit" disabled={loading} className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-purple-500/20 border-0">
+                  {loading ? 'Submitting...' : t('partner.form.submit')}
                 </Button>
               </form>
-            )}
+            )
+           )}
          </motion.div>
       </div>
     </div>

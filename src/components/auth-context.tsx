@@ -10,6 +10,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  handleRedirectCallback: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
 }
@@ -89,6 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
@@ -101,6 +107,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: err.message || 'Google 登录失败 / Google login failed' };
     }
   };
+
+  const signInWithGoogle = loginWithGoogle;
+
+  const handleRedirectCallback = async (): Promise<void> => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    if (session) {
+      setCurrentUser(session.user);
+    }
+  };
+
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -132,6 +149,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     loginWithGoogle,
+    signInWithGoogle,
+    handleRedirectCallback,
     logout,
     updateProfile,
   };
