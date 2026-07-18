@@ -1,2 +1,14 @@
 node_modules
 dist
+coverage
+.env
+.env.*
+!.env.example
+.DS_Store
+._*
+.godot/
+godot/tests/.generated/
+godot/mapsoo_imports/
+*.import
+*.zip
+*.tsbuildinfo

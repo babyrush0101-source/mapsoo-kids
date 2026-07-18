@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible Mapsoo generator, validator, export, or Godot import problem.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the expected and actual result.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Mapsoo version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Attach a minimal World Spec and seed. Remove credentials, personal data, and private IP.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, OS, and Godot version (if relevant)
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed API keys, children's data, private STOYO data, and unlicensed assets.
+          required: true

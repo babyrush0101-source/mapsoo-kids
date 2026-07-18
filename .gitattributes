@@ -1,0 +1,19 @@
+* text=auto
+
+*.css text eol=lf
+*.gd text eol=lf
+*.godot text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.mjs text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+*.jpg binary
+*.mp4 binary
+*.png binary
+*.webp binary
+*.zip binary

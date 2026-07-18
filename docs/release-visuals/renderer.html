@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapsoo release visuals</title>
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, "Segoe UI", Arial, sans-serif;
+        color: #f2f6ed;
+        --lime: #d8ff65;
+        --muted: #9aaa9f;
+        --line: #2b3c33;
+        --panel: #0b1712;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #050b08; }
+      .frame {
+        position: relative;
+        display: none;
+        overflow: hidden;
+        background:
+          linear-gradient(rgba(216,255,101,.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(216,255,101,.035) 1px, transparent 1px),
+          radial-gradient(circle at 72% 10%, rgba(91,145,83,.18), transparent 38%),
+          #050b08;
+        background-size: 32px 32px, 32px 32px, auto, auto;
+      }
+      .active { display: block; }
+      .cover { width: 1260px; height: 1000px; }
+      .shot { width: 1600px; height: 900px; }
+      .brand {
+        position: absolute; top: 44px; left: 56px; z-index: 5;
+        display: flex; align-items: center; gap: 14px;
+      }
+      .mark {
+        display: grid; width: 54px; height: 54px; place-items: center;
+        border-radius: 12px; color: #17200b; background: var(--lime);
+        font-size: 28px; font-weight: 950;
+      }
+      .brand strong { display: block; font-size: 23px; }
+      .brand small { display: block; margin-top: 6px; color: var(--muted); font-size: 14px; }
+      .eyebrow {
+        margin: 0; color: var(--lime); font-size: 18px; font-weight: 850;
+        letter-spacing: .15em; text-transform: uppercase;
+      }
+      .pixel { image-rendering: pixelated; image-rendering: crisp-edges; }
+      .cover-copy { position: absolute; top: 142px; left: 56px; z-index: 4; }
+      .cover-copy h1 {
+        margin: 14px 0 15px; font-size: 84px; font-weight: 950;
+        letter-spacing: -.055em; line-height: .93;
+      }
+      .cover-copy p:last-child {
+        width: 800px; margin: 0; color: #b9c8be; font-size: 24px; line-height: 1.42;
+      }
+      .cover-map {
+        position: absolute; right: 54px; bottom: 60px; width: 1000px; height: 500px;
+        padding: 18px; border: 1px solid #3a4d42; background: #08110d;
+        box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      }
+      .cover-map img { width: 964px; height: 464px; object-fit: cover; }
+      .cover-meta {
+        position: absolute; left: 56px; bottom: 20px; color: var(--muted);
+        font-size: 14px; font-weight: 750; letter-spacing: .08em;
+      }
+      .head {
+        position: absolute; top: 50px; left: 66px; right: 66px; z-index: 5;
+        display: flex; justify-content: space-between; align-items: flex-start;
+      }
+      .head h1 { margin: 10px 0 0; font-size: 56px; line-height: 1; letter-spacing: -.045em; }
+      .number { color: #53635a; font-size: 76px; font-weight: 950; line-height: .9; }
+      .foot {
+        position: absolute; left: 66px; right: 66px; bottom: 35px;
+        display: flex; justify-content: space-between; color: var(--muted); font-size: 15px;
+      }
+      .card { border: 1px solid var(--line); background: rgba(7,16,12,.97); }
+      .hero-layout {
+        position: absolute; top: 190px; left: 66px; width: 1468px; height: 630px;
+        display: grid; grid-template-columns: 1050px 1fr; gap: 28px; padding: 22px;
+      }
+      .hero-layout > img { width: 1006px; height: 584px; object-fit: cover; }
+      .facts { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 13px; }
+      .fact { min-height: 112px; padding: 18px; border: 1px solid var(--line); background: var(--panel); }
+      .fact strong { display: block; color: var(--lime); font-size: 33px; }
+      .fact span { color: var(--muted); font-size: 14px; }
+      .label {
+        grid-column: 1 / -1; padding: 18px; border-left: 3px solid var(--lime);
+        background: #102019; color: #dfe9e2; font-size: 17px; line-height: 1.4;
+      }
+      .workbench {
+        position: absolute; top: 166px; left: 66px; width: 1468px; height: 654px;
+        overflow: hidden;
+      }
+      .workbench img {
+        width: 1468px; height: 826px; object-fit: cover; object-position: center top;
+        transform: translateY(-170px);
+      }
+      .callout {
+        position: absolute; right: 92px; bottom: 102px; z-index: 4; width: 380px;
+        padding: 18px 20px; color: #101809; background: var(--lime);
+        font-size: 17px; font-weight: 850; line-height: 1.35;
+      }
+      .contents {
+        position: absolute; top: 170px; left: 66px; width: 1468px; height: 650px;
+        display: grid; grid-template-columns: 600px 1fr; gap: 24px;
+      }
+      .panel { overflow: hidden; border: 1px solid var(--line); background: rgba(8,18,13,.97); }
+      .panel-head {
+        display: flex; justify-content: space-between; padding: 17px 20px;
+        border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 800;
+      }
+      pre.tree {
+        margin: 0; padding: 20px 28px; color: #c9d5cd;
+        font: 16px/1.55 "Cascadia Code", Consolas, monospace; white-space: pre;
+      }
+      .assets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+      .asset { padding: 12px; border: 1px solid var(--line); background: var(--panel); }
+      .asset img { width: 100%; height: 96px; object-fit: contain; background: #07100c; }
+      .asset.wide { grid-column: 1 / -1; }
+      .asset.wide img { height: 190px; object-fit: cover; }
+      .asset p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+      .manifest-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 0 16px 16px; }
+      .manifest-facts div {
+        padding: 11px 13px; border: 1px solid var(--line); background: #0d1b15;
+        color: var(--muted); font-size: 13px;
+      }
+      .manifest-facts strong { display: block; margin-bottom: 4px; color: var(--lime); font-size: 18px; }
+      .godot {
+        position: absolute; top: 180px; left: 66px; width: 1468px; height: 630px;
+        display: grid; grid-template-columns: 900px 1fr; gap: 24px;
+      }
+      .godot-map { padding: 20px; }
+      .godot-map img { width: 858px; height: 588px; object-fit: cover; }
+      .checks { display: flex; flex-direction: column; gap: 13px; }
+      .check-card { padding: 20px; border: 1px solid #3b5c45; background: var(--panel); }
+      .check-mark {
+        display: inline-grid; width: 34px; height: 34px; margin-right: 10px; place-items: center;
+        border-radius: 50%; color: #17200b; background: var(--lime); font-weight: 950;
+      }
+      .check-card strong { font-size: 21px; }
+      .check-card code {
+        display: block; margin-top: 13px; padding: 14px; color: #bfd0c5; background: #06100b;
+        font: 13px/1.55 "Cascadia Code", Consolas, monospace;
+      }
+      .check-card p { margin: 11px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+      .flow {
+        position: absolute; top: 240px; left: 66px; width: 1468px;
+        display: grid; grid-template-columns: 250px 80px 250px 80px 250px 80px 250px;
+        align-items: center;
+      }
+      .node { min-height: 245px; padding: 26px 22px; border: 1px solid #35483d; background: rgba(10,24,17,.97); }
+      .node small { color: var(--lime); font-weight: 900; letter-spacing: .14em; }
+      .node h2 { margin: 30px 0 13px; font-size: 30px; line-height: 1.05; }
+      .node p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.45; }
+      .arrow { color: var(--lime); font-size: 58px; text-align: center; }
+      .promise {
+        position: absolute; left: 66px; right: 66px; bottom: 114px;
+        display: flex; justify-content: center; gap: 13px; padding: 18px;
+        border: 1px solid #3e5b47; background: #0d1c15;
+      }
+      .chip {
+        padding: 10px 14px; border: 1px solid #3e5447; border-radius: 999px;
+        color: #dce8df; font-size: 14px; font-weight: 780;
+      }
+      .chip.accent { color: #152008; border-color: var(--lime); background: var(--lime); }
+    </style>
+  </head>
+  <body>
+    <section class="frame cover" data-frame="cover">
+      <div class="brand"><span class="mark">M</span><div><strong>Mapsoo Worldsmith</strong><small>v0.1.0-alpha.1</small></div></div>
+      <div class="cover-copy"><p class="eyebrow">Free procedural pixel world pack</p><h1>Sunny Meadow<br />for Godot</h1><p>Terrain, props, map JSON, provenance, and a tested Godot 4.3+ import path.</p></div>
+      <div class="cover-map card"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png" alt="Actual Sunny Meadow generated map" /></div>
+      <div class="cover-meta">FREE · CC0-1.0 · GODOT 4.3+ · PNG + JSON</div>
+    </section>
+
+    <section class="frame shot" data-frame="hero">
+      <header class="head"><div><p class="eyebrow">Actual generated pack preview</p><h1>Sunny Meadow</h1></div><span class="number">01</span></header>
+      <div class="hero-layout card">
+        <img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png" alt="Sunny Meadow map preview" />
+        <div class="facts">
+          <div class="fact"><strong>24 × 16</strong><span>orthogonal map cells</span></div><div class="fact"><strong>32 px</strong><span>tile size</span></div>
+          <div class="fact"><strong>4</strong><span>stable terrain tile IDs</span></div><div class="fact"><strong>29</strong><span>placed prop instances</span></div>
+          <div class="label">Rendered from the exact executable-free pack attached to v0.1.0-alpha.1.</div>
+        </div>
+      </div>
+      <footer class="foot"><span>Seed: mapsoo-demo-001</span><span>procedural-pixel-v1 · no image-model output</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="workbench">
+      <header class="head"><div><p class="eyebrow">World Spec → validation → portable ZIP</p><h1>One local-first workbench</h1></div><span class="number">02</span></header>
+      <div class="workbench card"><img src="../media/v0.1.0-alpha.1/workbench-1585x892.png" alt="Actual Mapsoo browser workbench" /></div>
+      <div class="callout">Actual browser UI · 384 cells · 29 props · Valid</div>
+      <footer class="foot"><span>No account · no backend · no API key</span><span>Meadow · Desert · Snowfield</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="contents">
+      <header class="head"><div><p class="eyebrow">Inspectable by design</p><h1>What is inside the pack?</h1></div><span class="number">03</span></header>
+      <div class="contents">
+        <div class="panel">
+          <div class="panel-head"><span>mapsoo-sunny-meadow-v0.1.0-alpha.1/</span><span>11 files</span></div>
+          <pre class="tree">atlases/
+  props.png
+  terrain.png
+previews/
+  map-preview.png
+schema/
+  mapsoo-pack.schema.json
+  mapsoo-world.schema.json
+worlds/
+  demo-world.json
+  sunny-meadow.world.json
+generation-receipt.json
+license-assets.md
+mapsoo.manifest.json
+readme.md</pre>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Portable source of truth</span><span>PNG + JSON + Markdown only</span></div>
+          <div class="assets">
+            <div class="asset"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.1/atlases/terrain.png" alt="Terrain atlas" /><p>terrain.png · 4 stable tile IDs</p></div>
+            <div class="asset"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.1/atlases/props.png" alt="Props atlas" /><p>props.png · tree, rock, flower</p></div>
+            <div class="asset wide"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png" alt="Map preview" /><p>map-preview.png · exact exported world</p></div>
+          </div>
+          <div class="manifest-facts"><div><strong>SHA-256</strong>Every payload file</div><div><strong>CC0-1.0</strong>Example asset license</div><div><strong>false</strong>contains_generative_ai</div><div><strong>0 scripts</strong>No addon in asset ZIP</div></div>
+        </div>
+      </div>
+      <footer class="foot"><span>Open contract · stable IDs · provenance receipt</span><span>Importer distributed separately</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="godot">
+      <header class="head"><div><p class="eyebrow">Exact release attachment</p><h1>Verified in Godot 4.3 and 4.7</h1></div><span class="number">04</span></header>
+      <div class="godot">
+        <div class="godot-map card"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png" alt="Imported Sunny Meadow world" /></div>
+        <div class="checks">
+          <div class="check-card"><span class="check-mark">✓</span><strong>Godot 4.3</strong><code>MAPSOO_PACK_CLI_OK<br />pack_id=sunny-meadow<br />cells=384 props=29</code></div>
+          <div class="check-card"><span class="check-mark">✓</span><strong>Godot 4.7</strong><code>MAPSOO_PACK_CLI_OK<br />pack_id=sunny-meadow<br />cells=384 props=29</code></div>
+          <div class="check-card"><strong>Derived resources</strong><p>TileSet, TileMapLayer scene, and prop sprites under res://mapsoo_imports/sunny-meadow/.</p></div>
+        </div>
+      </div>
+      <footer class="foot"><span>Importer installed separately from the official repository</span><span>Asset ZIP never executes code</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="contract">
+      <header class="head"><div><p class="eyebrow">Engine-neutral source · trusted derived resources</p><h1>An open world-asset contract</h1></div><span class="number">05</span></header>
+      <div class="flow">
+        <article class="node"><small>01 · INPUT</small><h2>World Spec</h2><p>Biome, size, seed, palette, output targets, and asset license.</p></article><div class="arrow">→</div>
+        <article class="node"><small>02 · GENERATE</small><h2>Local pipeline</h2><p>Deterministic terrain, props, map cells, and validation.</p></article><div class="arrow">→</div>
+        <article class="node"><small>03 · PORTABLE</small><h2>PNG + JSON</h2><p>Manifest, stable IDs, hashes, provenance, schemas, and CC0.</p></article><div class="arrow">→</div>
+        <article class="node"><small>04 · DERIVE</small><h2>Godot 4.3+</h2><p>Trusted importer derives TileSet, TileMapLayer, and prop sprites.</p></article>
+      </div>
+      <div class="promise"><span class="chip accent">Executable-free asset ZIP</span><span class="chip">Versioned schema</span><span class="chip">Per-file SHA-256</span><span class="chip">License + provenance</span></div>
+      <footer class="foot"><span>Mapsoo Worldsmith v0.1.0-alpha.1</span><span>Open source · local first · Godot ready</span></footer>
+    </section>
+    <script>
+      const name = new URLSearchParams(location.search).get("frame") || "cover";
+      const frame = document.querySelector('[data-frame="' + name + '"]');
+      if (!frame) throw new Error("Unknown release visual frame: " + name);
+      frame.classList.add("active");
+      document.title = "Mapsoo release visual · " + name;
+    </script>
+  </body>
+</html>

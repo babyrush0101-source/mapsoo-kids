@@ -1,0 +1,329 @@
+{
+  "schema_version": "0.1.0",
+  "pack": {
+    "id": "sunny-meadow",
+    "title": "Sunny Meadow",
+    "version": "0.1.0-alpha.1",
+    "generator": {
+      "name": "Mapsoo Worldsmith",
+      "version": "0.1.0-alpha.1"
+    },
+    "created_at": "2026-07-18T11:43:25.533Z"
+  },
+  "compatibility": {
+    "godot_min": "4.3",
+    "grid": "orthogonal",
+    "art_style": "pixel_art",
+    "importer": {
+      "id": "mapsoo_importer",
+      "min_version": "0.1.0-alpha.1",
+      "source": "https://github.com/babyrush0101-source/mapsoo-kids"
+    }
+  },
+  "world_spec": {
+    "path": "worlds/sunny-meadow.world.json",
+    "sha256": "a02f45826484439f8a346bce7aa27277f5ae9dc1d293320039cd29eea11a76d8"
+  },
+  "demo": {
+    "map": "worlds/demo-world.json",
+    "preview": "previews/map-preview.png"
+  },
+  "layers": [
+    {
+      "id": "ground",
+      "kind": "tilemap",
+      "path": "worlds/demo-world.json",
+      "json_pointer": "/layers/0/cells",
+      "encoding": "row-major",
+      "dimensions_cells": [
+        24,
+        16
+      ],
+      "atlas_id": "terrain",
+      "empty_tile_id": -1
+    },
+    {
+      "id": "props",
+      "kind": "objects",
+      "path": "worlds/demo-world.json",
+      "json_pointer": "/props",
+      "encoding": "objects",
+      "sprite_atlas": "atlases/props.png"
+    }
+  ],
+  "receipt": {
+    "path": "generation-receipt.json"
+  },
+  "atlases": [
+    {
+      "id": "terrain",
+      "source_id": 0,
+      "file": "atlases/terrain.png",
+      "image_size_px": [
+        128,
+        32
+      ],
+      "cell_size_px": [
+        32,
+        32
+      ],
+      "margin_px": [
+        0,
+        0
+      ],
+      "separation_px": [
+        0,
+        0
+      ],
+      "texture_padding": true,
+      "tiles": [
+        {
+          "tile_id": 0,
+          "id": "ground_01",
+          "atlas_coords": [
+            0,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "ground"
+          ]
+        },
+        {
+          "tile_id": 1,
+          "id": "water_01",
+          "atlas_coords": [
+            1,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water"
+          ]
+        },
+        {
+          "tile_id": 2,
+          "id": "path_01",
+          "atlas_coords": [
+            2,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "path"
+          ]
+        },
+        {
+          "tile_id": 3,
+          "id": "detail_01",
+          "atlas_coords": [
+            3,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "detail"
+          ]
+        }
+      ]
+    }
+  ],
+  "sprites": [
+    {
+      "id": "tree_01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "tree",
+        "meadow"
+      ]
+    },
+    {
+      "id": "rock_01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "rock",
+        "meadow"
+      ]
+    },
+    {
+      "id": "flower_01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "flower",
+        "meadow"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "readme.md",
+      "media_type": "text/markdown",
+      "bytes": 991,
+      "sha256": "ac56718bbf78b83e7bd864f78b5612dc4accda248539dabd73259138b5cc3833"
+    },
+    {
+      "path": "license-assets.md",
+      "media_type": "text/markdown",
+      "bytes": 197,
+      "sha256": "f902f9120ad83e9462824c2942364f682eae3a908eb35d68ab0f2723c446e8cc"
+    },
+    {
+      "path": "generation-receipt.json",
+      "media_type": "application/json",
+      "bytes": 309,
+      "sha256": "f870091628e1fff1236f352bcddbac69a4937d05ecaa4143a42a59e170f7b819"
+    },
+    {
+      "path": "worlds/sunny-meadow.world.json",
+      "media_type": "application/json",
+      "bytes": 538,
+      "sha256": "a02f45826484439f8a346bce7aa27277f5ae9dc1d293320039cd29eea11a76d8"
+    },
+    {
+      "path": "worlds/demo-world.json",
+      "media_type": "application/json",
+      "bytes": 7008,
+      "sha256": "d93472024229b6e29c03fb6ae6ad132273980c03e9ed610cacd52364a3d06b53"
+    },
+    {
+      "path": "atlases/terrain.png",
+      "media_type": "image/png",
+      "bytes": 439,
+      "sha256": "23bf64682cc8f6c6331f5dae0c6df48bbbaa0dfc83895371c39b31c4fc853cb6"
+    },
+    {
+      "path": "atlases/props.png",
+      "media_type": "image/png",
+      "bytes": 413,
+      "sha256": "66fc5b395a2d38f4d896eaef46eb500615a0130d220d8465819f0a26f783cf6a"
+    },
+    {
+      "path": "previews/map-preview.png",
+      "media_type": "image/png",
+      "bytes": 19794,
+      "sha256": "d7a9b6fb292727b7ab5838c26eacca33ea71ce8e6cc15cba51fbfea3d52c69b1"
+    },
+    {
+      "path": "schema/mapsoo-pack.schema.json",
+      "media_type": "application/json",
+      "bytes": 12390,
+      "sha256": "f96197c2b4bb77ced7b8ecbbe5182bf6f6713f358f8f58eaf01b2baf7e378f4c"
+    },
+    {
+      "path": "schema/mapsoo-world.schema.json",
+      "media_type": "application/json",
+      "bytes": 2939,
+      "sha256": "ea4456e641fe956fee0d04703b326d48816c366caf31ae394341f7fb157ac7ed"
+    }
+  ],
+  "license": {
+    "assets": {
+      "id": "CC0-1.0",
+      "file": "license-assets.md"
+    }
+  },
+  "provenance": {
+    "contains_generative_ai": false,
+    "model_provider": null,
+    "model": null,
+    "seed": "mapsoo-demo-001",
+    "human_curated": false
+  }
+}

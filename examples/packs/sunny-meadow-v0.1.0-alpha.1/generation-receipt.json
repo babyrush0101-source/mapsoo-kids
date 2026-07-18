@@ -1,0 +1,15 @@
+{
+  "schema_version": "0.1.0",
+  "generator": {
+    "id": "procedural-pixel-v1",
+    "version": "0.1.0"
+  },
+  "world_id": "sunny-meadow",
+  "seed": "mapsoo-demo-001",
+  "contains_generative_ai": false,
+  "transformations": [
+    "seeded-map-layout",
+    "procedural-pixel-atlas",
+    "png-rgba-export"
+  ]
+}

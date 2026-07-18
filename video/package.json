@@ -1,0 +1,38 @@
+{
+  "name": "mapsoo-worldsmith-release-video",
+  "version": "0.1.0-alpha.1",
+  "description": "Deterministic 75-second release video for Mapsoo Worldsmith.",
+  "repository": {},
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@remotion/captions": "4.0.490",
+    "@remotion/cli": "4.0.490",
+    "@remotion/media-parser": "4.0.490",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.490"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.490",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "typescript": "5.7.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && tsc",
+    "render": "remotion render MapsooWorldsmith75s out/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4 --codec=h264 --crf=23 --muted",
+    "render:sample": "remotion still MapsooWorldsmith75s out/sample-frame-43s.png --frame=1290",
+    "verify:source": "node scripts/verify-source.mjs",
+    "verify:output": "node scripts/verify-output.mjs",
+    "verify:rendered": "node scripts/verify-output.mjs out/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

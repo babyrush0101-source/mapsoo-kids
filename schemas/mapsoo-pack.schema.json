@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-pack-0.1.0.json",
+  "title": "Mapsoo Asset Pack Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pack", "compatibility", "world_spec", "demo", "layers", "receipt", "atlases", "sprites", "files", "license", "provenance"],
+  "properties": {
+    "schema_version": { "const": "0.1.0" },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "version", "generator", "created_at"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "title": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$" },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "const": "Mapsoo Worldsmith" },
+            "version": { "type": "string" }
+          }
+        },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["godot_min", "grid", "art_style", "importer"],
+      "properties": {
+        "godot_min": { "const": "4.3" },
+        "grid": { "const": "orthogonal" },
+        "art_style": { "const": "pixel_art" },
+        "importer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "min_version", "source"],
+          "properties": {
+            "id": { "const": "mapsoo_importer" },
+            "min_version": { "const": "0.1.0-alpha.1" },
+            "source": { "const": "https://github.com/babyrush0101-source/mapsoo-kids" }
+          }
+        }
+      }
+    },
+    "world_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map", "preview"],
+      "properties": {
+        "map": { "$ref": "#/$defs/relativePath" },
+        "preview": { "$ref": "#/$defs/relativePath" }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/tilemapLayer" },
+        { "$ref": "#/$defs/objectLayer" }
+      ],
+      "items": false
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" }
+      }
+    },
+    "atlases": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source_id", "file", "image_size_px", "cell_size_px", "margin_px", "separation_px", "texture_padding", "tiles"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "source_id": { "type": "integer", "minimum": 0 },
+          "file": { "$ref": "#/$defs/relativePath" },
+          "image_size_px": { "$ref": "#/$defs/positivePair" },
+          "cell_size_px": { "$ref": "#/$defs/positivePair" },
+          "margin_px": { "$ref": "#/$defs/nonNegativePair" },
+          "separation_px": { "$ref": "#/$defs/nonNegativePair" },
+          "texture_padding": { "type": "boolean" },
+          "tiles": {
+            "type": "array",
+            "maxItems": 4096,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["tile_id", "id", "atlas_coords", "size_cells", "alternative_id", "collision", "terrain", "custom_data", "tags"],
+              "properties": {
+                "tile_id": { "type": "integer", "minimum": 0 },
+                "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+                "atlas_coords": { "$ref": "#/$defs/nonNegativePair" },
+                "size_cells": { "$ref": "#/$defs/positivePair" },
+                "alternative_id": { "type": "integer", "minimum": 0 },
+                "collision": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type"],
+                  "properties": { "type": { "const": "none" } }
+                },
+                "terrain": { "type": "null" },
+                "custom_data": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["walkable", "biome"],
+                  "properties": {
+                    "walkable": { "type": "boolean" },
+                    "biome": { "enum": ["meadow", "desert", "snow"] }
+                  }
+                },
+                "tags": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sprites": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "atlas", "region_px", "pivot_px", "footprint_cells", "tags"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "atlas": { "$ref": "#/$defs/relativePath" },
+          "region_px": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "integer", "minimum": 0 },
+              { "type": "integer", "minimum": 1 },
+              { "type": "integer", "minimum": 1 }
+            ],
+            "items": false
+          },
+          "pivot_px": { "$ref": "#/$defs/nonNegativePair" },
+          "footprint_cells": { "$ref": "#/$defs/positivePair" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "media_type", "bytes", "sha256"],
+        "properties": {
+          "path": { "$ref": "#/$defs/relativePath" },
+          "media_type": { "type": "string" },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assets"],
+      "properties": {
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "file"],
+          "properties": {
+            "id": { "const": "CC0-1.0" },
+            "file": { "$ref": "#/$defs/relativePath" }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["contains_generative_ai", "human_curated"],
+      "properties": {
+        "contains_generative_ai": { "type": "boolean" },
+        "human_curated": { "type": "boolean" },
+        "model_provider": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "seed": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*(?:/[a-z0-9][a-z0-9._-]*)*$"
+    },
+    "positivePair": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "integer", "minimum": 1 }
+      ],
+      "items": false
+    },
+    "nonNegativePair": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "integer", "minimum": 0 }
+      ],
+      "items": false
+    },
+    "tilemapLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "dimensions_cells", "atlas_id", "empty_tile_id"],
+      "properties": {
+        "id": { "const": "ground" },
+        "kind": { "const": "tilemap" },
+        "path": { "$ref": "#/$defs/relativePath" },
+        "json_pointer": { "type": "string", "pattern": "^/" },
+        "encoding": { "const": "row-major" },
+        "dimensions_cells": { "$ref": "#/$defs/positivePair" },
+        "atlas_id": { "type": "string" },
+        "empty_tile_id": { "const": -1 }
+      }
+    },
+    "objectLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "sprite_atlas"],
+      "properties": {
+        "id": { "const": "props" },
+        "kind": { "const": "objects" },
+        "path": { "$ref": "#/$defs/relativePath" },
+        "json_pointer": { "type": "string", "pattern": "^/" },
+        "encoding": { "const": "objects" },
+        "sprite_atlas": { "$ref": "#/$defs/relativePath" }
+      }
+    }
+  }
+}

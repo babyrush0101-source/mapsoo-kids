@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://example/main.gd" id="1_main"]
+
+[node name="MapsooImporterExample" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Instructions" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 616.0
+offset_bottom = 112.0
+theme_override_font_sizes/font_size = 20
+text = "Mapsoo Worldsmith — Godot importer example\nRun tests/run-smoke.ps1 to generate and import the deterministic fixture."
