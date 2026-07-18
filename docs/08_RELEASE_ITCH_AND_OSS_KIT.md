@@ -483,7 +483,7 @@ Please remove private paths, credentials, paid API keys, and private STOYO conte
 
 ## 6. Codex for OSS 申请证据包
 
-OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请；评审会关注 meaningful usage、broad adoption、生态重要性，以及 PR review、issue triage、release management 等持续维护证据。表单目前要求公开 GitHub profile/repository，并提供 role、qualifying reason、OpenAI Organization ID 和 API credits 用途；三个长文本字段上限均为 500 字符。项目支持包括 6 个月 ChatGPT Pro（含 Codex）、按条件提供的 Codex Security，以及适用项目的 API credits，但都属于申请和评审结果，不能写成已获批。参考：[Codex for Open Source 项目页](https://developers.openai.com/community/codex-for-oss) 与 [当前申请表和评审说明](https://openai.com/form/codex-for-oss/)（2026-07-18 核对）。
+OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请；评审会关注 meaningful usage、broad adoption、生态重要性，以及 PR review、issue triage、release management 等持续维护证据。表单目前要求公开 GitHub profile/repository，并提供 role、qualifying reason、OpenAI Organization ID 和 API credits 用途；三个长文本字段上限均为 500 字符。项目支持包括 6 个月 ChatGPT Pro（含 Codex）、按条件提供的 Codex Security，以及适用项目的 API credits，但都属于申请和评审结果，不能写成已获批。参考：[Codex for Open Source 项目页](https://developers.openai.com/community/codex-for-oss) 与 [当前申请表和评审说明](https://openai.com/form/codex-for-oss/)（2026-07-19 核对）。
 
 提交前同时阅读 [Program Terms](https://developers.openai.com/codex/codex-for-oss-terms)：必须使用有效 ChatGPT 账号并准确说明身份、仓库和维护职责；提交不保证入选，OpenAI 可要求验证仓库控制权。不要提交机密 STOYO 信息，不要为多个身份重复申请，也不要将 Codex Security/API credits 用于没有授权的仓库或系统。福利不可转让，具体范围和期限以书面获批结果为准。
 
@@ -510,11 +510,12 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 
 | 证据 | 当前状态 | 可提交的权威 URL/数据 |
 | --- | --- | --- |
+| Public GitHub profile | 已匿名访问验证；申请表使用 `babyrush0101-source` | [GitHub profile](https://github.com/babyrush0101-source) |
 | Public repository | Provider、runner evidence 与版本化 release architecture 已在默认分支 | [main commit `544e014`](https://github.com/babyrush0101-source/mapsoo-kids/tree/544e014c2e46798e63d531432cfef9eccf4b4d03) |
 | 源码与资产许可边界 | 已公开 | [`LICENSE`](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/LICENSE)、release 素材 ZIP 内 `license-assets.md` |
 | 可复现构建与测试 | 当前公开 `main` `544e014` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773)、[`check` job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773/job/88117808870) |
-| Godot 4.3/4.7 兼容 | 当前公开 main 的两个基础 smoke jobs 已通过；alpha.2 exact-pack job 仍待候选 PR | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773/job/88117808849)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773/job/88117808869) |
-| 公开维护活动 | Provider contract、Workbench、receipt、runner evidence 和 release architecture PR 已连续合并 | [PR #18](https://github.com/babyrush0101-source/mapsoo-kids/pull/18)、[PR #19](https://github.com/babyrush0101-source/mapsoo-kids/pull/19)、[PR #20](https://github.com/babyrush0101-source/mapsoo-kids/pull/20)、[PR #21](https://github.com/babyrush0101-source/mapsoo-kids/pull/21)、[PR #22](https://github.com/babyrush0101-source/mapsoo-kids/pull/22) |
+| Godot 4.3/4.7 兼容 | 公开 main 的两个基础 smoke jobs 已通过；alpha.2 当前候选头的 exact-pack jobs 也已通过，但候选尚未发布 | [candidate check](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29662701524/job/88127939225)、[4.3 exact-pack](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29662701524/job/88128038952)、[4.7 exact-pack](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29662701524/job/88128038947) |
+| 公开维护活动 | Provider contract、Workbench、receipt、runner evidence 和 release architecture PR 已连续合并；alpha.2 foundation/candidate 继续以 Draft PR 接受审查 | [PR #18](https://github.com/babyrush0101-source/mapsoo-kids/pull/18)、[PR #19](https://github.com/babyrush0101-source/mapsoo-kids/pull/19)、[PR #20](https://github.com/babyrush0101-source/mapsoo-kids/pull/20)、[PR #21](https://github.com/babyrush0101-source/mapsoo-kids/pull/21)、[PR #22](https://github.com/babyrush0101-source/mapsoo-kids/pull/22)、[Draft PR #23](https://github.com/babyrush0101-source/mapsoo-kids/pull/23)、[Draft PR #24](https://github.com/babyrush0101-source/mapsoo-kids/pull/24) |
 | GitHub alpha release | 已发布 pre-release | [`v0.1.0-alpha.1`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) |
 | 在线 Demo | 已部署并匿名访问验证 | [GitHub Pages](https://babyrush0101-source.github.io/mapsoo-kids/) |
 | itch.io 免费包 | 未发布 | `[REPLACE: ITCH_URL]` |
@@ -589,9 +590,9 @@ itch.io
 [x] 本地 75 秒证据视频只展示已验证功能和有效仓库 URL
 [x] 公共页面已提供可匿名访问的视频 URL
 [ ] 至少一轮外部反馈得到公开响应
-[ ] downloads/stars/issues 记录带日期和来源，不做推算
+[x] downloads/stars/issues 记录带日期和来源，不做推算
 [ ] Codex for OSS 每个证据 URL 可匿名访问
-[ ] 三段申请文本替换后仍不超过 500 字符
+[x] 三段申请文本无占位符且分别为 388 / 342 / 399 字符
 ```
 
 只有清单全部满足，才把“本地可运行 alpha”升级为“已有公开 release、itch.io 页面和社区证据的开源项目”。
