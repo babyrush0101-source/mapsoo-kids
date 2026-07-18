@@ -1,4 +1,5 @@
 import { sha256 } from './release-lib.mjs';
+import { getReleaseConfig } from './release-config.mjs';
 
 const MAX_RECEIPT_BYTES = 128 * 1024;
 const LEGACY_GENERATOR = Object.freeze({
@@ -196,4 +197,43 @@ export async function verifyLegacyAlpha1Receipt({ manifest, readPackFile, contex
   );
 
   return { receipt, receiptSha256: sha256(receiptBytes) };
+}
+
+/**
+ * Selects a receipt policy from the trusted release registry. The manifest and
+ * receipt never choose their own verifier; unknown versions and policies fail closed.
+ */
+export async function verifyReceiptForRelease({
+  version,
+  manifest,
+  readPackFile,
+  context = 'release pack',
+}) {
+  const config = getReleaseConfig(version);
+  let verifier;
+
+  switch (config.receiptVerifier) {
+    case 'legacy-alpha1':
+      assert(
+        config.version === '0.1.0-alpha.1',
+        'The legacy-alpha1 receipt policy only authorizes release 0.1.0-alpha.1',
+      );
+      verifier = verifyLegacyAlpha1Receipt;
+      break;
+    default:
+      throw new Error(
+        `Unsupported receipt verifier policy for ${config.version}: ${String(config.receiptVerifier)}`,
+      );
+  }
+
+  assertPlainObject(manifest, `${context} manifest`);
+  assert(
+    manifest.pack?.id === config.release.examplePack.id,
+    `${context} pack ID must match trusted release config`,
+  );
+  assert(
+    manifest.pack?.version === config.version,
+    `${context} pack version must match trusted release config`,
+  );
+  return verifier({ manifest, readPackFile, context });
 }

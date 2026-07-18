@@ -74,7 +74,7 @@ Mapsoo Worldsmith v0.1.0-alpha.1 — Portable Godot World Pack / 可移植 Godot
 | `mapsoo-sunny-meadow-v0.1.0-alpha.1.zip` | 必需 | 可执行代码为零的示例素材包；根目录必须只有一个版本化 pack 文件夹 |
 | `mapsoo-godot-importer-v0.1.0-alpha.1.zip` | 必需 | 单独的官方 importer 发行包，仅包含 `addons/mapsoo_importer/`、MIT `LICENSE` 和安装说明；不得塞回素材 ZIP |
 | `SHA256SUMS` | 必需 | 记录发布脚本生成的全部其他附件 SHA-256（不记录自身）；GitHub 自动生成的 Source code archives 不写入此文件 |
-| `mapsoo-worldsmith-web-v0.1.0-alpha.1.zip`、两份 schema、World Spec、release manifest、LICENSE、CHANGELOG | 推荐保留 | 由 `pnpm release:local` 自动生成，便于离线部署、工具集成和复核；不要手工改名后继续沿用旧 checksum |
+| `mapsoo-worldsmith-web-v0.1.0-alpha.1.zip`、两份 schema、World Spec、release manifest、LICENSE、CHANGELOG | 推荐保留 | 最初由候选阶段的 `pnpm release:local` 自动生成；版本公开后禁止用当前源码重建同一 tag，只能下载并按 registry 中的 GitHub digest 复核 |
 | `mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4` | 推荐保留 | 已验证的 75 秒无音轨 H.264 中英双语证据视频；发布前不得把候选包证据描述成公开使用量 |
 | desert / snowfield 示例包 | 本次不要求 | 只有在逐包经过同等浏览器导出和 Godot 4.3/4.7 验收后才上传 |
 

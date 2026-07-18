@@ -35,6 +35,8 @@ Image generation alone does not make a usable game-asset pipeline. Mapsoo first 
 
 The repository defines the next full generation-receipt contract separately from the frozen `v0.1.0-alpha.1` example. The published alpha keeps its legacy receipt bytes and procedural-only allowlist; a later release will adopt the new receipt only with a new fixture, version, and public hash.
 
+Release tooling now resolves `package.json` through a fail-closed, immutable version registry. That registry selects the exact fixture, release inputs, itch.io page/media, and receipt policy; CI also rebuilds every published example pack and compares it with its pinned public SHA-256. Every GitHub attachment digest for a published tag is pinned, and the builder refuses to overwrite that tag—continued development must use a new candidate version.
+
 ## Documentation
 
 - [Master plan](docs/00_MASTER_PLAN.md)
@@ -69,11 +71,13 @@ Run the complete local verification before contributing:
 pnpm check
 ```
 
-Build, validate, and reproduce the complete local alpha release bundle:
+Build, validate, and reproduce a complete **unpublished candidate** release bundle:
 
 ```bash
 pnpm release:local
 ```
+
+The command intentionally refuses to rebuild a version whose lifecycle is already `published`. To inspect a published release, download its attachments into the configured release directory and run `pnpm release:verify`; every attachment must match the pinned GitHub digest. Start a new candidate version for any changed output.
 
 Build the exact itch.io operator directory—including the executable-free asset ZIP, itch-specific checksum, page metadata/copy, cover, five screenshots, and byte manifest:
 
@@ -81,7 +85,7 @@ Build the exact itch.io operator directory—including the executable-free asset
 pnpm release:itch
 ```
 
-The GitHub files are written to `release/v0.1.0-alpha.1/`; the separate itch.io operator kit is written to `release/itch/v0.1.0-alpha.1/`. The itch kit intentionally excludes the importer and preserves page visibility as `Draft` until the maintainer previews the real page. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; the maintainer then deliberately publishes the verified prerelease. The public alpha was produced through that path.
+Candidate GitHub files are written to `release/v<version>/`; the separate itch.io operator kit is written to `release/itch/v<version>/`. The itch kit intentionally excludes the importer and preserves page visibility as `Draft` until the maintainer previews the real page. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; the maintainer then deliberately publishes the verified prerelease. The public alpha was produced through that path and is now protected from rebuilding.
 
 No environment variables are required for the portable alpha. See [`.env.example`](.env.example) for the key-handling policy before adding a future provider.
 

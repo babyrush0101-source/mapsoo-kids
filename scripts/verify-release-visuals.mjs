@@ -1,21 +1,16 @@
 #!/usr/bin/env node
 
 import { readFile, stat } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const visualRoot = join(repositoryRoot, 'docs', 'media', 'v0.1.0-alpha.1', 'itch');
-const rendererPath = join(repositoryRoot, 'docs', 'release-visuals', 'renderer.html');
+import { CURRENT_RELEASE_CONFIG, REPOSITORY_ROOT } from './release-lib.mjs';
 
-const expectedVisuals = new Map([
-  ['cover-1260x1000.png', [1260, 1000]],
-  ['01-generated-pack-1600x900.png', [1600, 900]],
-  ['02-workbench-1600x900.png', [1600, 900]],
-  ['03-pack-contents-1600x900.png', [1600, 900]],
-  ['04-godot-verification-1600x900.png', [1600, 900]],
-  ['05-open-contract-1600x900.png', [1600, 900]],
-]);
+const visualRoot = join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.itch.visualDirectory);
+const rendererPath = join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.itch.renderer);
+
+const expectedVisuals = new Map(
+  CURRENT_RELEASE_CONFIG.itch.visuals.map(({ name, width, height }) => [name, [width, height]]),
+);
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
@@ -54,18 +49,12 @@ async function verify() {
     'Release visual renderer must not load remote images, scripts, styles, or fonts',
   );
 
-  for (const frame of ['cover', 'hero', 'workbench', 'contents', 'godot', 'contract']) {
+  for (const frame of CURRENT_RELEASE_CONFIG.itch.rendererFrames) {
     const matches = renderer.match(new RegExp(`data-frame=["']${frame}["']`, 'g')) ?? [];
     assert(matches.length === 1, `Renderer must contain exactly one ${frame} frame`);
   }
 
-  for (const requiredText of [
-    'CC0-1.0',
-    'Godot 4.3',
-    'Godot 4.7',
-    'contains_generative_ai',
-    'Executable-free asset ZIP',
-  ]) {
+  for (const requiredText of CURRENT_RELEASE_CONFIG.itch.requiredRendererFacts) {
     assert(renderer.includes(requiredText), `Renderer is missing required release fact: ${requiredText}`);
   }
 

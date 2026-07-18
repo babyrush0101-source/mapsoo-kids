@@ -4,10 +4,12 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
+  CURRENT_RELEASE_CONFIG,
   HASHED_RELEASE_FILE_NAMES,
   RELEASE_FILES,
   REPOSITORY_ROOT,
   buildRelease,
+  assertReleaseBuildAllowed,
   removeSafeOutputDirectory,
   replaceSafeOutputDirectory,
   sha256,
@@ -18,6 +20,7 @@ const releaseParent = join(REPOSITORY_ROOT, 'release');
 const temporaryRoot = join(releaseParent, '.repro');
 
 try {
+  assertReleaseBuildAllowed(CURRENT_RELEASE_CONFIG);
   await replaceSafeOutputDirectory(
     releaseParent,
     temporaryRoot,

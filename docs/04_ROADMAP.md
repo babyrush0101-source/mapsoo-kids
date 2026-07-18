@@ -58,6 +58,7 @@
 - [ ] 成本/错误/重试 UI；
 - [x] 下一版本的 `0.2.0` provider receipt 类型、JSON Schema、runtime validator 与 legacy release 语义校验；
 - [x] runner-owned 原子 evidence envelope、Provider claims 校验、深冻结 world/spec snapshot 与 legacy exporter 信任边界；
+- [x] 可信版本 registry、按版本选择的 release/itch 输入、receipt verifier 分派、已发布 pack 重建门禁与完整 GitHub 附件 digest 固定；
 - [ ] manifest/export receipt 投影与新版本 fixture；
 - [ ] 内容安全和许可提醒。
 

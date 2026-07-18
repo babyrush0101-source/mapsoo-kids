@@ -12,7 +12,12 @@ import {
   verifyPackZip,
   verifyItchKit,
 } from './itch-kit-lib.mjs';
-import { RELEASE_FILES, RELEASE_TAG, assertDescendantPath, sha256 } from './release-lib.mjs';
+import {
+  CURRENT_RELEASE_CONFIG,
+  RELEASE_FILES,
+  assertDescendantPath,
+  sha256,
+} from './release-lib.mjs';
 
 const testRoot = join(ITCH_RELEASE_ROOT, '.negative-test');
 const linkTarget = join(ITCH_RELEASE_ROOT, '.negative-link-target');
@@ -79,7 +84,7 @@ async function rewriteLegacyReceipt(mutator) {
   await buildItchKit(testRoot);
   const packPath = join(testRoot, 'uploads', RELEASE_FILES.examplePack);
   const zip = await JSZip.loadAsync(await readFile(packPath), { createFolders: false });
-  const packRoot = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
+  const packRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   const receiptPath = `${packRoot}/generation-receipt.json`;
   const manifestPath = `${packRoot}/mapsoo.manifest.json`;
   const receiptEntry = zip.file(receiptPath);
@@ -115,6 +120,56 @@ async function rewriteKitIntegrityRecords(packBytes) {
     }
   }
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+async function runReceiptPolicyNegativeCases() {
+  switch (CURRENT_RELEASE_CONFIG.receiptVerifier) {
+    case 'legacy-alpha1':
+      await expectPackFailure(
+        'receipt and manifest AI semantic conflict with recomputed inner integrity',
+        () => rewriteLegacyReceipt(({ receipt }) => {
+          receipt.contains_generative_ai = true;
+        }),
+        /legacy receipt must declare contains_generative_ai=false/,
+      );
+
+      await expectPackFailure(
+        'forged non-builtin receipt generator with recomputed inner integrity',
+        () => rewriteLegacyReceipt(({ receipt }) => {
+          receipt.generator = { id: 'future-ai-provider', version: '1.0.0' };
+        }),
+        /legacy receipt must use builtin procedural-pixel-v1@0\.1\.0/,
+      );
+
+      await expectPackFailure(
+        'future receipt schema hidden inside alpha1 pack',
+        () => rewriteLegacyReceipt(({ receipt }) => {
+          receipt.schema_version = '0.2.0';
+        }),
+        /legacy receipt schema must be 0\.1\.0/,
+      );
+
+      await expectPackFailure(
+        'forged manifest pack ID',
+        () => rewriteLegacyReceipt(({ manifest }) => {
+          manifest.pack.id = 'forged-pack';
+        }),
+        /pack ID mismatch|pack ID must match trusted release config/,
+      );
+
+      await expectPackFailure(
+        'forged manifest pack version',
+        () => rewriteLegacyReceipt(({ manifest }) => {
+          manifest.pack.version = '9999.0.0';
+        }),
+        /manifest version mismatch|pack version must match trusted release config/,
+      );
+      return;
+    default:
+      throw new Error(
+        `No negative receipt test suite is registered for ${CURRENT_RELEASE_CONFIG.receiptVerifier}`,
+      );
+  }
 }
 
 try {
@@ -256,7 +311,7 @@ try {
     /differs from the verified GitHub release pack/,
   );
 
-  const packRoot = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
+  const packRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   await expectPackFailure(
     'ZIP traversal path',
     () => createZip([[`${packRoot}/../../escape.json`, '{}']]),
@@ -273,21 +328,7 @@ try {
     /declared size limit/,
   );
 
-  await expectPackFailure(
-    'receipt and manifest AI semantic conflict with recomputed inner integrity',
-    () => rewriteLegacyReceipt(({ receipt }) => {
-      receipt.contains_generative_ai = true;
-    }),
-    /legacy receipt must declare contains_generative_ai=false/,
-  );
-
-  await expectPackFailure(
-    'forged non-builtin receipt generator with recomputed inner integrity',
-    () => rewriteLegacyReceipt(({ receipt }) => {
-      receipt.generator = { id: 'future-ai-provider', version: '1.0.0' };
-    }),
-    /legacy receipt must use builtin procedural-pixel-v1@0\.1\.0/,
-  );
+  await runReceiptPolicyNegativeCases();
 
   await expectFailure(
     'invalid cover',

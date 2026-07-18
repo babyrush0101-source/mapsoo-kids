@@ -3,18 +3,18 @@ import { join } from 'node:path';
 
 import JSZip from 'jszip';
 
-import { verifyLegacyAlpha1Receipt } from './receipt-verifier.mjs';
+import { verifyReceiptForRelease } from './receipt-verifier.mjs';
 
 import {
-  DEFAULT_RELEASE_ROOT,
+  CURRENT_RELEASE_CONFIG,
   RELEASE_FILES,
   RELEASE_TAG,
   REPOSITORY_ROOT,
-  VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES,
   VERSION,
   assertNoLocalAbsolutePath,
   assertPortableRelativePath,
   assertSafeOutputPath,
+  buildExamplePackArchive,
   comparePortablePaths,
   listFiles,
   normalizeText,
@@ -23,25 +23,18 @@ import {
   sha256,
 } from './release-lib.mjs';
 
-export const ITCH_SOURCE_ROOT = join(REPOSITORY_ROOT, 'docs', 'itch-kit', RELEASE_TAG);
+export const ITCH_SOURCE_ROOT = join(
+  REPOSITORY_ROOT,
+  CURRENT_RELEASE_CONFIG.itch.sourceDirectory,
+);
 export const ITCH_VISUAL_ROOT = join(
   REPOSITORY_ROOT,
-  'docs',
-  'media',
-  RELEASE_TAG,
-  'itch',
+  CURRENT_RELEASE_CONFIG.itch.visualDirectory,
 );
 export const ITCH_RELEASE_ROOT = join(REPOSITORY_ROOT, 'release', 'itch');
 export const DEFAULT_ITCH_OUTPUT_ROOT = join(ITCH_RELEASE_ROOT, RELEASE_TAG);
 
-export const ITCH_VISUALS = Object.freeze([
-  { name: 'cover-1260x1000.png', width: 1260, height: 1000, role: 'cover' },
-  { name: '01-generated-pack-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-  { name: '02-workbench-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-  { name: '03-pack-contents-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-  { name: '04-godot-verification-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-  { name: '05-open-contract-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-]);
+export const ITCH_VISUALS = CURRENT_RELEASE_CONFIG.itch.visuals;
 
 const OUTPUT_PATHS = Object.freeze([
   'itch-upload-manifest.json',
@@ -123,7 +116,7 @@ async function verifyVisual(path, visual) {
   return bytes;
 }
 
-function verifyMetadata(metadata) {
+function verifyProceduralMetadata(metadata) {
   assertExactKeys(
     metadata,
     [
@@ -196,7 +189,7 @@ function verifyMetadata(metadata) {
   }
 }
 
-function verifyPageMarkdown(page) {
+function verifyProceduralPageMarkdown(page) {
   assertLfText(page, 'itch page Markdown');
   for (const url of REQUIRED_PUBLIC_URLS) {
     assert(page.includes(url), `itch page Markdown is missing public URL: ${url}`);
@@ -219,6 +212,44 @@ function verifyPageMarkdown(page) {
   }
   assert(!/Godot 4\.3\+/.test(page), 'itch page must not claim untested Godot 4.3+ compatibility');
   assert(!/\b(?:Windows|macOS|Linux)\b\s+(?:download|build)/i.test(page), 'itch page falsely claims an OS build');
+}
+
+function verifyMetadata(metadata) {
+  switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
+    case 'sunny-meadow-procedural-cc0-v1':
+      return verifyProceduralMetadata(metadata);
+    default:
+      throw new Error(
+        `Unsupported itch metadata policy: ${CURRENT_RELEASE_CONFIG.itch.verificationPolicy}`,
+      );
+  }
+}
+
+function verifyPageMarkdown(page) {
+  switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
+    case 'sunny-meadow-procedural-cc0-v1':
+      return verifyProceduralPageMarkdown(page);
+    default:
+      throw new Error(
+        `Unsupported itch page policy: ${CURRENT_RELEASE_CONFIG.itch.verificationPolicy}`,
+      );
+  }
+}
+
+function verifyConfiguredItchPackManifest(manifest) {
+  switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
+    case 'sunny-meadow-procedural-cc0-v1':
+      assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
+      assert(
+        manifest.provenance?.contains_generative_ai === false,
+        'itch asset manifest AI provenance mismatch',
+      );
+      return;
+    default:
+      throw new Error(
+        `Unsupported itch pack policy: ${CURRENT_RELEASE_CONFIG.itch.verificationPolicy}`,
+      );
+  }
 }
 
 export async function verifyItchSource() {
@@ -256,17 +287,6 @@ export async function removeItchOutput(outputRoot) {
     outputRoot,
     'Refusing to remove itch output outside release/itch/',
   );
-}
-
-function parseReleaseChecksum(text, fileName) {
-  const matches = normalizeText(text)
-    .trim()
-    .split('\n')
-    .map((line) => line.match(/^([a-f0-9]{64})  (.+)$/))
-    .filter(Boolean)
-    .filter((match) => match[2] === fileName);
-  assert(matches.length === 1, `release SHA256SUMS must contain exactly one ${fileName} entry`);
-  return matches[0][1];
 }
 
 function roleFor(path) {
@@ -310,15 +330,14 @@ async function readBoundedPack(path, context) {
 }
 
 async function loadAuthoritativePack() {
-  const packPath = join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.examplePack);
-  const packBytes = await readBoundedPack(packPath, 'verified GitHub release pack');
-  const checksumText = await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.checksums), 'utf8');
-  assertLfText(checksumText, 'verified GitHub release SHA256SUMS');
-  const expectedHash = parseReleaseChecksum(checksumText, RELEASE_FILES.examplePack);
-  const pinnedPublicHash = VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES[RELEASE_TAG];
-  assert(pinnedPublicHash, `no public pack hash is pinned for ${RELEASE_TAG}`);
-  assert(expectedHash === pinnedPublicHash, 'release SHA256SUMS differs from the pinned public pack hash');
-  assert(sha256(packBytes) === expectedHash, 'verified GitHub release pack differs from SHA256SUMS');
+  const packBytes = await buildExamplePackArchive(VERSION);
+  assert(
+    packBytes.length > 0 && packBytes.length <= MAX_PACK_BYTES,
+    `configured asset pack exceeds the ${MAX_PACK_BYTES}-byte limit`,
+  );
+  const expectedHash = CURRENT_RELEASE_CONFIG.expectedExamplePackSha256;
+  assert(expectedHash, `no immutable example-pack hash is configured for ${RELEASE_TAG}`);
+  assert(sha256(packBytes) === expectedHash, 'rebuilt example pack differs from its configured hash');
   return { packBytes, expectedHash };
 }
 
@@ -385,7 +404,7 @@ export async function verifyPackZip(packPath, authoritativeHash) {
   const zip = await JSZip.loadAsync(bytes, { checkCRC32: false, createFolders: false });
   const allEntries = Object.values(zip.files);
   assert(allEntries.length > 0 && allEntries.length <= MAX_ZIP_ENTRIES, 'itch asset ZIP has an invalid entry count');
-  const expectedRoot = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
+  const expectedRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   for (const entry of allEntries) {
     const originalName = normalizedZipPath(entry, entry.unsafeOriginalName ?? entry.name);
     const sanitizedName = normalizedZipPath(entry, entry.name);
@@ -426,10 +445,12 @@ export async function verifyPackZip(packPath, authoritativeHash) {
   assert(manifestBytes, 'itch asset ZIP is missing mapsoo.manifest.json');
   assert(entryBytes.has('license-assets.md'), 'itch asset ZIP is missing license-assets.md');
   const manifest = JSON.parse(decodeUtf8(manifestBytes, 'itch asset ZIP:mapsoo.manifest.json'));
-  assert(manifest.pack?.id === 'sunny-meadow', 'itch asset manifest pack ID mismatch');
+  assert(
+    manifest.pack?.id === CURRENT_RELEASE_CONFIG.release.examplePack.id,
+    'itch asset manifest pack ID mismatch',
+  );
   assert(manifest.pack?.version === VERSION, 'itch asset manifest version mismatch');
-  assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
-  assert(manifest.provenance?.contains_generative_ai === false, 'itch asset manifest AI provenance mismatch');
+  verifyConfiguredItchPackManifest(manifest);
   const records = manifest.files;
   assert(Array.isArray(records), 'itch asset manifest files must be an array');
   const recordPaths = new Set(records.map((record) => record.path));
@@ -447,7 +468,8 @@ export async function verifyPackZip(packPath, authoritativeHash) {
     assert(contents.length === record.bytes, `itch asset byte count mismatch: ${record.path}`);
     assert(sha256(contents) === record.sha256, `itch asset SHA-256 mismatch: ${record.path}`);
   }
-  await verifyLegacyAlpha1Receipt({
+  await verifyReceiptForRelease({
+    version: VERSION,
     manifest,
     context: 'itch Sunny Meadow pack',
     readPackFile: async (path) => entryBytes.get(path),

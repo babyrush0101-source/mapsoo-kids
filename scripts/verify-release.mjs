@@ -5,15 +5,15 @@ import { join } from 'node:path';
 
 import JSZip from 'jszip';
 
-import { verifyLegacyAlpha1Receipt } from './receipt-verifier.mjs';
+import { verifyReceiptForRelease } from './receipt-verifier.mjs';
 
 import {
+  CURRENT_RELEASE_CONFIG,
   DEFAULT_RELEASE_ROOT,
   HASHED_RELEASE_FILE_NAMES,
   RELEASE_FILES,
   RELEASE_TAG,
   REPOSITORY_ROOT,
-  VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES,
   VERSION,
   assertNoLocalAbsolutePath,
   assertPortableRelativePath,
@@ -28,6 +28,47 @@ import {
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
+  }
+}
+
+function verifyConfiguredExampleManifest(manifest) {
+  assert(
+    manifest.pack?.id === CURRENT_RELEASE_CONFIG.release.examplePack.id,
+    'Example manifest pack ID mismatch',
+  );
+  assert(manifest.pack?.version === VERSION, 'Example manifest version mismatch');
+
+  switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
+    case 'sunny-meadow-procedural-cc0-v1':
+      assert(
+        manifest.provenance?.contains_generative_ai === false,
+        'Procedural example pack must disclose contains_generative_ai=false',
+      );
+      assert(manifest.license?.assets?.id === 'CC0-1.0', 'Procedural asset license mismatch');
+      assert(
+        manifest.compatibility?.importer?.source ===
+          'https://github.com/babyrush0101-source/mapsoo-kids',
+        'Procedural pack importer source must point to the official repository',
+      );
+      return;
+    default:
+      throw new Error(
+        `Unsupported pack verification policy: ${CURRENT_RELEASE_CONFIG.release.verificationPolicy}`,
+      );
+  }
+}
+
+function verifyConfiguredWorldSpec(worldSpec) {
+  switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
+    case 'sunny-meadow-procedural-cc0-v1':
+      assert(worldSpec.schemaVersion === '0.1.0', 'Example World Spec has an unexpected schema version');
+      assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
+      assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
+      return;
+    default:
+      throw new Error(
+        `Unsupported World Spec verification policy: ${CURRENT_RELEASE_CONFIG.release.verificationPolicy}`,
+      );
   }
 }
 
@@ -92,8 +133,11 @@ async function expectedImporterEntries() {
 }
 
 async function expectedExamplePackEntries() {
-  const rootName = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
-  const packRoot = join(REPOSITORY_ROOT, 'examples', 'packs', `sunny-meadow-${RELEASE_TAG}`);
+  const rootName = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
+  const packRoot = join(
+    REPOSITORY_ROOT,
+    CURRENT_RELEASE_CONFIG.release.examplePack.sourceDirectory,
+  );
   const result = new Map();
   for (const entry of await listFiles(packRoot)) {
     const archivePath = `${rootName}/${entry.archivePath}`;
@@ -151,12 +195,28 @@ async function verify() {
     'Release output contains missing or unexpected files',
   );
 
+  if (CURRENT_RELEASE_CONFIG.lifecycle === 'published') {
+    for (const [fileName, expectedHash] of Object.entries(
+      CURRENT_RELEASE_CONFIG.publicReleaseAssetSha256,
+    )) {
+      const actualHash = sha256(await readFile(join(DEFAULT_RELEASE_ROOT, fileName)));
+      assert(
+        actualHash === expectedHash,
+        `${fileName} differs from the immutable published digest for ${RELEASE_TAG}`,
+      );
+    }
+    console.log(
+      `MAPSOO_PUBLISHED_RELEASE_VERIFIED tag=${RELEASE_TAG} files=${actualReleaseNames.length}`,
+    );
+    return;
+  }
+
   await verifyChecksums();
-  const pinnedExamplePackHash = VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES[RELEASE_TAG];
-  assert(pinnedExamplePackHash, `No immutable public example-pack hash is pinned for ${RELEASE_TAG}`);
+  const pinnedExamplePackHash = CURRENT_RELEASE_CONFIG.expectedExamplePackSha256;
+  assert(pinnedExamplePackHash, `No example-pack hash is configured for ${RELEASE_TAG}`);
   assert(
     sha256(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.examplePack))) === pinnedExamplePackHash,
-    `Sunny Meadow ZIP differs from the immutable public hash for ${RELEASE_TAG}`,
+    `Sunny Meadow ZIP differs from the configured immutable hash for ${RELEASE_TAG}`,
   );
   await assertZipMatches(RELEASE_FILES.web, await expectedWebEntries());
   await assertZipMatches(RELEASE_FILES.godotImporter, await expectedImporterEntries());
@@ -188,7 +248,7 @@ async function verify() {
   );
 
   const examplePackEntries = await loadZip(RELEASE_FILES.examplePack);
-  const examplePackRoot = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
+  const examplePackRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   assert(
     examplePackEntries.every((entry) => entry.name.startsWith(`${examplePackRoot}/`)),
     'Sunny Meadow ZIP must contain exactly one versioned root folder',
@@ -208,18 +268,7 @@ async function verify() {
   );
   assert(exampleManifestEntry, 'Sunny Meadow ZIP does not contain mapsoo.manifest.json');
   const exampleManifest = JSON.parse(await exampleManifestEntry.async('text'));
-  assert(exampleManifest.pack?.id === 'sunny-meadow', 'Sunny Meadow manifest pack ID mismatch');
-  assert(exampleManifest.pack?.version === VERSION, 'Sunny Meadow manifest version mismatch');
-  assert(
-    exampleManifest.provenance?.contains_generative_ai === false,
-    'Sunny Meadow alpha must disclose that its artwork is procedural, not model-generated',
-  );
-  assert(exampleManifest.license?.assets?.id === 'CC0-1.0', 'Sunny Meadow asset license mismatch');
-  assert(
-    exampleManifest.compatibility?.importer?.source ===
-      'https://github.com/babyrush0101-source/mapsoo-kids',
-    'Sunny Meadow importer source must point to the official repository',
-  );
+  verifyConfiguredExampleManifest(exampleManifest);
 
   const exampleFiles = new Map(
     examplePackEntries.map((entry) => [entry.name.slice(examplePackRoot.length + 1), entry]),
@@ -251,7 +300,8 @@ async function verify() {
     assert(sha256(bytes) === fileRecord.sha256, `Sunny Meadow SHA-256 mismatch: ${fileRecord.path}`);
   }
 
-  await verifyLegacyAlpha1Receipt({
+  await verifyReceiptForRelease({
+    version: VERSION,
     manifest: exampleManifest,
     context: 'Sunny Meadow release pack',
     readPackFile: async (path) => {
@@ -261,9 +311,14 @@ async function verify() {
   });
 
   const sourceJsonChecks = [
-    ['worlds/sunny-meadow.world.json', join(REPOSITORY_ROOT, 'examples', 'sunny-meadow.world.json')],
-    ['schema/mapsoo-world.schema.json', join(REPOSITORY_ROOT, 'schemas', 'mapsoo-world.schema.json')],
-    ['schema/mapsoo-pack.schema.json', join(REPOSITORY_ROOT, 'schemas', 'mapsoo-pack.schema.json')],
+    [
+      CURRENT_RELEASE_CONFIG.release.examplePack.worldSpecPackPath,
+      join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.exampleWorldSpec),
+    ],
+    ...CURRENT_RELEASE_CONFIG.release.schemas.map(({ packPath, source }) => [
+      packPath,
+      join(REPOSITORY_ROOT, source),
+    ]),
   ];
   for (const [packedPath, sourcePath] of sourceJsonChecks) {
     const entry = exampleFiles.get(packedPath);
@@ -278,39 +333,32 @@ async function verify() {
 
   await verifyCopiedFile(
     RELEASE_FILES.exampleWorldSpec,
-    join(REPOSITORY_ROOT, 'examples', 'sunny-meadow.world.json'),
+    join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.exampleWorldSpec),
+  );
+  for (const { releaseFileKey, source } of CURRENT_RELEASE_CONFIG.release.schemas) {
+    await verifyCopiedFile(RELEASE_FILES[releaseFileKey], join(REPOSITORY_ROOT, source));
+  }
+  await verifyCopiedFile(
+    RELEASE_FILES.license,
+    join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.license),
   );
   await verifyCopiedFile(
-    RELEASE_FILES.worldSchema,
-    join(REPOSITORY_ROOT, 'schemas', 'mapsoo-world.schema.json'),
+    RELEASE_FILES.changelog,
+    join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.changelog),
   );
-  await verifyCopiedFile(
-    RELEASE_FILES.packSchema,
-    join(REPOSITORY_ROOT, 'schemas', 'mapsoo-pack.schema.json'),
-  );
-  await verifyCopiedFile(RELEASE_FILES.license, join(REPOSITORY_ROOT, 'LICENSE'));
-  await verifyCopiedFile(RELEASE_FILES.changelog, join(REPOSITORY_ROOT, 'CHANGELOG.md'));
   await verifyCopiedFile(
     RELEASE_FILES.evidenceVideo,
-    join(
-      REPOSITORY_ROOT,
-      'docs',
-      'media',
-      RELEASE_TAG,
-      'video',
-      `mapsoo-worldsmith-${RELEASE_TAG}-75s.mp4`,
-    ),
+    join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.evidenceVideo),
   );
 
   const worldSpec = JSON.parse(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.exampleWorldSpec), 'utf8'),
   );
-  assert(worldSpec.schemaVersion === '0.1.0', 'Example World Spec has an unexpected schema version');
-  assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
-  assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
+  verifyConfiguredWorldSpec(worldSpec);
 
-  JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.worldSchema), 'utf8'));
-  JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.packSchema), 'utf8'));
+  for (const { releaseFileKey } of CURRENT_RELEASE_CONFIG.release.schemas) {
+    JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[releaseFileKey]), 'utf8'));
+  }
 
   const manifest = JSON.parse(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.manifest), 'utf8'),
@@ -325,6 +373,14 @@ async function verify() {
   assert(
     manifest.artifacts?.examplePack?.file === RELEASE_FILES.examplePack,
     'Release manifest Sunny Meadow artifact mismatch',
+  );
+  assert(
+    JSON.stringify(manifest.artifacts?.schemas) === JSON.stringify(
+      CURRENT_RELEASE_CONFIG.release.schemas.map(
+        ({ releaseFileKey }) => RELEASE_FILES[releaseFileKey],
+      ),
+    ),
+    'Release manifest schema artifacts mismatch',
   );
   assert(
     manifest.artifacts?.evidenceVideo?.file === RELEASE_FILES.evidenceVideo,
