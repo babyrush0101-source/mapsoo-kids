@@ -1,0 +1,58 @@
+[
+  {
+    "text": "Mapsoo Worldsmith 把世界设定变成 Godot 可用的素材包。\nMapsoo Worldsmith turns a World Spec into a Godot-ready asset pack.",
+    "startMs": 0,
+    "endMs": 6000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "选择 biome、尺寸和 seed；当前 alpha 完全在本地运行。\nChoose a biome, size, and seed. No account, backend, or API key.",
+    "startMs": 6000,
+    "endMs": 17000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "在 v0.1.0-alpha.1 中，相同 spec 与 seed 会重现相同结果。\nIn v0.1.0-alpha.1, the same spec and seed reproduce the same result.",
+    "startMs": 17000,
+    "endMs": 28000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "导出前检查素材契约，而不只是检查一张图片。\nValidation checks the asset contract—not just the picture.",
+    "startMs": 28000,
+    "endMs": 38000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "可移植 ZIP 包含 PNG、JSON、hash、生成记录和 CC0 许可。\nThe portable ZIP contains PNG, JSON, hashes, provenance, and a CC0 license.",
+    "startMs": 38000,
+    "endMs": 49000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "素材 ZIP 不含可执行脚本；importer 从官方仓库单独安装。\nAsset packs are executable-free. Install the importer separately.",
+    "startMs": 49000,
+    "endMs": 58000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "同一候选包已在 Godot 4.3 和 4.7 中完成真实 CLI 导入验证。\nThe same candidate pack passed real CLI imports in Godot 4.3 and 4.7.",
+    "startMs": 58000,
+    "endMs": 69000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "alpha 免费开源；请试用并报告可复现问题。\nThe alpha is free and open source. Try it and report reproducible issues.",
+    "startMs": 69000,
+    "endMs": 75000,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

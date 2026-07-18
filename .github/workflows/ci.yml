@@ -27,12 +27,21 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            video/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install release-video dependencies
+        run: pnpm --dir video install --frozen-lockfile
+
       - name: Run project checks
         run: pnpm check
+
+      - name: Verify release-video source and committed MP4
+        run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output
 
   godot-smoke:
     name: Godot ${{ matrix.version }} smoke

@@ -39,6 +39,7 @@
 - [x] 固化真实 Sunny Meadow 浏览器导出包，并纳入可重复 release 打包；
 - [x] GitHub Pages 与 tag-gated release-draft 工作流准备；
 - [x] 完成可校验的 itch.io 封面与五张真实 release 证据图；
+- [x] 完成 75 秒中英双语、无音轨的本地 release-candidate 证据视频；
 - [ ] `v0.1.0-alpha.1` 预发布。
 
 ## v0.2 — AI-assisted Assets

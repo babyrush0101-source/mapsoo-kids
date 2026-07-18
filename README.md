@@ -40,7 +40,10 @@ Image generation alone does not make a usable game-asset pipeline. Mapsoo first 
 - [STOYO integration](docs/07_STOYO_INTEGRATION.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
+- [75-second evidence video source and verification](video/README.md)
 - [v0.1.0-alpha.1 release notes](docs/releases/v0.1.0-alpha.1.md)
+
+The reviewed local release-candidate video is available as a [silent bilingual 75-second MP4](docs/media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4). It is local evidence, not a claim that the GitHub release or itch.io page is already public.
 
 ## Local development
 
@@ -63,7 +66,7 @@ Build, validate, and reproduce the complete local alpha release bundle:
 pnpm release:local
 ```
 
-The generated files are written to `release/v0.1.0-alpha.1/` and include the static web build, executable-free Sunny Meadow pack, separately installed Godot importer, schemas, manifest, and SHA-256 checksums. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; publishing the prerelease remains a deliberate maintainer action.
+The generated files are written to `release/v0.1.0-alpha.1/` and include the static web build, executable-free Sunny Meadow pack, separately installed Godot importer, schemas, silent 75-second evidence video, manifest, and SHA-256 checksums. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; publishing the prerelease remains a deliberate maintainer action.
 
 No environment variables are required for the portable alpha. See [`.env.example`](.env.example) for the key-handling policy before adding a future provider.
 

@@ -272,6 +272,17 @@ async function verify() {
   );
   await verifyCopiedFile(RELEASE_FILES.license, join(REPOSITORY_ROOT, 'LICENSE'));
   await verifyCopiedFile(RELEASE_FILES.changelog, join(REPOSITORY_ROOT, 'CHANGELOG.md'));
+  await verifyCopiedFile(
+    RELEASE_FILES.evidenceVideo,
+    join(
+      REPOSITORY_ROOT,
+      'docs',
+      'media',
+      RELEASE_TAG,
+      'video',
+      `mapsoo-worldsmith-${RELEASE_TAG}-75s.mp4`,
+    ),
+  );
 
   const worldSpec = JSON.parse(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.exampleWorldSpec), 'utf8'),
@@ -296,6 +307,10 @@ async function verify() {
   assert(
     manifest.artifacts?.examplePack?.file === RELEASE_FILES.examplePack,
     'Release manifest Sunny Meadow artifact mismatch',
+  );
+  assert(
+    manifest.artifacts?.evidenceVideo?.file === RELEASE_FILES.evidenceVideo,
+    'Release manifest evidence video artifact mismatch',
   );
   assertNoLocalAbsolutePath(JSON.stringify(manifest), RELEASE_FILES.manifest);
 

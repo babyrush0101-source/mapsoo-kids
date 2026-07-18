@@ -27,6 +27,7 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 - Deterministic local release packaging with ZIP content verification, SHA-256 checksums, and byte-for-byte reproducibility checks.
 - GitHub Pages and tag-gated release-draft workflows, plus weekly dependency update configuration.
 - A deterministic itch.io cover and five evidence-based release visuals with automated dimension and source-fact verification.
+- A reproducible 75-second bilingual H.264 evidence video, committed MP4 metadata checks, and release-bundle integration.
 
 ### Changed
 

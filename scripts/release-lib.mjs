@@ -23,6 +23,7 @@ export const RELEASE_FILES = Object.freeze({
   web: `mapsoo-worldsmith-web-${RELEASE_TAG}.zip`,
   godotImporter: `mapsoo-godot-importer-${RELEASE_TAG}.zip`,
   examplePack: `mapsoo-sunny-meadow-${RELEASE_TAG}.zip`,
+  evidenceVideo: `mapsoo-worldsmith-${RELEASE_TAG}-75s.mp4`,
   exampleWorldSpec: `sunny-meadow-${RELEASE_TAG}.world.json`,
   worldSchema: `mapsoo-world.schema-${RELEASE_TAG}.json`,
   packSchema: `mapsoo-pack.schema-${RELEASE_TAG}.json`,
@@ -250,11 +251,24 @@ export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
     [join(REPOSITORY_ROOT, 'schemas', 'mapsoo-pack.schema.json'), RELEASE_FILES.packSchema],
     [join(REPOSITORY_ROOT, 'LICENSE'), RELEASE_FILES.license],
     [join(REPOSITORY_ROOT, 'CHANGELOG.md'), RELEASE_FILES.changelog],
+    [
+      join(
+        REPOSITORY_ROOT,
+        'docs',
+        'media',
+        RELEASE_TAG,
+        'video',
+        `mapsoo-worldsmith-${RELEASE_TAG}-75s.mp4`,
+      ),
+      RELEASE_FILES.evidenceVideo,
+    ],
   ];
 
   for (const [source, targetName] of copiedFiles) {
     const bytes = await readPortableFile(source, targetName);
-    assertNoLocalAbsolutePath(bytes.toString('utf8'), targetName);
+    if (isTextPath(targetName)) {
+      assertNoLocalAbsolutePath(bytes.toString('utf8'), targetName);
+    }
     await writeFile(join(resolvedOutputRoot, targetName), bytes);
   }
 
@@ -275,6 +289,10 @@ export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
       examplePack: {
         file: RELEASE_FILES.examplePack,
         purpose: 'Executable-free Sunny Meadow PNG + JSON pack verified in Godot 4.3 and 4.7',
+      },
+      evidenceVideo: {
+        file: RELEASE_FILES.evidenceVideo,
+        purpose: 'Silent bilingual 75-second H.264 evidence cut for the verified release candidate',
       },
       exampleWorldSpec: {
         file: RELEASE_FILES.exampleWorldSpec,
