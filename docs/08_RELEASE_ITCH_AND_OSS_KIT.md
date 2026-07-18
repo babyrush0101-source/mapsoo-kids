@@ -1,6 +1,6 @@
 # Mapsoo Worldsmith：GitHub Alpha、itch.io 与 Codex for OSS 发布执行包
 
-更新日期：2026-07-18
+更新日期：2026-07-19
 
 目标版本：`v0.1.0-alpha.1`
 
@@ -20,8 +20,8 @@
 - 真实 Sunny Meadow 浏览器导出 fixture，以及包含 11 个文件、带 SHA-256 和字节级可重复性校验的本地 release bundle；
 - 本地 1260×1000 封面、五张 1600×900 证据图和已验证的 75 秒中英双语 H.264 证据视频；
 - README、路线图、贡献指南、安全政策、issue/PR 模板与 MIT 源码许可。
-- alpha 已在公开 `main` 合并，tag 指向 merge commit `f36ef4d29020b3f7ceaf87d314ca1d80c0e44500`；
-- [GitHub Actions](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29649158764) 的 `check`、Godot 4.3 和 Godot 4.7 jobs 全绿；
+- alpha 已在公开 `main` 合并，tag 指向 merge commit `f36ef4d29020b3f7ceaf87d314ca1d80c0e44500`；后续 release 套件与输入安全加固已通过 [PR #14](https://github.com/babyrush0101-source/mapsoo-kids/pull/14) 和 [PR #15](https://github.com/babyrush0101-source/mapsoo-kids/pull/15) 公开合入；
+- [最新 main GitHub Actions](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223) 的 `check`、Godot 4.3 和 Godot 4.7 jobs 全绿；
 - [GitHub Pages Demo](https://babyrush0101-source.github.io/mapsoo-kids/) 可匿名访问；
 - [`v0.1.0-alpha.1` GitHub pre-release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) 已公开，11 个版本化附件和证据视频可下载；
 - [统一反馈 issue](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) 已公开。
@@ -470,16 +470,17 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 
 | 证据 | 当前状态 | 可提交的权威 URL/数据 |
 | --- | --- | --- |
-| Public repository | 新版与公开证据文档已在默认分支 | [main commit `519018e`](https://github.com/babyrush0101-source/mapsoo-kids/tree/519018e0eb9a72b229b418ae4b385b8d9ae5d518) |
+| Public repository | 新版、发布工具与输入安全加固已在默认分支 | [main commit `08c5af6`](https://github.com/babyrush0101-source/mapsoo-kids/tree/08c5af6275790e54df7c28f41a72f9dba875839c) |
 | 源码与资产许可边界 | 已公开 | [`LICENSE`](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/LICENSE)、release 素材 ZIP 内 `license-assets.md` |
-| 可复现构建与测试 | 最新公开 `main` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29650348782) |
-| Godot 4.3/4.7 兼容 | 最新公开 `main` 的两个 jobs 已通过 | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29650348782/job/88095517050)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29650348782/job/88095517039) |
+| 可复现构建与测试 | 最新公开 `main` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223)、[`check` job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892789) |
+| Godot 4.3/4.7 兼容 | 最新公开 `main` 的两个 jobs 已通过 | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892787)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892790) |
+| 公开维护活动 | 4 个功能、发布、证据和安全加固 PR 已合并 | [PR #1](https://github.com/babyrush0101-source/mapsoo-kids/pull/1)、[PR #13](https://github.com/babyrush0101-source/mapsoo-kids/pull/13)、[PR #14](https://github.com/babyrush0101-source/mapsoo-kids/pull/14)、[PR #15](https://github.com/babyrush0101-source/mapsoo-kids/pull/15) |
 | GitHub alpha release | 已发布 pre-release | [`v0.1.0-alpha.1`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) |
 | 在线 Demo | 已部署并匿名访问验证 | [GitHub Pages](https://babyrush0101-source.github.io/mapsoo-kids/) |
 | itch.io 免费包 | 未发布 | `[REPLACE: ITCH_URL]` |
 | 演示视频 | 已作为版本化 release asset 公开 | [75 秒 H.264 MP4](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) |
-| 外部反馈与维护响应 | 统一入口已创建；尚无外部反馈 | [feedback issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) |
-| downloads / stars / forks | 2026-07-18：11 个 release assets 均为 0 下载，0 stars，0 forks；不把维护者访问算作采用 | [release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
+| 外部反馈与维护响应 | 统一入口已创建；截至 2026-07-19 仍无评论或外部反馈 | [feedback issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) |
+| downloads / stars / forks | 2026-07-19：11 个 release assets 均为 0 下载，0 stars，0 forks；不把维护者访问算作采用 | [release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
 | STOYO 使用 | 计划中的首个真实消费者 | 只有真正接入后才附公开且不泄密的案例；否则明确写 planned |
 
 推荐申请门槛：release、公开 CI、itch 页面、Demo/视频至少三者完成，并且有至少一轮真实外部反馈与维护响应。star 不是唯一标准，但不能用愿景替代活跃维护证据。
@@ -522,10 +523,11 @@ I am the primary maintainer responsible for roadmap, releases, issue triage, and
 
 ```text
 代码与验证
-[ ] alpha 已合入 public main
-[ ] public CI 的 Node、Godot 4.3、Godot 4.7 全绿
-[ ] 精确 release 附件完成真实浏览器 ZIP -> Godot 验收
-[ ] secret scan、绝对路径与 ZIP 可执行文件检查通过
+[x] alpha 已合入 public main
+[x] public CI 的 Node、Godot 4.3、Godot 4.7 全绿
+[x] 精确 release 附件完成真实浏览器 ZIP -> Godot 验收
+[x] 绝对路径与 ZIP 可执行文件自动检查通过
+[ ] 历史已暴露凭据如有复用，已由维护者确认轮换
 
 GitHub
 [x] tag/release 版本一致，标记为 pre-release
