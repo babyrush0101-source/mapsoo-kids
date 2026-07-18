@@ -8,13 +8,15 @@ export interface PackFileRecord {
   sha256: string;
 }
 
+export type PackReleaseVersion = '0.1.0-alpha.1' | '0.1.0-alpha.2';
+
 export interface PackManifest {
   schema_version: '0.1.0';
   pack: {
     id: string;
     title: string;
-    version: '0.1.0-alpha.1';
-    generator: { name: 'Mapsoo Worldsmith'; version: '0.1.0-alpha.1' };
+    version: PackReleaseVersion;
+    generator: { name: 'Mapsoo Worldsmith'; version: PackReleaseVersion };
     created_at: string;
   };
   compatibility: {
@@ -81,14 +83,14 @@ export interface PackManifest {
   }>;
   files: PackFileRecord[];
   license: {
-    assets: { id: 'CC0-1.0'; file: 'license-assets.md' };
+    assets: { id: 'CC0-1.0'; file: string };
   };
   provenance: {
-    contains_generative_ai: false;
-    model_provider: null;
-    model: null;
+    contains_generative_ai: boolean;
+    model_provider: string | null;
+    model: string | null;
     seed: string;
-    human_curated: false;
+    human_curated: boolean;
   };
 }
 
