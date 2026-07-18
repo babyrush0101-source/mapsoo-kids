@@ -101,11 +101,11 @@ export function App() {
 
       <main id="top">
         <section className="hero-copy">
-          <p className="eyebrow">Open-source · Portable today · Godot importer planned</p>
+          <p className="eyebrow">Open-source · Portable · Godot 4.3+ importer available</p>
           <h1>Describe a world.<br />Build a playable pack.</h1>
           <p>
             Turn a versioned world specification into coherent tiles, a map preview, validation results,
-            and a portable PNG + JSON asset pack.
+            and a portable PNG + JSON asset pack with a validated Godot importer.
           </p>
         </section>
 
@@ -303,7 +303,7 @@ export function App() {
               <article><strong>{world.ground.length}</strong><span>map cells</span></article>
               <article><strong>{world.tiles.length}</strong><span>tile types</span></article>
               <article><strong>{world.props.length}</strong><span>props</span></article>
-              <article><strong>1</strong><span>portable target</span></article>
+              <article><strong>3</strong><span>export targets</span></article>
             </div>
 
             <h3>Validation</h3>
@@ -322,7 +322,7 @@ export function App() {
             <h3>Export targets</h3>
             <ul className="target-list">
               <li><span>Portable pack</span><small>Current · PNG + JSON</small></li>
-              <li><span>Godot 4.3+</span><small>Planned · importer + TileMapLayer</small></li>
+              <li><span>Godot 4.3+</span><small>Official importer + TileMapLayer</small></li>
               <li><span>itch.io</span><small>Current · versioned release ZIP</small></li>
             </ul>
 
@@ -341,7 +341,7 @@ export function App() {
                 onClick={exportPack}
                 disabled={exportState === 'building' || hasPackErrors}
               >
-                {exportState === 'building' ? 'Building ZIP…' : 'Assemble portable ZIP'}
+                {exportState === 'building' ? 'Building ZIP…' : 'Assemble Godot-compatible ZIP'}
                 <span>↓</span>
               </button>
             </div>
@@ -351,7 +351,7 @@ export function App() {
 
         <section className="principles">
           <article><span>01</span><h2>World-level coherence</h2><p>One versioned spec controls the whole pack—not a folder of unrelated prompts.</p></article>
-          <article><span>02</span><h2>Portable output</h2><p>PNG + JSON works today; automated Godot import validation is the planned next milestone.</p></article>
+          <article><span>02</span><h2>Engine-validated output</h2><p>PNG + JSON stays portable; the official importer is tested on Godot 4.3 and 4.7.</p></article>
           <article><span>03</span><h2>Traceable by default</h2><p>Seeds, providers, licenses, versions, and transformations travel with every pack.</p></article>
         </section>
       </main>

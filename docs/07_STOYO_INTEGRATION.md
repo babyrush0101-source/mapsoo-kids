@@ -105,7 +105,7 @@ STOYO 文档的核心主张可以转换为 Mapsoo 的开发者表达：
 
 portable alpha 已完成确定性 terrain/props 占位素材、地图预览、manifest、validation 和 ZIP。以下能力仍是路线图，不应在演示中描述为已交付：
 
-- 一键 Godot 导入、生成 `TileSet`/scene 和 headless smoke test；
+- 直接读取未解压、不可信 ZIP（当前流程先解压，再由插件校验 manifest、hash 并生成 `TileSet`/scene）；
 - buildings、角色、动画和授权 IP 视觉适配；
 - 正式印刷版式；
 - STOYO 内容安全、隐私或家长控制判断。

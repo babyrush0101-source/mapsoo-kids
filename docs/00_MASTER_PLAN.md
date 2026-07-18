@@ -25,8 +25,8 @@
 3. 生成一套确定性的像素风地形与道具占位素材；
 4. 在浏览器中看到按 Tile 网格渲染的地图；
 5. 得到明确的素材检查结果；
-6. 下载包含 PNG、世界描述、清单、许可证和 Godot 导入文件的 ZIP；
-7. 按 README 在 Godot 4 示例项目中打开结果。
+6. 下载不含可执行代码、包含 PNG、世界描述、清单和许可证的 ZIP；
+7. 从官方可信来源安装 Godot importer，再按 README 打开结果。
 
 ## 3. 核心产品原则
 
@@ -90,7 +90,7 @@
 | v0.5 Community Beta | 示例、文档、贡献流程、预发布 | 至少 3 个示例包、外部 issue/反馈、首个 beta release |
 | v1.0 Stable | 稳定 schema 和兼容策略 | schema 版本化、迁移策略、跨平台测试和正式 release |
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、确定性生成、Canvas 预览、基础校验和 portable ZIP，尚未满足 Godot importer、示例项目及公开预发布的出口条件。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、确定性生成、Canvas 预览、严格校验、portable ZIP、Godot importer、示例工程、桌面/390px 浏览器视觉验收，以及真实浏览器 ZIP 在 Godot 4.3/4.7 中的跨管线验收；尚未完成公开预发布。
 
 ## 6. 总控节奏
 
@@ -130,7 +130,6 @@
 
 ## 9. 当前下一步
 
-1. 完成浏览器下载与像素预览的视觉验收；
-2. 实现 Godot 4.3+ EditorPlugin importer，派生 `TileSetAtlasSource` 与 `TileMapLayer`；
-3. 建立可执行的 Godot 示例项目与 headless smoke test；
-4. 发布 `v0.1.0-alpha.1`，再准备 itch.io 免费示例包。
+1. 整理 `v0.1.0-alpha.1` 的 release notes、截图和可下载示例包；
+2. 发布 GitHub alpha release，并准备 itch.io 免费示例页；
+3. 部署在线 Demo，邀请第一轮外部用户反馈。

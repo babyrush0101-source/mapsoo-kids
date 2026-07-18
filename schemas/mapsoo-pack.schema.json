@@ -30,11 +30,21 @@
     "compatibility": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["godot_min", "grid", "art_style"],
+      "required": ["godot_min", "grid", "art_style", "importer"],
       "properties": {
         "godot_min": { "const": "4.3" },
         "grid": { "const": "orthogonal" },
-        "art_style": { "const": "pixel_art" }
+        "art_style": { "const": "pixel_art" },
+        "importer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "min_version", "source"],
+          "properties": {
+            "id": { "const": "mapsoo_importer" },
+            "min_version": { "const": "0.1.0-alpha.1" },
+            "source": { "const": "https://github.com/babyrush0101-source/mapsoo-kids" }
+          }
+        }
       }
     },
     "world_spec": {
@@ -57,13 +67,13 @@
     },
     "layers": {
       "type": "array",
-      "minItems": 1,
-      "items": {
-        "oneOf": [
-          { "$ref": "#/$defs/tilemapLayer" },
-          { "$ref": "#/$defs/objectLayer" }
-        ]
-      }
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/tilemapLayer" },
+        { "$ref": "#/$defs/objectLayer" }
+      ],
+      "items": false
     },
     "receipt": {
       "type": "object",
@@ -75,6 +85,7 @@
     },
     "atlases": {
       "type": "array",
+      "maxItems": 8,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -90,25 +101,69 @@
           "texture_padding": { "type": "boolean" },
           "tiles": {
             "type": "array",
+            "maxItems": 4096,
             "items": {
               "type": "object",
-              "additionalProperties": true,
-              "required": ["tile_id", "id", "atlas_coords", "size_cells", "alternative_id"],
+              "additionalProperties": false,
+              "required": ["tile_id", "id", "atlas_coords", "size_cells", "alternative_id", "collision", "terrain", "custom_data", "tags"],
               "properties": {
                 "tile_id": { "type": "integer", "minimum": 0 },
                 "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
                 "atlas_coords": { "$ref": "#/$defs/nonNegativePair" },
                 "size_cells": { "$ref": "#/$defs/positivePair" },
-                "alternative_id": { "type": "integer", "minimum": 0 }
+                "alternative_id": { "type": "integer", "minimum": 0 },
+                "collision": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type"],
+                  "properties": { "type": { "const": "none" } }
+                },
+                "terrain": { "type": "null" },
+                "custom_data": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["walkable", "biome"],
+                  "properties": {
+                    "walkable": { "type": "boolean" },
+                    "biome": { "enum": ["meadow", "desert", "snow"] }
+                  }
+                },
+                "tags": { "type": "array", "items": { "type": "string" } }
               }
             }
           }
         }
       }
     },
-    "sprites": { "type": "array", "items": { "type": "object" } },
+    "sprites": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "atlas", "region_px", "pivot_px", "footprint_cells", "tags"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "atlas": { "$ref": "#/$defs/relativePath" },
+          "region_px": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "integer", "minimum": 0 },
+              { "type": "integer", "minimum": 1 },
+              { "type": "integer", "minimum": 1 }
+            ],
+            "items": false
+          },
+          "pivot_px": { "$ref": "#/$defs/nonNegativePair" },
+          "footprint_cells": { "$ref": "#/$defs/positivePair" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
     "files": {
       "type": "array",
+      "maxItems": 512,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -124,10 +179,17 @@
     "license": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "file"],
+      "required": ["assets"],
       "properties": {
-        "id": { "type": "string" },
-        "file": { "$ref": "#/$defs/relativePath" }
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "file"],
+          "properties": {
+            "id": { "const": "CC0-1.0" },
+            "file": { "$ref": "#/$defs/relativePath" }
+          }
+        }
       }
     },
     "provenance": {
@@ -150,7 +212,7 @@
     },
     "relativePath": {
       "type": "string",
-      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[a-z0-9][a-z0-9_./-]*$"
+      "pattern": "^[a-z0-9][a-z0-9._-]*(?:/[a-z0-9][a-z0-9._-]*)*$"
     },
     "positivePair": {
       "type": "array",
@@ -173,7 +235,7 @@
       "additionalProperties": false,
       "required": ["id", "kind", "path", "json_pointer", "encoding", "dimensions_cells", "atlas_id", "empty_tile_id"],
       "properties": {
-        "id": { "type": "string" },
+        "id": { "const": "ground" },
         "kind": { "const": "tilemap" },
         "path": { "$ref": "#/$defs/relativePath" },
         "json_pointer": { "type": "string", "pattern": "^/" },
@@ -188,7 +250,7 @@
       "additionalProperties": false,
       "required": ["id", "kind", "path", "json_pointer", "encoding", "sprite_atlas"],
       "properties": {
-        "id": { "type": "string" },
+        "id": { "const": "props" },
         "kind": { "const": "objects" },
         "path": { "$ref": "#/$defs/relativePath" },
         "json_pointer": { "type": "string", "pattern": "^/" },

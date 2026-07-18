@@ -17,11 +17,15 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 - A versioned Sunny Meadow World Spec fixture and ZIP contract regression tests.
 - Explicit manifest references for world specs, map layers, previews, receipts, and numeric tile IDs.
 - A strict, namespaced `extensions` field for integrations such as STOYO.
+- A separately installed Godot 4.3+ EditorPlugin that derives `TileSet`, `TileMapLayer`, and prop resources from validated portable packs.
+- Godot 4.3/4.7 headless smoke tests, security-negative fixtures, and CI coverage.
+- Executable-free asset packs that declare the required official importer version without bundling GDScript.
+- A reusable Godot CLI verifier and a real browser ZIP-to-Godot 4.3/4.7 end-to-end acceptance path.
 
 ### Changed
 
 - Rebuilt the active application from scratch as a Godot-first creator tool.
-- Clarified that the current deliverable is a portable PNG + JSON alpha; the Godot importer and engine-native resources are planned follow-up work.
+- Kept PNG + JSON as the portable source of truth while adding engine-native resources as validated Godot-derived artifacts.
 
 ### Removed
 

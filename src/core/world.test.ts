@@ -131,7 +131,16 @@ describe('pack manifest', () => {
       '2026-07-18T12:00:00.000Z',
     );
 
-    expect(manifest.compatibility).toEqual({ godot_min: '4.3', grid: 'orthogonal', art_style: 'pixel_art' });
+    expect(manifest.compatibility).toEqual({
+      godot_min: '4.3',
+      grid: 'orthogonal',
+      art_style: 'pixel_art',
+      importer: {
+        id: 'mapsoo_importer',
+        min_version: '0.1.0-alpha.1',
+        source: 'https://github.com/babyrush0101-source/mapsoo-kids',
+      },
+    });
     expect(manifest.world_spec).toEqual({ path: 'worlds/sunny-meadow.world.json', sha256: HASH });
     expect(manifest.demo).toEqual({
       map: 'worlds/demo-world.json',

@@ -1,6 +1,6 @@
 # 资产与导出规格 v0.1
 
-本文描述 v0.1 的目标合同。当前 portable alpha 已输出 PNG、JSON、manifest、receipt 和许可文件；第 7 节的 Godot ZIP、EditorPlugin 与导入验收尚未实现，不能据此宣称当前下载包已可一键导入 Godot。
+本文描述 v0.1 的目标合同。当前 alpha 已输出 PNG、JSON、manifest、receipt、资产许可和所需 importer 版本；独立安装的官方 Godot EditorPlugin 可从已解压 pack 在 Godot 4.3/4.7 中派生 `TileSet`、`TileMapLayer` scene 和 props。素材包不携带可执行 GDScript，直接读取不可信 ZIP 也未开放。
 
 ## 1. 像素资产约束
 
@@ -80,60 +80,48 @@ Godot Atlas 额外规则：
 - 生成时间；
 - 目标引擎与验证版本；
 - World Spec 路径和 hash；
-- 每个文件的角色、尺寸、媒体类型与可选 hash；
+- 每个文件的角色、字节数、媒体类型与必填 SHA-256；
 - tileset 定义；
 - map layers；
 - provider receipt 路径；
-- 代码许可与资产许可；
+- 资产许可，以及独立 importer 的 ID、最低版本和官方来源；
 - attribution 条目。
 
-## 6. 通用 ZIP 结构
+## 6. v0.1 统一 ZIP 结构
 
 ```text
-sunny-meadow-v0.1.0/
-  README.md
-  CHANGELOG.md
-  LICENSE-ASSETS.md
+mapsoo-sunny-meadow-v0.1.0-alpha.1/
+  readme.md
+  license-assets.md
   mapsoo.manifest.json
   generation-receipt.json
-  world/
+  worlds/
     sunny-meadow.world.json
-    map.json
-  assets/
-    tiles/terrain.png
-    props/meadow-props.png
-    previews/cover.png
-    previews/map-preview.png
+    demo-world.json
+  atlases/
+    terrain.png
+    props.png
+  previews/
+    map-preview.png
+  schema/
+    mapsoo-pack.schema.json
+    mapsoo-world.schema.json
 ```
 
-## 7. Godot ZIP 结构
+所有消费者读取同一套 PNG、JSON、manifest 和许可文件。Godot 用户从官方仓库或未来的 Godot Asset Library 独立安装 importer；素材 ZIP 只在 manifest 中声明 importer ID、最低版本和官方来源，不维护容易漂移的第二套“Godot ZIP”。
 
-```text
-sunny-meadow-godot-v0.1.0/
-  README.md
-  LICENSE-ASSETS.md
-  mapsoo.manifest.json
-  generation-receipt.json
-  addons/
-    mapsoo_importer/
-      plugin.cfg
-      mapsoo_importer.gd
-  mapsoo/
-    world.json
-    map.json
-    assets/
-      terrain.png
-      props.png
-  demo/
-    demo_world.tscn
-```
+## 7. Godot 导入流程
 
-Godot 资源通常在导入时产生 UID 和 `.godot/imported` 状态，因此 v0.1 优先让 Godot 内运行的普通 `EditorPlugin` 创建 TileSet/场景，而不是在浏览器里手写依赖特定 UID 的 `.tres`，也不抢占通用 `.json` 扩展名注册 `EditorImportPlugin`。`.godot/` 和 `.import` 缓存不进入导出包。参考：[Godot import plugins](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/import_plugins.html)。
+Godot 资源通常在导入时产生 UID 和 `.godot/imported` 状态，因此 v0.1 由 Godot 内运行的普通 `EditorPlugin` 创建 TileSet/场景，而不是在浏览器里手写依赖特定 UID 的 `.tres`，也不抢占通用 `.json` 扩展名注册 `EditorImportPlugin`。`.godot/` 和 `.import` 缓存不进入导出包。参考：[Godot editor plugins](https://docs.godotengine.org/en/4.3/tutorials/plugins/editor/making_plugins.html)。
+
+使用顺序：从官方可信来源安装并启用 Mapsoo importer → 解压 pack → 从 Tools 菜单选择已解压 pack 的 `mapsoo.manifest.json` → 打开 `res://mapsoo_imports/<pack-id>/<pack-id>.world.tscn`。
+
+安全边界：pack 内的 SHA-256 只能证明文件与 manifest 自洽，不能证明发布者身份。第三方素材包即使附带 `addons/` 或 `.gd` 文件，也不得复制并启用；可执行 importer 必须通过独立可信渠道获得。
 
 Importer 职责：
 
 1. 读取 manifest；
-2. 将 PNG 导入设为 Lossless、关闭 mipmap，并把使用它们的 `CanvasItem`（尤其 `TileMapLayer`）设为 nearest texture filter；
+2. 在解码前检查 PNG IHDR 尺寸/像素预算，解码后以内嵌 Lossless `PortableCompressedTexture2D` 保存，并把使用它们的 `CanvasItem`（尤其 `TileMapLayer`）设为 nearest texture filter；
 3. 创建 TileSet atlas source；
 4. 按 manifest 添加 Tile；
 5. 创建 Godot 4.3+ 的 `TileMapLayer` 和地图内容；
@@ -168,18 +156,19 @@ itch.io 不应成为私有格式。发布包在通用 ZIP 上增加：
 
 ## 10. 验收清单
 
-- [ ] 所有 PNG 尺寸与 manifest 一致；
-- [ ] tilesheet 宽高可被 Tile 尺寸整除；
-- [ ] 对象背景具有预期 alpha；
-- [ ] 地图中不存在越界 Tile ID；
-- [ ] 所有 manifest 路径使用 `/` 且为相对路径；
-- [ ] 不包含绝对本机路径、API Key 或用户目录；
-- [ ] README、资产许可和 generation receipt 存在；
-- [ ] ZIP 根目录只有一个带版本的 pack 文件夹；
+- [x] 所有 PNG 尺寸与 manifest 一致；
+- [x] tilesheet 宽高可被 Tile 尺寸整除；
+- [x] 对象背景具有预期 alpha；
+- [x] 地图中不存在越界 Tile ID；
+- [x] 所有 manifest 路径使用 `/` 且为相对路径；
+- [x] 不包含绝对本机路径、API Key 或用户目录；
+- [x] README、资产许可和 generation receipt 存在；
+- [x] ZIP 根目录只有一个带版本的 pack 文件夹；
+- [x] 素材 ZIP 不包含 `.gd`、`addons/` 或其他可执行 importer 代码；
 - [ ] Windows/macOS/Linux 解压后文件名稳定；
-- [ ] Godot 示例导入后保持 nearest-neighbor；
-- [ ] 在 Godot 4.3 与发布时最新稳定版完成导入 smoke test；
-- [ ] 示例场景使用 `TileMapLayer`，不依赖已弃用的旧 `TileMap`；
+- [x] Godot 示例导入后保持 nearest-neighbor；
+- [x] 在 Godot 4.3 与发布时最新稳定版完成导入 smoke test；
+- [x] 示例场景使用 `TileMapLayer`，不依赖已弃用的旧 `TileMap`；
 - [ ] itch.io 预览与实际包内容一致。
 
 推荐实现顺序：`manifest/PNG validator → ZIP exporter → Godot importer → 示例世界 → itch.io release pipeline`。

@@ -11,11 +11,11 @@ The current worktree is a **portable v0.1 alpha**. It already provides a determi
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same starter tiles and map again from the same seed.
 3. Preview the pixel-art result in the browser and review validation issues.
-4. Download the World Spec JSON or a portable ZIP containing PNG atlases, a map preview, schemas, manifest, provenance receipt, and asset license.
+4. Download the World Spec JSON or an executable-free ZIP containing PNG atlases, a map preview, schemas, manifest, provenance receipt, and asset license.
 
 The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json).
 
-The ZIP uses engine-neutral PNG and JSON as its source of truth. A tested Godot 4.3+ importer, generated `TileSet`/scene resources, and a Godot example project are **planned next**; the current portable alpha should not yet be described as a one-click Godot-ready pack.
+The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; it derives a `TileSet`, `TileMapLayer` scene, and prop sprites under `res://mapsoo_imports/`. The importer and example project are headless-tested on Godot 4.3 and 4.7. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
 ## Why this order
 

@@ -34,7 +34,8 @@
 - [x] 浏览器端 PNG + JSON portable ZIP 导出；
 - [x] 确定性生成、基础校验、稳定 Godot ID/atlas 坐标单元测试；
 - [x] 版本化示例 World Spec 与 ZIP 文件清单/hash 回归测试；
-- [ ] Godot importer alpha；
+- [x] Godot 4.3+ importer alpha 与 4.3/4.7 headless smoke；
+- [x] 真实浏览器 ZIP → Godot 4.3/4.7 跨管线验收；
 - [ ] `v0.1.0-alpha.1` 预发布。
 
 ## v0.2 — AI-assisted Assets
@@ -54,12 +55,12 @@
 
 目标：让 Godot 用户在编辑器内稳定导入和更新 Mapsoo pack。
 
-- [ ] EditorPlugin；
-- [ ] manifest importer；
-- [ ] TileSetAtlasSource 创建；
-- [ ] 地图 scene 创建；
+- [x] EditorPlugin alpha；
+- [x] manifest importer alpha；
+- [x] TileSetAtlasSource 创建；
+- [x] `TileMapLayer` 地图 scene 创建；
 - [ ] 重新导入和冲突策略；
-- [ ] headless smoke test；
+- [x] importer 基线 headless smoke test；
 - [ ] Godot Asset Library 发布准备。
 
 ## v0.4 — World System

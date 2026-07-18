@@ -16,7 +16,16 @@ export interface PackManifest {
     generator: { name: 'Mapsoo Worldsmith'; version: '0.1.0-alpha.1' };
     created_at: string;
   };
-  compatibility: { godot_min: '4.3'; grid: 'orthogonal'; art_style: 'pixel_art' };
+  compatibility: {
+    godot_min: '4.3';
+    grid: 'orthogonal';
+    art_style: 'pixel_art';
+    importer: {
+      id: 'mapsoo_importer';
+      min_version: '0.1.0-alpha.1';
+      source: 'https://github.com/babyrush0101-source/mapsoo-kids';
+    };
+  };
   world_spec: { path: string; sha256: string };
   demo: { map: string; preview: string };
   layers: [
@@ -70,7 +79,9 @@ export interface PackManifest {
     tags: string[];
   }>;
   files: PackFileRecord[];
-  license: { id: 'CC0-1.0'; file: 'license-assets.md' };
+  license: {
+    assets: { id: 'CC0-1.0'; file: 'license-assets.md' };
+  };
   provenance: {
     contains_generative_ai: false;
     model_provider: null;
@@ -150,7 +161,16 @@ export function buildPackManifest(
       generator: { name: 'Mapsoo Worldsmith', version: '0.1.0-alpha.1' },
       created_at: createdAt,
     },
-    compatibility: { godot_min: '4.3', grid: 'orthogonal', art_style: 'pixel_art' },
+    compatibility: {
+      godot_min: '4.3',
+      grid: 'orthogonal',
+      art_style: 'pixel_art',
+      importer: {
+        id: 'mapsoo_importer',
+        min_version: '0.1.0-alpha.1',
+        source: 'https://github.com/babyrush0101-source/mapsoo-kids',
+      },
+    },
     world_spec: { path: worldSpecPath, sha256: worldSpecFile.sha256 },
     demo: { map: demoMapPath, preview: previewPath },
     layers: [
@@ -206,7 +226,9 @@ export function buildPackManifest(
       tags: ['prop', kind, world.spec.map.biome],
     })),
     files,
-    license: { id: 'CC0-1.0', file: licensePath },
+    license: {
+      assets: { id: 'CC0-1.0', file: licensePath },
+    },
     provenance: {
       contains_generative_ai: false,
       model_provider: null,

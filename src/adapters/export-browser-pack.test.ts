@@ -72,6 +72,7 @@ describe('portable pack browser download', () => {
       `${root}atlases/props.png`,
       `${root}previews/map-preview.png`,
     ]));
+    expect(fileNames.some((path) => path.endsWith('.gd') || path.includes('/addons/'))).toBe(false);
 
     const manifestText = await zip.file(`${root}mapsoo.manifest.json`)?.async('string');
     expect(manifestText).toBeDefined();
@@ -79,12 +80,22 @@ describe('portable pack browser download', () => {
       world_spec: { path: string; sha256: string };
       layers: Array<{ id: string; path: string }>;
       files: Array<{ path: string; sha256: string }>;
+      compatibility: { importer: { id: string; min_version: string; source: string } };
+      license: { assets: { id: string; file: string } };
     };
     const worldRecord = manifest.files.find((file) => file.path === manifest.world_spec.path);
 
     expect(worldRecord?.sha256).toBe(manifest.world_spec.sha256);
     expect(manifest.layers.map((layer) => layer.id)).toEqual(['ground', 'props']);
     expect(manifest.layers.every((layer) => manifest.files.some((file) => file.path === layer.path))).toBe(true);
+    expect(manifest.license).toEqual({
+      assets: { id: 'CC0-1.0', file: 'license-assets.md' },
+    });
+    expect(manifest.compatibility.importer).toEqual({
+      id: 'mapsoo_importer',
+      min_version: '0.1.0-alpha.1',
+      source: 'https://github.com/babyrush0101-source/mapsoo-kids',
+    });
 
     const schemaText = await zip.file(`${root}schema/mapsoo-pack.schema.json`)?.async('string');
     const schema = JSON.parse(schemaText ?? '{}') as { required?: string[] };
