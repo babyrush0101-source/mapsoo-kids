@@ -130,6 +130,6 @@
 
 ## 9. 当前下一步
 
-1. 整理 `v0.1.0-alpha.1` 的 release notes、截图和可下载示例包；
-2. 发布 GitHub alpha release，并准备 itch.io 免费示例页；
-3. 部署在线 Demo，邀请第一轮外部用户反馈。
+1. 创建并复核 itch.io 免费 Graphical Assets 页面，直接上传已验证的 Sunny Meadow 素材 ZIP；
+2. 邀请第一轮外部用户完成下载 → Godot 导入，并在统一反馈 issue 公开响应；
+3. 用真实的 itch URL、反馈与精确指标更新 Codex for OSS 证据台账，再决定申请时机。
