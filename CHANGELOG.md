@@ -4,9 +4,25 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+### Candidate: 0.1.0-alpha.2
+
 ### Added
 
+- Runner-owned generation receipt 0.2 with exact World Spec byte binding, provider execution evidence, workflow and transformation versions, AI disclosure, sources, and licensing evidence.
+- A 12-file alpha.2 Sunny Meadow fixture captured from the real browser exporter and pinned to SHA-256 `8c7720a8578cdc276ff69677ed0d64d8a1524d32fd00da0ffb8035b5a52bfcb6`.
+- A version-bound Node receipt verifier with alpha.1 and alpha.2 negative-policy suites.
+- The generation-receipt JSON Schema as both a pack payload and release attachment.
 - A deterministic, verified itch.io operator kit containing only the executable-free sample pack, its dedicated checksum, exact page metadata/copy, cover, five screenshots, and a byte-level upload manifest.
+- Complete CC0 and MIT license notices inside the portable pack, plus the pako MIT notice in the web distribution.
+
+### Changed
+
+- Switched the default workbench export to alpha.2 through a package-version-checked current-export binding.
+- Made browser ZIP output byte deterministic with a pinned pure-JavaScript PNG encoder plus fixed timestamps, path order, permissions, and compression settings shared by release packaging.
+- Made CI run the current exporter in a real browser and compare its raw ZIP bytes with the registered fixture before the exact artifact reaches Godot.
+- Made release evidence video optional per version; alpha.1 retains its historical video while alpha.2 does not reuse it.
+- Added exact alpha.2 pack import coverage for the Godot 4.3 and 4.7 PR and tag-release matrices; release drafts now wait for both jobs.
+- Rebuilt Vite independently for both reproducibility passes and added a remote digest check for every immutable published GitHub attachment.
 
 ## [0.1.0-alpha.1] - 2026-07-18
 

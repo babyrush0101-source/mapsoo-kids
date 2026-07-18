@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { downloadPortablePack } from '../adapters/export-browser-pack';
+import {
+  CURRENT_PACK_VERSION,
+  downloadCurrentPortablePack,
+} from '../adapters/export-current-pack';
 import { readWorldSpecFile } from '../adapters/import-world-spec';
 import type { GenerationRunResult } from '../core/generation-evidence';
 import { runGenerationProviderWithEvidence } from '../core/generation-provider';
@@ -138,7 +141,7 @@ export function App() {
       if (errors.length > 0) {
         throw new Error(`Invalid generated world: ${errors.map((issue) => issue.code).join(', ')}`);
       }
-      await downloadPortablePack(generationRun);
+      await downloadCurrentPortablePack(generationRun);
       setExportState('idle');
     } catch {
       console.error('Mapsoo portable export failed after local validation.');
@@ -216,7 +219,7 @@ export function App() {
           </span>
           <span>
             <strong>Mapsoo</strong>
-            <small>Worldsmith · alpha 0.1</small>
+            <small>Worldsmith · v{CURRENT_PACK_VERSION}</small>
           </span>
         </a>
         <div className="topbar-meta">

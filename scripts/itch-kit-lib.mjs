@@ -50,15 +50,14 @@ const REQUIRED_PUBLIC_URLS = Object.freeze([
   'https://github.com/babyrush0101-source/mapsoo-kids',
   `https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/${RELEASE_TAG}`,
   'https://babyrush0101-source.github.io/mapsoo-kids/',
-  'https://github.com/babyrush0101-source/mapsoo-kids/issues/12',
+  CURRENT_RELEASE_CONFIG.itch.feedbackUrl,
 ]);
 const MAX_PACK_BYTES = 25 * 1024 * 1024;
 const MAX_ZIP_ENTRIES = 64;
 const MAX_ZIP_ENTRY_BYTES = 10 * 1024 * 1024;
 const MAX_ZIP_TOTAL_BYTES = 50 * 1024 * 1024;
 const MAX_TEXT_ENTRY_BYTES = 1024 * 1024;
-const EXPECTED_SHORT_DESCRIPTION =
-  'Free CC0 pixel-art tiles, props, map JSON, and an import workflow tested on Godot 4.3 and 4.7.';
+const EXPECTED_SHORT_DESCRIPTION = CURRENT_RELEASE_CONFIG.itch.shortDescription;
 const EXPECTED_TAGS = Object.freeze([
   'Pixel Art',
   '2D',
@@ -106,7 +105,10 @@ async function verifyVisual(path, visual) {
   const fileStat = await lstat(path);
   assert(!fileStat.isSymbolicLink(), `itch visual may not be a symbolic link: ${visual.name}`);
   assert(fileStat.isFile(), `itch visual is not a file: ${visual.name}`);
-  assert(fileStat.size >= 100_000, `itch visual is unexpectedly small: ${visual.name}`);
+  assert(
+    fileStat.size >= visual.minBytes,
+    `itch visual is unexpectedly small: ${visual.name} (${fileStat.size} < ${visual.minBytes})`,
+  );
   const bytes = await readFile(path);
   const dimensions = pngDimensions(bytes, visual.name);
   assert(
@@ -217,6 +219,7 @@ function verifyProceduralPageMarkdown(page) {
 function verifyMetadata(metadata) {
   switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
+    case 'sunny-meadow-procedural-cc0-v2':
       return verifyProceduralMetadata(metadata);
     default:
       throw new Error(
@@ -229,6 +232,19 @@ function verifyPageMarkdown(page) {
   switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
       return verifyProceduralPageMarkdown(page);
+    case 'sunny-meadow-procedural-cc0-v2':
+      verifyProceduralPageMarkdown(page);
+      for (const requiredText of [
+        'generation-receipt.json',
+        'schema/mapsoo-generation-receipt.schema.json',
+        'schema_version: 0.2.0',
+        '12 files',
+        '11 payload records',
+        'Executable-free asset ZIP',
+      ]) {
+        assert(page.includes(requiredText), `alpha.2 itch page is missing required fact: ${requiredText}`);
+      }
+      return;
     default:
       throw new Error(
         `Unsupported itch page policy: ${CURRENT_RELEASE_CONFIG.itch.verificationPolicy}`,
@@ -239,11 +255,22 @@ function verifyPageMarkdown(page) {
 function verifyConfiguredItchPackManifest(manifest) {
   switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
+    case 'sunny-meadow-procedural-cc0-v2':
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
       assert(
         manifest.provenance?.contains_generative_ai === false,
         'itch asset manifest AI provenance mismatch',
       );
+      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v2')) {
+        assert(manifest.receipt?.path === 'generation-receipt.json', 'alpha.2 itch receipt path mismatch');
+        const alpha2Paths = new Set((manifest.files ?? []).map(({ path }) => path));
+        assert(alpha2Paths.size === 11, 'alpha.2 itch manifest must contain 11 payload records');
+        assert(alpha2Paths.has('generation-receipt.json'), 'alpha.2 itch manifest is missing its receipt');
+        assert(
+          alpha2Paths.has('schema/mapsoo-generation-receipt.schema.json'),
+          'alpha.2 itch manifest is missing its receipt schema',
+        );
+      }
       return;
     default:
       throw new Error(
@@ -400,8 +427,8 @@ function normalizedZipPath(entry, rawName) {
 
 export async function verifyPackZip(packPath, authoritativeHash) {
   const bytes = await readBoundedPack(packPath, 'itch asset ZIP');
-  assert(sha256(bytes) === authoritativeHash, 'itch asset ZIP differs from the verified GitHub release pack');
-  const zip = await JSZip.loadAsync(bytes, { checkCRC32: false, createFolders: false });
+  assert(sha256(bytes) === authoritativeHash, 'itch asset ZIP differs from the trusted configured example-pack hash');
+  const zip = await JSZip.loadAsync(bytes, { checkCRC32: true, createFolders: false });
   const allEntries = Object.values(zip.files);
   assert(allEntries.length > 0 && allEntries.length <= MAX_ZIP_ENTRIES, 'itch asset ZIP has an invalid entry count');
   const expectedRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
@@ -439,6 +466,11 @@ export async function verifyPackZip(packPath, authoritativeHash) {
       const text = decodeUtf8(contents, `itch asset ZIP:${entry.name}`);
       assertLfText(text, `itch asset ZIP:${entry.name}`);
     }
+  }
+
+  if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy === 'sunny-meadow-procedural-cc0-v2') {
+    assert(allEntries.length === 12, 'alpha.2 itch asset ZIP must contain exactly 12 entries');
+    assert(allEntries.every(({ dir }) => !dir), 'alpha.2 itch asset ZIP must not contain directory entries');
   }
 
   const manifestBytes = entryBytes.get('mapsoo.manifest.json');

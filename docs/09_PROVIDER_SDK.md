@@ -9,7 +9,7 @@ This document describes the first provider boundary in Mapsoo Worldsmith. It is 
 - The Workbench atomically stores the runner-owned `world + evidence` result for its initial world, edited specs, and imported specs; the preview shows the Provider snapshot that actually produced the current world.
 - A single request session aborts superseded work and prevents stale completions from replacing the last successful world/evidence pair. UI and console errors expose only stable Mapsoo error codes.
 - The next-release `0.2.0` Provider Receipt schema and runtime validator are implemented without rewriting the published alpha receipt.
-- A separate alpha.2 export foundation now projects only runner-minted evidence into receipt `0.2.0`, derives manifest time/World Spec/license/provenance from that receipt, and verifies every shipped payload byte before creating a ZIP. It is deliberately not the default UI download until the complete alpha.2 candidate registry, fixture, hash, Godot, and itch gates land together.
+- The registered alpha.2 candidate is now the package and Workbench default. It projects only runner-minted evidence into receipt `0.2.0`, derives manifest time/World Spec/license/provenance from that receipt, verifies every shipped payload byte before ZIP creation, and uses the same deterministic ZIP encoding as release packaging.
 - No optional AI provider is shipped yet.
 - The portable/itch exporter accepts only the reserved built-in procedural integration and its exact source-free CC0 workflow/transformation evidence profile. A provider being runnable does **not** make its output publishable.
 
@@ -137,15 +137,15 @@ The example is deliberately incomplete: it omits backend code, error normalizati
 
 Procedural receipts require `model: null`, `contains_generative_ai: false`, a null disclosure statement, and null provider terms. Generative-AI receipts require a model, a hashed workflow definition, a non-empty disclosure statement, and provider terms. Human curation never overrides AI provenance. Unknown fields, unsafe paths, malformed timestamps/hashes, duplicate or unlocated sources, missing CC attribution, unknown bare license names, and context mismatches are rejected. Public terms/source URLs must be canonical HTTPS URLs without credentials, query strings, or fragments. Custom licenses use an explicit `LicenseRef-*`; custom source licenses also require a public HTTPS terms URL.
 
-The public `v0.1.0-alpha.1` fixture remains byte-for-byte immutable with its legacy `0.1.0` receipt. Release and itch verification pin the published asset ZIP SHA-256, accept that legacy shape only for the exact built-in procedural identity, and cross-check its world, seed, license, transformations, and non-AI provenance. The new receipt will enter a new versioned fixture; it is not a reason to rewrite an existing tag.
+The public `v0.1.0-alpha.1` fixture remains byte-for-byte immutable with its legacy `0.1.0` receipt. Release and itch verification pin the published asset ZIP SHA-256, accept that legacy shape only for the exact built-in procedural identity, and cross-check its world, seed, license, transformations, and non-AI provenance. Receipt 0.2 enters only the new `v0.1.0-alpha.2` fixture; the historical tag is never rewritten.
 
-The unactivated alpha.2 builder is intentionally a separate code path. It accepts only a `GenerationRunResult` minted by the runner, serializes the World Spec once, binds its actual SHA-256 into receipt `0.2.0`, includes the trusted receipt schema, then derives manifest creation time, World Spec, license, and provenance from the shipped receipt. Its manifest file records exactly cover all non-manifest ZIP payloads. The current public `buildPortablePack()` and Workbench download remain alpha.1 until the version registry, committed fixture, expected hash, Node verifier, Godot matrix, and itch evidence switch atomically to alpha.2.
+The alpha.2 builder remains a distinct implementation from the frozen legacy exporter. A package-version-checked current-export binding selects it for the Workbench. It accepts only a `GenerationRunResult` minted by the runner, serializes the World Spec once, binds its actual SHA-256 into receipt `0.2.0`, includes the receipt schema, and derives manifest creation time, World Spec, license, and provenance from the shipped receipt. Its 11 manifest records exactly cover all non-manifest ZIP payloads; the full ZIP has 12 files and no implicit directory entries.
 
 ## Publication gate for future AI providers
 
 Before any AI provider can enter portable or itch.io output, the project still needs:
 
-- atomic activation of the validated receipt in a registered new-version package, committed fixture, and release/itch verification policy;
+- a separate reviewed AI-publication policy and fixture rather than reuse of the procedural-only alpha.2 allowlist;
 - a license decision for every output and any source/reference asset;
 - truthful `contains_generative_ai` manifest and itch.io AI Disclosure mapping;
 - secret handling outside browser bundles and repository history;

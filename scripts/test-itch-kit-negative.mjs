@@ -80,7 +80,7 @@ async function createZip(entries) {
   return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
-async function rewriteLegacyReceipt(mutator) {
+async function rewriteCurrentReceipt(mutator) {
   await buildItchKit(testRoot);
   const packPath = join(testRoot, 'uploads', RELEASE_FILES.examplePack);
   const zip = await JSZip.loadAsync(await readFile(packPath), { createFolders: false });
@@ -127,7 +127,7 @@ async function runReceiptPolicyNegativeCases() {
     case 'legacy-alpha1':
       await expectPackFailure(
         'receipt and manifest AI semantic conflict with recomputed inner integrity',
-        () => rewriteLegacyReceipt(({ receipt }) => {
+        () => rewriteCurrentReceipt(({ receipt }) => {
           receipt.contains_generative_ai = true;
         }),
         /legacy receipt must declare contains_generative_ai=false/,
@@ -135,7 +135,7 @@ async function runReceiptPolicyNegativeCases() {
 
       await expectPackFailure(
         'forged non-builtin receipt generator with recomputed inner integrity',
-        () => rewriteLegacyReceipt(({ receipt }) => {
+        () => rewriteCurrentReceipt(({ receipt }) => {
           receipt.generator = { id: 'future-ai-provider', version: '1.0.0' };
         }),
         /legacy receipt must use builtin procedural-pixel-v1@0\.1\.0/,
@@ -143,7 +143,7 @@ async function runReceiptPolicyNegativeCases() {
 
       await expectPackFailure(
         'future receipt schema hidden inside alpha1 pack',
-        () => rewriteLegacyReceipt(({ receipt }) => {
+        () => rewriteCurrentReceipt(({ receipt }) => {
           receipt.schema_version = '0.2.0';
         }),
         /legacy receipt schema must be 0\.1\.0/,
@@ -151,7 +151,7 @@ async function runReceiptPolicyNegativeCases() {
 
       await expectPackFailure(
         'forged manifest pack ID',
-        () => rewriteLegacyReceipt(({ manifest }) => {
+        () => rewriteCurrentReceipt(({ manifest }) => {
           manifest.pack.id = 'forged-pack';
         }),
         /pack ID mismatch|pack ID must match trusted release config/,
@@ -159,7 +159,48 @@ async function runReceiptPolicyNegativeCases() {
 
       await expectPackFailure(
         'forged manifest pack version',
-        () => rewriteLegacyReceipt(({ manifest }) => {
+        () => rewriteCurrentReceipt(({ manifest }) => {
+          manifest.pack.version = '9999.0.0';
+        }),
+        /manifest version mismatch|pack version must match trusted release config/,
+      );
+      return;
+    case 'builtin-procedural-alpha2-v0.2':
+      await expectPackFailure(
+        'alpha2 AI disclosure conflict with recomputed inner integrity',
+        () => rewriteCurrentReceipt(({ receipt }) => {
+          receipt.ai_disclosure.contains_generative_ai = true;
+        }),
+        /AI disclosure mismatch/,
+      );
+
+      await expectPackFailure(
+        'alpha2 forged provider with recomputed inner integrity',
+        () => rewriteCurrentReceipt(({ receipt }) => {
+          receipt.provider.id = 'future-ai-provider';
+        }),
+        /provider evidence mismatch/,
+      );
+
+      await expectPackFailure(
+        'alpha2 receipt schema downgrade',
+        () => rewriteCurrentReceipt(({ receipt }) => {
+          receipt.schema_version = '0.1.0';
+        }),
+        /receipt schema must be 0\.2\.0/,
+      );
+
+      await expectPackFailure(
+        'alpha2 forged manifest pack ID',
+        () => rewriteCurrentReceipt(({ manifest }) => {
+          manifest.pack.id = 'forged-pack';
+        }),
+        /pack ID mismatch|pack ID must match trusted release config/,
+      );
+
+      await expectPackFailure(
+        'alpha2 forged manifest pack version',
+        () => rewriteCurrentReceipt(({ manifest }) => {
           manifest.pack.version = '9999.0.0';
         }),
         /manifest version mismatch|pack version must match trusted release config/,
@@ -308,7 +349,7 @@ try {
       await writeFile(path, tampered);
       await rewriteKitIntegrityRecords(tampered);
     },
-    /differs from the verified GitHub release pack/,
+    /differs from the trusted configured example-pack hash/,
   );
 
   const packRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;

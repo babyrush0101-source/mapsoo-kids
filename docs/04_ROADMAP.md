@@ -60,7 +60,7 @@
 - [x] runner-owned 原子 evidence envelope、Provider claims 校验、深冻结 world/spec snapshot 与 legacy exporter 信任边界；
 - [x] 可信版本 registry、按版本选择的 release/itch 输入、receipt verifier 分派、已发布 pack 重建门禁与完整 GitHub 附件 digest 固定；
 - [x] 可信 runner evidence → `0.2.0` receipt → alpha.2 manifest/export 投影，以及最终 ZIP 字节/hash/文件集合一致性测试；
-- [ ] 原子启用 alpha.2 package/UI，提交新版本 fixture、固定 hash，并接入 release/itch/Godot 门禁；
+- [x] 原子启用 alpha.2 package/UI，提交 12 文件浏览器 fixture、固定 hash，并接入 release/itch/Godot 4.3/4.7 门禁；
 - [ ] 内容安全和许可提醒。
 
 ## v0.3 — Godot-native Workflow

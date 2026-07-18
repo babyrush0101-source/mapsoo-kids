@@ -2,11 +2,42 @@
 
 更新日期：2026-07-19
 
-目标版本：`v0.1.0-alpha.1`
+当前候选版本：`v0.1.0-alpha.2`
+
+已发布且不可变的历史基线：`v0.1.0-alpha.1`
 
 目标仓库：`babyrush0101-source/mapsoo-kids`
 
 > 本文同时记录已完成的公开证据和仍待执行的 itch.io / Codex for OSS 模板。只有带权威 URL 的项目才算完成；模板中的 `[REPLACE: ...]` 仍必须在正式提交或公开页面粘贴前替换，不能把不存在的外部反馈写成已完成。
+
+## 0A. alpha.2 候选版执行状态（2026-07-19）
+
+alpha.2 不能覆盖或重建已经公开的 alpha.1。它使用新的版本注册项、fixture、receipt verifier、发布说明和 itch 素材目录；只有合并后的公共 CI 全绿并创建真实 release 后，才把生命周期从 `candidate` 改成 `published`，并固定每个公开附件的 GitHub SHA-256。
+
+### 当前已经由本地门禁证明
+
+- 默认网页导出已切换到 `v0.1.0-alpha.2`，但旧 alpha.1 exporter 与公开 fixture 仍保留；
+- 真实浏览器导出的 Sunny Meadow ZIP 恰好包含 12 个文件、一个根目录且没有隐式目录项；manifest 恰好记录 11 个 payload；
+- 固定的纯 JavaScript PNG 编码器消除原生 Canvas PNG 压缩差异；CI 门禁会运行当前真实浏览器 exporter，并把原始 ZIP 字节与注册 fixture 比较；
+- 同一个 trusted generation run 连续导出两次得到完全相同的 ZIP 字节；真实浏览器 ZIP 与规范 release ZIP 一致；
+- 候选包 SHA-256 固定为 `8c7720a8578cdc276ff69677ed0d64d8a1524d32fd00da0ffb8035b5a52bfcb6`；
+- receipt `0.2.0` 随包附带 schema，并绑定 World Spec 原始字节、provider 执行方式、workflow、转换、AI 披露、来源和许可；
+- `pnpm check` 已通过 80 个测试、31 个跨 alpha.1/alpha.2 receipt 篡改拒绝案例、历史公开哈希复核、六张发布图验证和生产构建；
+- `pnpm release:local` 已从两个隔离的 Vite 构建生成并复核 11 个 GitHub Release 附件，且逐字节一致；alpha.2 附带 receipt schema，不冒充或复用 alpha.1 的 75 秒视频；
+- `pnpm release:history:remote` 已通过 GitHub API 复核公开 alpha.1 的 11 个附件列表与远端 SHA-256；CI 使用只读仓库 token，匿名本地运行仍可用；
+- `pnpm release:itch` 已生成 11 文件的操作员上传目录，资产 ZIP 可重复、CRC/路径/文件数/许可/AI 披露均受验证，并通过 24 个负向篡改案例；
+- alpha.2 的封面为真实 1260×1000 PNG，五张截图为真实 1600×900 PNG；验证器逐张确认尺寸、最小体积、本地来源且不复用 alpha.1 成品字节。
+
+### 仍需公共证据，当前不得提前宣称完成
+
+- `[ ]` 将候选提交推送到 Draft PR，并等待 `check`、Godot 4.3、Godot 4.7 全绿；两个 Godot job 必须下载 `check` job 上传的同一个固定哈希 12 文件 ZIP，再输出 `MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29`；
+- `[ ]` 合并后由 tag workflow 把同一个固定哈希包再次交给 Godot 4.3/4.7；只有两个 job 均通过才创建 `v0.1.0-alpha.2` GitHub draft prerelease，随后人工核对 11 个附件、发布并记录真实 URL 与全部公开附件哈希；
+- `[ ]` 在 itch.io 完成人工 Cloudflare 验证，先创建 Draft 页面、上传 `release/itch/v0.1.0-alpha.2/` 中的精确文件并逐张预览；
+- `[ ]` 只有 GitHub prerelease URL 有效且 itch Draft 复核完成后，才把 itch 页面设为 Public；
+- `[ ]` 收集真实下载、issue 或外部用户反馈并公开响应；不得把维护者自测、机器人访问或 STOYO 计划写成外部采用；
+- `[ ]` 最后按申请当天的官方表单重新核对字段、500 字符限制、公开 GitHub profile、ChatGPT 邮箱和 OpenAI Organization ID，再提交 Codex for OSS。
+
+alpha.2 的宣传图目前统一使用“CI-gated”措辞，而不是在公共 matrix 运行前写成“已通过”。权威证明始终是合并候选 commit 对应的 GitHub Actions job URL，不是截图中的文字。
 
 ## 0. 当前事实边界
 
@@ -175,7 +206,9 @@ Issues and feedback: <https://github.com/babyrush0101-source/mapsoo-kids/issues/
 [x] release notes contain no [REPLACE: ...] placeholder
 ```
 
-## 3. itch.io 免费 Graphical Assets 页面
+## 3. 历史 `v0.1.0-alpha.1` itch.io 页面模板（仅存档）
+
+> 本节保留 alpha.1 当时的页面文案、release URL 与披露记录，只用于审计历史，不能复制到 alpha.2。当前候选版的唯一上传源是 [`docs/itch-kit/v0.1.0-alpha.2/`](itch-kit/v0.1.0-alpha.2/)；最终操作员目录由 `pnpm release:itch` 写入 `release/itch/v0.1.0-alpha.2/`。
 
 itch.io 官方建议封面保持 315:250 比例，推荐至少使用 630×500，并上传 3–5 张截图；Graphical Assets 不应虚假勾选 Windows/macOS/Linux 平台。素材页必须准确填写生成式 AI 披露。参考：[Your first itch.io page](https://itch.io/docs/creators/getting-started) 与 [Content creator quality guidelines](https://itch.io/docs/creators/quality-guidelines)。
 
@@ -361,7 +394,9 @@ pnpm release:itch
 
 其中 Godot 图如实展示同一 Sunny Meadow 附件的 4.3/4.7 CLI 验证结果，不冒充尚未截取的编辑器 UI。两张 [`hero-1585x892.png`](media/v0.1.0-alpha.1/hero-1585x892.png) 与 [`workbench-1585x892.png`](media/v0.1.0-alpha.1/workbench-1585x892.png) 继续保留为浏览器验收原图。
 
-## 4. 75 秒证据视频
+## 4. 历史 `v0.1.0-alpha.1` 75 秒证据视频（仅存档）
+
+> alpha.2 不重命名、不复用这段视频，也不把它作为 alpha.2 通过证明；候选版证据以版本化 PNG、固定哈希包和公开 CI job 为准。
 
 本地 evidence cut 已完成：[`mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4`](media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4)。它由 [`video/`](../video/) 下的 Remotion 工程可复现生成，并通过媒体解析器与 FFprobe 验证为 `1920×1080`、30 fps、2250 帧、75 秒、H.264/yuv420p、无音轨；SHA-256 见 [`video/SHA256SUMS`](media/v0.1.0-alpha.1/video/SHA256SUMS)。
 
@@ -470,17 +505,17 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 
 | 证据 | 当前状态 | 可提交的权威 URL/数据 |
 | --- | --- | --- |
-| Public repository | 新版、发布工具与输入安全加固已在默认分支 | [main commit `08c5af6`](https://github.com/babyrush0101-source/mapsoo-kids/tree/08c5af6275790e54df7c28f41a72f9dba875839c) |
+| Public repository | Provider、runner evidence 与版本化 release architecture 已在默认分支 | [main commit `544e014`](https://github.com/babyrush0101-source/mapsoo-kids/tree/544e014c2e46798e63d531432cfef9eccf4b4d03) |
 | 源码与资产许可边界 | 已公开 | [`LICENSE`](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/LICENSE)、release 素材 ZIP 内 `license-assets.md` |
-| 可复现构建与测试 | 产品提交 `08c5af6` 的公开 `main` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223)、[`check` job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892789) |
-| Godot 4.3/4.7 兼容 | 产品提交 `08c5af6` 的两个 jobs 已通过 | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892787)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892790) |
-| 公开维护活动 | 4 个功能、发布、证据和安全加固 PR 已合并 | [PR #1](https://github.com/babyrush0101-source/mapsoo-kids/pull/1)、[PR #13](https://github.com/babyrush0101-source/mapsoo-kids/pull/13)、[PR #14](https://github.com/babyrush0101-source/mapsoo-kids/pull/14)、[PR #15](https://github.com/babyrush0101-source/mapsoo-kids/pull/15) |
+| 可复现构建与测试 | 当前公开 `main` `544e014` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773)、[`check` job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773/job/88117808870) |
+| Godot 4.3/4.7 兼容 | 当前公开 main 的两个基础 smoke jobs 已通过；alpha.2 exact-pack job 仍待候选 PR | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773/job/88117808849)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773/job/88117808869) |
+| 公开维护活动 | Provider contract、Workbench、receipt、runner evidence 和 release architecture PR 已连续合并 | [PR #18](https://github.com/babyrush0101-source/mapsoo-kids/pull/18)、[PR #19](https://github.com/babyrush0101-source/mapsoo-kids/pull/19)、[PR #20](https://github.com/babyrush0101-source/mapsoo-kids/pull/20)、[PR #21](https://github.com/babyrush0101-source/mapsoo-kids/pull/21)、[PR #22](https://github.com/babyrush0101-source/mapsoo-kids/pull/22) |
 | GitHub alpha release | 已发布 pre-release | [`v0.1.0-alpha.1`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) |
 | 在线 Demo | 已部署并匿名访问验证 | [GitHub Pages](https://babyrush0101-source.github.io/mapsoo-kids/) |
 | itch.io 免费包 | 未发布 | `[REPLACE: ITCH_URL]` |
 | 演示视频 | 已作为版本化 release asset 公开 | [75 秒 H.264 MP4](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) |
 | 外部反馈与维护响应 | 统一入口已创建；截至 2026-07-19 仍无评论或外部反馈 | [feedback issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) |
-| downloads / stars / forks | 2026-07-19：11 个 release assets 均为 0 下载，0 stars，0 forks；不把维护者访问算作采用 | [release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
+| downloads / stars / forks | 2026-07-19：GitHub API 显示 11 个 release assets 各 1 次下载，0 stars，0 forks；下载者身份不可见，因此外部采用仍未得到证明 | [release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
 | STOYO 使用 | 计划中的首个真实消费者 | 只有真正接入后才附公开且不泄密的案例；否则明确写 planned |
 
 推荐申请门槛：release、公开 CI、itch 页面、Demo/视频至少三者完成，并且有至少一轮真实外部反馈与维护响应。star 不是唯一标准，但不能用愿景替代活跃维护证据。
@@ -495,7 +530,7 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 Mapsoo Worldsmith is an active public, local-first tool that turns versioned World Specs into deterministic, validated PNG/JSON world packs for Godot. The alpha includes an executable-free CC0 sample, a separate MIT importer, public CI on Godot 4.3/4.7, a live demo, release, and reproducible feedback workflow. It is designed for indie creators; STOYO is the planned first real consumer.
 ```
 
-这段有意不写 stars、downloads 或外部用户数量，因为当前权威数据仍为零；申请当天只有在 GitHub/itch.io 已出现真实指标时才加入精确值。
+这段有意不写 stars、downloads 或外部用户数量：GitHub 虽报告每个 alpha.1 附件各 1 次下载，但无法证明下载者是外部用户，因此不能据此声称采用。申请当天只有在 GitHub/itch.io 出现可如实解释的真实指标时才加入精确值。
 
 **How will you use API credits for your project?（342 characters）**
 
