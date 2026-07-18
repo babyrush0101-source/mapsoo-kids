@@ -195,10 +195,20 @@ function isCanonicalTimestamp(value: unknown): value is string {
 }
 
 function isHttpsUrl(value: unknown): value is string {
-  if (typeof value !== 'string' || value.length > 2_048 || CONTROL_CHARACTERS.test(value)) return false;
+  if (
+    typeof value !== 'string'
+    || value.length > 2_048
+    || CONTROL_CHARACTERS.test(value)
+    || value.includes('?')
+    || value.includes('#')
+  ) return false;
   try {
     const parsed = new URL(value);
-    return parsed.protocol === 'https:' && parsed.username === '' && parsed.password === '';
+    return parsed.protocol === 'https:'
+      && parsed.username === ''
+      && parsed.password === ''
+      && parsed.search === ''
+      && parsed.hash === '';
   } catch {
     return false;
   }
@@ -210,7 +220,7 @@ interface ReceiptTraversalEntry {
   exit?: boolean;
 }
 
-function inspectReceiptJsonContract(value: unknown): ValidationIssue | null {
+export function inspectGenerationReceiptJsonContract(value: unknown): ValidationIssue | null {
   const pending: ReceiptTraversalEntry[] = [{ value, depth: 0 }];
   const ancestors = new WeakSet<object>();
   let nodes = 0;
@@ -456,6 +466,13 @@ function validateLicenseDeclaration(
   if (record.attribution !== null && !isBoundedString(record.attribution, 1, 1_000)) {
     issues.push(issue('receipt.license', `${path}.attribution must be null or a bounded string.`));
   }
+  if (
+    typeof record.id === 'string'
+    && record.id.startsWith('CC-BY')
+    && !isBoundedString(record.attribution, 1, 1_000)
+  ) {
+    issues.push(issue('receipt.license', `${path} requires attribution for ${record.id}.`));
+  }
   if (typeof record.id === 'string' && LICENSE_REF.test(record.id) && !isHttpsUrl(record.url)) {
     issues.push(issue('receipt.license', `${path} custom LicenseRef declarations require a public HTTPS terms URL.`));
   }
@@ -493,6 +510,9 @@ function validateSources(value: unknown, issues: ValidationIssue[]): GenerationR
     }
     if (hasOwn(record, 'uri') && !isHttpsUrl(record.uri)) {
       issues.push(issue('receipt.sources', `${path}.uri must be an HTTPS URL.`));
+    }
+    if (!hasOwn(record, 'path') && !hasOwn(record, 'uri')) {
+      issues.push(issue('receipt.sources', `${path} must identify a packaged path or public HTTPS URI.`));
     }
     validateLicenseDeclaration(record.license, `${path}.license`, issues);
     result.push(record as unknown as GenerationReceiptSource);
@@ -615,7 +635,7 @@ export function validateGenerationReceipt(
   const issues: ValidationIssue[] = [];
   let root: Record<string, unknown> | null;
   try {
-    const jsonIssue = inspectReceiptJsonContract(value);
+    const jsonIssue = inspectGenerationReceiptJsonContract(value);
     if (jsonIssue) return [jsonIssue];
     root = validateObjectShape(
       value,
@@ -678,7 +698,7 @@ export function validateGenerationReceipt(
 
     const provider = validateProvider(root.provider, 'receipt.provider', issues);
     const model = validateModel(root.model, issues);
-    validateWorkflow(root.workflow, issues);
+    const workflow = validateWorkflow(root.workflow, issues);
     validateTransformations(root.transformations, issues);
 
     const disclosure = validateObjectShape(
@@ -760,6 +780,9 @@ export function validateGenerationReceipt(
       if (generative) {
         if (model === null) {
           issues.push(issue('receipt.ai-condition', 'Generative-AI receipts must identify a model.'));
+        }
+        if (workflow?.definition_sha256 === null) {
+          issues.push(issue('receipt.ai-condition', 'Generative-AI receipts require a hashed workflow definition.'));
         }
         if (!isBoundedString(disclosure.statement, 1, 2_000)) {
           issues.push(issue('receipt.ai-condition', 'Generative-AI receipts require a disclosure statement.'));

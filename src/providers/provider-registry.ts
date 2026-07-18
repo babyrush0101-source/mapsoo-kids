@@ -1,5 +1,4 @@
 import {
-  assertValidProviderMetadata,
   GenerationProviderError,
   snapshotGeneratorProvider,
   type GeneratorCapabilities,
@@ -19,14 +18,13 @@ export class GeneratorProviderRegistry {
 
   constructor(providers: readonly GeneratorProvider[]) {
     for (const provider of providers) {
-      assertValidProviderMetadata(provider);
-      if (this.providers.has(provider.id)) {
+      const snapshot = snapshotGeneratorProvider(provider);
+      if (this.providers.has(snapshot.id)) {
         throw new GenerationProviderError(
           'provider.invalid-metadata',
-          `Duplicate provider ID: ${provider.id}.`,
+          `Duplicate provider ID: ${snapshot.id}.`,
         );
       }
-      const snapshot = snapshotGeneratorProvider(provider);
       this.providers.set(snapshot.id, snapshot);
     }
   }

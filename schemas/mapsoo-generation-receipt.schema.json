@@ -146,6 +146,11 @@
       "then": {
         "properties": {
           "model": { "$ref": "#/$defs/model" },
+          "workflow": {
+            "properties": {
+              "definition_sha256": { "$ref": "#/$defs/sha256" }
+            }
+          },
           "ai_disclosure": {
             "properties": {
               "contains_generative_ai": { "const": true },
@@ -252,7 +257,7 @@
       "type": "string",
       "format": "uri",
       "maxLength": 2048,
-      "pattern": "^https://(?![^/?#]*@)"
+      "pattern": "^https://(?![^/?#]*@)[^?#]+$"
     },
     "licenseId": {
       "oneOf": [
@@ -355,6 +360,19 @@
               "url": { "$ref": "#/$defs/httpsUrl" }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": { "type": "string", "pattern": "^CC-BY" }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "properties": {
+              "attribution": { "$ref": "#/$defs/bounded1000" }
+            }
+          }
         }
       ]
     },
@@ -362,6 +380,10 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "kind", "sha256", "license"],
+      "anyOf": [
+        { "required": ["path"] },
+        { "required": ["uri"] }
+      ],
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "kind": { "enum": ["user-input", "reference-asset", "third-party-asset"] },

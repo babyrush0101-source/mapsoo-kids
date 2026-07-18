@@ -1,12 +1,26 @@
-import {
-  GenerationProviderError,
-  type GeneratorProvider,
-} from '../core/generation-provider';
+import type { GeneratorProvider } from '../core/generation-provider';
 import { generateWorld } from '../core/generate-world';
 import {
   PROCEDURAL_PIXEL_GENERATOR_ID,
   PROCEDURAL_PIXEL_GENERATOR_VERSION,
 } from '../core/generator-identity';
+
+const PROCEDURAL_PIXEL_CLAIMS = Object.freeze({
+  model: null,
+  workflow: Object.freeze({
+    id: 'mapsoo-procedural-world-pack',
+    version: '0.1.0',
+    definition_sha256: null,
+  }),
+  transformations: Object.freeze([
+    Object.freeze({ id: 'seeded-map-layout', version: '0.1.0' }),
+    Object.freeze({ id: 'procedural-pixel-atlas', version: '0.1.0' }),
+    Object.freeze({ id: 'png-rgba-export', version: '0.1.0' }),
+  ]),
+  disclosureStatement: null,
+  providerTerms: null,
+  sources: Object.freeze([]),
+});
 
 export const PROCEDURAL_PIXEL_PROVIDER = Object.freeze({
   id: PROCEDURAL_PIXEL_GENERATOR_ID,
@@ -26,8 +40,11 @@ export const PROCEDURAL_PIXEL_PROVIDER = Object.freeze({
   }),
   async generate(spec, options = {}) {
     if (options.signal?.aborted) {
-      throw new GenerationProviderError('provider.aborted', 'Procedural generation was aborted.');
+      throw new Error('Procedural generation was aborted.');
     }
-    return generateWorld(spec);
+    return {
+      world: generateWorld(spec),
+      claims: PROCEDURAL_PIXEL_CLAIMS,
+    };
   },
 } satisfies GeneratorProvider);

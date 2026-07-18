@@ -41,6 +41,8 @@ describe('generation receipt contract', () => {
     expect(semver.test('1.0.0-alpha.01')).toBe(false);
     expect(httpsUrl.test('https://example.com/terms')).toBe(true);
     expect(httpsUrl.test('https://user:secret@example.com/terms')).toBe(false);
+    expect(httpsUrl.test('https://example.com/source?token=secret')).toBe(false);
+    expect(httpsUrl.test('https://example.com/source#secret')).toBe(false);
     expect(supportedLicenses).toContain('CC0-1.0');
     expect(supportedLicenses).not.toContain('TotallyMadeUpLicense');
     expect(licenseRef.test('LicenseRef-Example-Terms')).toBe(true);
@@ -239,10 +241,12 @@ describe('generation receipt contract', () => {
     expect(validateGenerationReceipt(aiReceipt)).toEqual([]);
 
     aiReceipt.model = null;
+    aiReceipt.workflow.definition_sha256 = null;
     aiReceipt.ai_disclosure.contains_generative_ai = false;
     aiReceipt.ai_disclosure.statement = null;
     aiReceipt.licensing.provider_terms = null;
     expect(issueCodes(aiReceipt)).toEqual(expect.arrayContaining([
+      'receipt.ai-condition',
       'receipt.ai-condition',
       'receipt.ai-condition',
       'receipt.ai-condition',
@@ -344,6 +348,29 @@ describe('generation receipt contract', () => {
       'receipt.sources',
       'receipt.license',
     ]));
+
+    const incompleteSource = buildReceipt();
+    incompleteSource.sources = [{
+      id: 'unlocated-source',
+      kind: 'reference-asset',
+      sha256: SOURCE_HASH,
+      license: { id: 'CC-BY-4.0', url: null, attribution: null },
+    }];
+    expect(issueCodes(incompleteSource)).toEqual(expect.arrayContaining([
+      'receipt.sources',
+      'receipt.license',
+    ]));
+
+    incompleteSource.sources[0].uri = 'https://example.com/source.png?token=secret';
+    incompleteSource.sources[0].license.attribution = 'Example Artist';
+    expect(issueCodes(incompleteSource)).toContain('receipt.sources');
+
+    for (const suffix of ['?', '#']) {
+      const trailingMarker = buildReceipt();
+      trailingMarker.sources = [structuredClone(incompleteSource.sources[0])];
+      trailingMarker.sources[0].uri = `https://example.com/source.png${suffix}`;
+      expect(issueCodes(trailingMarker)).toContain('receipt.sources');
+    }
   });
 
   it('refuses to build a built-in receipt for a different provider or invalid export identity', () => {

@@ -2,10 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { generateWorld } from './generate-world';
 import {
   GenerationProviderError,
+  isTrustedGenerationRun,
   runGenerationProvider,
+  runGenerationProviderWithEvidence,
+  type GenerationOptions,
   type GeneratorCapabilities,
   type GeneratorProvider,
 } from './generation-provider';
+import {
+  type ProviderGenerationClaims,
+  type ProviderGenerationOutput,
+} from './generation-evidence';
 import { cloneWorldSpec, DEFAULT_WORLD_SPEC, type GeneratedWorld, type WorldSpec } from './world-spec';
 import { PROCEDURAL_PIXEL_PROVIDER } from '../providers/procedural-pixel-provider';
 import {
@@ -39,16 +46,40 @@ function identify(world: GeneratedWorld, provider: GeneratorProvider): Generated
   return { ...world, generator: { id: provider.id, version: provider.version } };
 }
 
+function claims(overrides: Partial<ProviderGenerationClaims> = {}): ProviderGenerationClaims {
+  return {
+    model: null,
+    workflow: {
+      id: 'test-workflow',
+      version: '1.0.0',
+      definition_sha256: null,
+    },
+    transformations: [{ id: 'test-transform', version: '1.0.0' }],
+    disclosureStatement: null,
+    providerTerms: null,
+    sources: [],
+    ...overrides,
+  };
+}
+
+type WorldGenerator = (spec: WorldSpec, options?: GenerationOptions) => Promise<GeneratedWorld>;
+
 function fakeProvider(
-  generate: GeneratorProvider['generate'],
+  generateWorld: WorldGenerator,
   overrides: Partial<GeneratorProvider> = {},
+  generationClaims: ProviderGenerationClaims = claims(),
 ): GeneratorProvider {
   return {
     id: 'test-provider',
     version: '1.0.0',
     displayName: 'Test Provider',
     capabilities: capabilities(),
-    generate,
+    async generate(spec, options) {
+      return {
+        world: await generateWorld(spec, options),
+        claims: generationClaims,
+      };
+    },
     ...overrides,
   };
 }
@@ -85,6 +116,210 @@ describe('generation provider contract', () => {
 
     expect(result).toEqual(generateWorld(DEFAULT_WORLD_SPEC));
     expect(result.spec).not.toBe(DEFAULT_WORLD_SPEC);
+  });
+
+  it('returns an atomic runner-owned result with deeply frozen invocation evidence', async () => {
+    const completedAt = new Date('2026-07-18T18:30:00.000Z');
+    const now = vi.fn(() => completedAt);
+    const result = await runGenerationProviderWithEvidence(
+      PROCEDURAL_PIXEL_PROVIDER,
+      DEFAULT_WORLD_SPEC,
+      { now },
+    );
+
+    expect(now).toHaveBeenCalledOnce();
+    expect(isTrustedGenerationRun(result)).toBe(true);
+    expect(result.evidence).toMatchObject({
+      schemaVersion: '0.1.0',
+      createdAt: completedAt.toISOString(),
+      provider: {
+        id: PROCEDURAL_PIXEL_GENERATOR_ID,
+        version: PROCEDURAL_PIXEL_GENERATOR_VERSION,
+        displayName: 'Mapsoo Procedural Pixel',
+        capabilities: {
+          execution: 'local',
+          determinism: 'seeded',
+          outputProvenance: 'procedural',
+        },
+      },
+      model: null,
+      workflow: { id: 'mapsoo-procedural-world-pack', version: '0.1.0' },
+      aiDisclosure: {
+        containsGenerativeAi: false,
+        humanCurated: false,
+        statement: null,
+      },
+      providerTerms: null,
+      sources: [],
+    });
+    expect(result.world.spec).toBe(result.evidence.requestSpec);
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(Object.isFrozen(result.world)).toBe(true);
+    expect(Object.isFrozen(result.world.spec.visual.palette)).toBe(true);
+    expect(Object.isFrozen(result.evidence.provider.capabilities.supportedBiomes)).toBe(true);
+    expect(Object.isFrozen(result.evidence.transformations)).toBe(true);
+  });
+
+  it('detaches the returned run from provider-owned world, claims, and metadata references', async () => {
+    let rawWorld: GeneratedWorld | undefined;
+    const rawClaims = claims();
+    const provider = fakeProvider(async (spec) => {
+      rawWorld = identify(generateWorld(spec), provider);
+      return rawWorld;
+    }, {}, rawClaims);
+
+    const result = await runGenerationProviderWithEvidence(provider, DEFAULT_WORLD_SPEC, {
+      now: () => new Date('2026-07-18T18:31:00.000Z'),
+    });
+    if (!rawWorld) throw new Error('test provider did not expose its raw world');
+
+    rawWorld.spec.title = 'Mutated after runner validation';
+    rawWorld.ground[0] = 999;
+    rawClaims.workflow.id = 'mutated-workflow';
+    (provider as { id: string }).id = 'mutated-provider';
+    (provider.capabilities as { supportedBiomes: GeneratorCapabilities['supportedBiomes'] }).supportedBiomes = ['desert'];
+
+    expect(result.world.spec.title).toBe(DEFAULT_WORLD_SPEC.title);
+    expect(result.world.ground[0]).not.toBe(999);
+    expect(result.evidence.workflow.id).toBe('test-workflow');
+    expect(result.evidence.provider.id).toBe('test-provider');
+    expect(result.evidence.provider.capabilities.supportedBiomes).toEqual(['meadow', 'desert', 'snow']);
+  });
+
+  it('materializes provider world and claims from data descriptors without invoking Proxy get traps', async () => {
+    const worldGet = vi.fn((target: GeneratedWorld, property: PropertyKey, receiver: object) => {
+      if (property === 'then') return undefined;
+      return Reflect.get(target, property, receiver);
+    });
+    const claimsGet = vi.fn(() => {
+      throw new Error('claims get trap must not run');
+    });
+    const proxiedClaims = new Proxy(claims(), { get: claimsGet });
+    const provider = fakeProvider(
+      async (spec) => new Proxy(identify(generateWorld(spec), provider), { get: worldGet }),
+      {},
+      proxiedClaims,
+    );
+
+    const result = await runGenerationProviderWithEvidence(provider, DEFAULT_WORLD_SPEC);
+
+    expect(result.world.spec.id).toBe(DEFAULT_WORLD_SPEC.id);
+    expect(result.evidence.workflow.id).toBe('test-workflow');
+    expect(worldGet).toHaveBeenCalledOnce();
+    expect(worldGet.mock.calls[0][1]).toBe('then');
+    expect(claimsGet).not.toHaveBeenCalled();
+  });
+
+  it('derives AI disclosure from the frozen provider and fails closed on incomplete AI claims', async () => {
+    const validClaims = claims({
+      model: { provider: 'Example AI', id: 'image-model-v1', revision: '2026-07-01' },
+      workflow: {
+        id: 'example-ai-workflow',
+        version: '1.0.0',
+        definition_sha256: 'd'.repeat(64),
+      },
+      disclosureStatement: 'Generated by Example AI from a versioned workflow.',
+      providerTerms: { url: 'https://example.com/terms', version: '2026-07' },
+    });
+    const aiProvider = fakeProvider(
+      async (spec) => identify(generateWorld(spec), aiProvider),
+      { capabilities: capabilities({ execution: 'remote', outputProvenance: 'generative-ai' }) },
+      validClaims,
+    );
+    const result = await runGenerationProviderWithEvidence(aiProvider, DEFAULT_WORLD_SPEC);
+
+    expect(result.evidence.aiDisclosure).toEqual({
+      containsGenerativeAi: true,
+      humanCurated: false,
+      statement: validClaims.disclosureStatement,
+    });
+
+    const incompleteProvider = fakeProvider(
+      async (spec) => identify(generateWorld(spec), incompleteProvider),
+      { capabilities: capabilities({ execution: 'remote', outputProvenance: 'generative-ai' }) },
+      claims({
+        workflow: {
+          id: 'example-ai-workflow',
+          version: '1.0.0',
+          definition_sha256: null,
+        },
+      }),
+    );
+    await expect(
+      runGenerationProviderWithEvidence(incompleteProvider, DEFAULT_WORLD_SPEC),
+    ).rejects.toMatchObject({ code: 'provider.invalid-evidence' });
+  });
+
+  it('rejects unknown raw provider output fields and aborts before returning an envelope', async () => {
+    const base = fakeProvider(async (spec) => identify(generateWorld(spec), base));
+    const withRawResponse: GeneratorProvider = {
+      ...base,
+      async generate(spec) {
+        return {
+          world: identify(generateWorld(spec), withRawResponse),
+          claims: claims(),
+          raw_response: 'MAPSOO_PRIVATE_SENTINEL',
+        } as unknown as ProviderGenerationOutput;
+      },
+    };
+    await expect(
+      runGenerationProviderWithEvidence(withRawResponse, DEFAULT_WORLD_SPEC),
+    ).rejects.toMatchObject({ code: 'provider.invalid-output' });
+
+    const withAccessor: GeneratorProvider = {
+      ...base,
+      async generate(spec) {
+        const output = {
+          world: identify(generateWorld(spec), withAccessor),
+        } as { world: GeneratedWorld; claims?: ProviderGenerationClaims };
+        Object.defineProperty(output, 'claims', {
+          enumerable: true,
+          get: () => claims(),
+        });
+        return output as ProviderGenerationOutput;
+      },
+    };
+    await expect(
+      runGenerationProviderWithEvidence(withAccessor, DEFAULT_WORLD_SPEC),
+    ).rejects.toMatchObject({ code: 'provider.invalid-output' });
+
+    const claimsWithSecret = {
+      ...claims(),
+      secret: 'MAPSOO_PRIVATE_SENTINEL',
+    } as unknown as ProviderGenerationClaims;
+    const withSecretClaims = fakeProvider(
+      async (spec) => identify(generateWorld(spec), withSecretClaims),
+      {},
+      claimsWithSecret,
+    );
+    await expect(
+      runGenerationProviderWithEvidence(withSecretClaims, DEFAULT_WORLD_SPEC),
+    ).rejects.toMatchObject({ code: 'provider.invalid-evidence' });
+
+    const nestedGetter = vi.fn(() => null);
+    const accessorClaims = claims();
+    Object.defineProperty(accessorClaims.workflow, 'definition_sha256', {
+      enumerable: true,
+      get: nestedGetter,
+    });
+    const withNestedAccessor = fakeProvider(
+      async (spec) => identify(generateWorld(spec), withNestedAccessor),
+      {},
+      accessorClaims,
+    );
+    await expect(
+      runGenerationProviderWithEvidence(withNestedAccessor, DEFAULT_WORLD_SPEC),
+    ).rejects.toMatchObject({ code: 'provider.invalid-evidence' });
+    expect(nestedGetter).not.toHaveBeenCalled();
+
+    const controller = new AbortController();
+    await expect(runGenerationProviderWithEvidence(base, DEFAULT_WORLD_SPEC, {
+      signal: controller.signal,
+      now: () => {
+        controller.abort();
+        return new Date('2026-07-18T18:32:00.000Z');
+      },
+    })).rejects.toMatchObject({ code: 'provider.aborted' });
   });
 
   it('validates the World Spec and provider capabilities before generation', async () => {
@@ -236,7 +471,10 @@ describe('generation provider contract', () => {
     });
     (stableProvider as { generate: GeneratorProvider['generate'] }).generate = async (spec) => {
       await stableGate;
-      return identify(generateWorld(spec), stableProvider);
+      return {
+        world: identify(generateWorld(spec), stableProvider),
+        claims: claims(),
+      };
     };
     const stableInput = cloneWorldSpec(DEFAULT_WORLD_SPEC);
     const stableResultPromise = runGenerationProvider(stableProvider, stableInput);
@@ -313,5 +551,30 @@ describe('generation provider contract', () => {
       capabilities: capabilities({ outputProvenance: 'generative-ai' }),
     });
     expect(() => new GeneratorProviderRegistry([aiImpersonator])).toThrowError(GenerationProviderError);
+
+    const proceduralImpersonator = fakeProvider(async (spec) => generateWorld(spec), {
+      id: PROCEDURAL_PIXEL_GENERATOR_ID,
+      version: PROCEDURAL_PIXEL_GENERATOR_VERSION,
+    });
+    expect(() => new GeneratorProviderRegistry([proceduralImpersonator])).toThrowError(GenerationProviderError);
+
+    const capabilitySecret = fakeProvider(async (spec) => identify(generateWorld(spec), capabilitySecret), {
+      capabilities: {
+        ...capabilities(),
+        apiKey: 'MAPSOO_PRIVATE_SENTINEL',
+      } as unknown as GeneratorCapabilities,
+    });
+    expect(() => new GeneratorProviderRegistry([capabilitySecret])).toThrowError(GenerationProviderError);
+
+    const shiftingTarget = fakeProvider(async (spec) => identify(generateWorld(spec), shiftingTarget));
+    const shiftingIdentity = new Proxy(shiftingTarget, {
+      get(target, property, receiver) {
+        if (property === 'id') return PROCEDURAL_PIXEL_GENERATOR_ID;
+        if (property === 'version') return PROCEDURAL_PIXEL_GENERATOR_VERSION;
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    const shiftingRegistry = new GeneratorProviderRegistry([shiftingIdentity]);
+    expect(shiftingRegistry.require('test-provider')).toMatchObject({ id: 'test-provider', version: '1.0.0' });
   });
 });
