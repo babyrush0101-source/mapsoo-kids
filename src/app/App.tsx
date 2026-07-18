@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { downloadPortablePack } from '../adapters/export-browser-pack';
 import { readWorldSpecFile } from '../adapters/import-world-spec';
-import { runGenerationProvider } from '../core/generation-provider';
+import type { GenerationRunResult } from '../core/generation-evidence';
+import { runGenerationProviderWithEvidence } from '../core/generation-provider';
 import {
   BIOME_PALETTES,
   DEFAULT_WORLD_SPEC,
@@ -44,7 +45,8 @@ export function App() {
   if (generationSessionRef.current === null) generationSessionRef.current = new GenerationSession();
   const generationSession = generationSessionRef.current;
   const [draft, setDraft] = useState<WorldSpec>(() => cloneWorldSpec(DEFAULT_WORLD_SPEC));
-  const [world, setWorld] = useState<GeneratedWorld | null>(null);
+  const [generationRun, setGenerationRun] = useState<GenerationRunResult | null>(null);
+  const world: GeneratedWorld | null = generationRun?.world ?? null;
   const [exportState, setExportState] = useState<'idle' | 'building' | 'failed'>('idle');
   const [generationState, setGenerationState] = useState<'idle' | 'generating'>('idle');
   const [generationNotice, setGenerationNotice] = useState<{
@@ -58,21 +60,24 @@ export function App() {
   const hasDraftErrors = draftIssues.some((issue) => issue.severity === 'error');
   const hasPackErrors = !world || packIssues.some((issue) => issue.severity === 'error');
   const hasChanges = !world || JSON.stringify(draft) !== JSON.stringify(world.spec);
-  const operationBusy = generationState === 'generating' || importState !== 'idle';
+  const operationBusy = generationState === 'generating'
+    || importState !== 'idle'
+    || exportState === 'building';
   const initialGenerationFailed = !world && generationState === 'idle' && generationNotice?.tone === 'error';
+  const displayedProvider = generationRun?.evidence.provider ?? DEFAULT_GENERATION_PROVIDER;
 
   useEffect(() => {
     const request = generationSession.begin();
     setGenerationState('generating');
     setGenerationNotice(null);
 
-    void runGenerationProvider(DEFAULT_GENERATION_PROVIDER, DEFAULT_WORLD_SPEC, { signal: request.signal })
-      .then((generatedWorld) => {
+    void runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, DEFAULT_WORLD_SPEC, { signal: request.signal })
+      .then((result) => {
         if (!generationSession.isCurrent(request)) return;
-        setWorld(generatedWorld);
+        setGenerationRun(result);
         setGenerationNotice({
           tone: 'success',
-          message: `Ready with ${DEFAULT_GENERATION_PROVIDER.displayName} ${DEFAULT_GENERATION_PROVIDER.version}.`,
+          message: `Ready with ${result.evidence.provider.displayName} ${result.evidence.provider.version}.`,
         });
       })
       .catch((error: unknown) => {
@@ -105,15 +110,15 @@ export function App() {
     setImportNotice(null);
 
     try {
-      const generatedWorld = await runGenerationProvider(DEFAULT_GENERATION_PROVIDER, draft, {
+      const result = await runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, draft, {
         signal: request.signal,
       });
       if (!generationSession.isCurrent(request)) return;
-      setWorld(generatedWorld);
+      setGenerationRun(result);
       setExportState('idle');
       setGenerationNotice({
         tone: 'success',
-        message: `Generated with ${DEFAULT_GENERATION_PROVIDER.displayName} ${DEFAULT_GENERATION_PROVIDER.version}.`,
+        message: `Generated with ${result.evidence.provider.displayName} ${result.evidence.provider.version}.`,
       });
     } catch (error) {
       if (!generationSession.isCurrent(request)) return;
@@ -126,17 +131,17 @@ export function App() {
   }
 
   async function exportPack() {
-    if (!world) return;
+    if (!generationRun) return;
     setExportState('building');
     try {
-      const errors = validateGeneratedWorld(world).filter((issue) => issue.severity === 'error');
+      const errors = validateGeneratedWorld(generationRun.world).filter((issue) => issue.severity === 'error');
       if (errors.length > 0) {
         throw new Error(`Invalid generated world: ${errors.map((issue) => issue.code).join(', ')}`);
       }
-      await downloadPortablePack(world);
+      await downloadPortablePack(generationRun);
       setExportState('idle');
-    } catch (error) {
-      console.error(error);
+    } catch {
+      console.error('Mapsoo portable export failed after local validation.');
       setExportState('failed');
     }
   }
@@ -175,12 +180,12 @@ export function App() {
 
     try {
       setImportState('generating');
-      const generatedWorld = await runGenerationProvider(DEFAULT_GENERATION_PROVIDER, result.spec, {
+      const generationResult = await runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, result.spec, {
         signal: request.signal,
       });
       if (!generationSession.isCurrent(request)) return;
       setDraft(cloneWorldSpec(result.spec));
-      setWorld(generatedWorld);
+      setGenerationRun(generationResult);
       setExportState('idle');
       const warningCount = result.issues.filter((issue) => issue.severity === 'warning').length;
       setImportNotice({
@@ -379,7 +384,7 @@ export function App() {
               className="primary-action"
               type="button"
               onClick={generate}
-              disabled={hasDraftErrors || generationState === 'generating'}
+              disabled={hasDraftErrors || operationBusy}
             >
               {generationState === 'generating' ? 'Generating with provider…' : 'Generate local world'}
               <span>→</span>
@@ -432,20 +437,20 @@ export function App() {
 
             <div className="build-note">
               <span>Provider</span>
-              <strong title={`${DEFAULT_GENERATION_PROVIDER.id}@${DEFAULT_GENERATION_PROVIDER.version}`}>
-                {DEFAULT_GENERATION_PROVIDER.displayName}
+              <strong title={`${displayedProvider.id}@${displayedProvider.version}`}>
+                {displayedProvider.displayName}
               </strong>
               <span>Mode</span>
               <strong>
-                {DEFAULT_GENERATION_PROVIDER.capabilities.execution} · {DEFAULT_GENERATION_PROVIDER.capabilities.determinism}
-                {' · '}{DEFAULT_GENERATION_PROVIDER.capabilities.outputProvenance}
+                {displayedProvider.capabilities.execution} · {displayedProvider.capabilities.determinism}
+                {' · '}{displayedProvider.capabilities.outputProvenance}
               </strong>
               <span>Credentials</span>
-              <strong>{DEFAULT_GENERATION_PROVIDER.capabilities.requiresCredentials ? 'required' : 'none'}</strong>
+              <strong>{displayedProvider.capabilities.requiresCredentials ? 'required' : 'none'}</strong>
               <span>Seed</span>
               <strong>{world?.spec.seed ?? draft.seed}</strong>
               <span>Contract</span>
-              <strong>{DEFAULT_GENERATION_PROVIDER.id}@{DEFAULT_GENERATION_PROVIDER.version}</strong>
+              <strong>{displayedProvider.id}@{displayedProvider.version}</strong>
             </div>
           </section>
 
@@ -510,13 +515,13 @@ export function App() {
                 accept=".json,application/json"
                 aria-label="Choose a World Spec JSON file"
                 onChange={importWorldSpec}
-                disabled={importState !== 'idle'}
+                disabled={operationBusy}
               />
               <button
                 className="secondary-action is-ready"
                 type="button"
                 onClick={() => worldSpecInputRef.current?.click()}
-                disabled={importState !== 'idle'}
+                disabled={operationBusy}
                 aria-describedby="world-spec-import-status"
               >
                 {importState === 'reading'

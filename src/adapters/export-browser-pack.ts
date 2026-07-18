@@ -6,7 +6,8 @@ import {
   buildPackManifest,
   type PackFileRecord,
 } from '../core/pack-manifest';
-import type { GeneratedWorld } from '../core/world-spec';
+import type { GenerationRunResult } from '../core/generation-evidence';
+import { assertTrustedGenerationRun } from '../core/generation-provider';
 import { assertV01ProceduralGenerator } from '../core/generator-identity';
 import { validateGeneratedWorld } from '../core/validate-world';
 import { renderPropsAtlas, renderTerrainAtlas, renderWorldToCanvas } from './canvas/render-world';
@@ -17,6 +18,46 @@ function jsonBlob(value: unknown): Blob {
 
 function textBlob(value: string, type = 'text/markdown'): Blob {
   return new Blob([value], { type: `${type};charset=utf-8` });
+}
+
+const LEGACY_WORKFLOW = {
+  id: 'mapsoo-procedural-world-pack',
+  version: '0.1.0',
+  definition_sha256: null,
+} as const;
+const LEGACY_TRANSFORMATIONS = [
+  { id: 'seeded-map-layout', version: '0.1.0' },
+  { id: 'procedural-pixel-atlas', version: '0.1.0' },
+  { id: 'png-rgba-export', version: '0.1.0' },
+] as const;
+
+function exactJson(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+export function assertLegacyAlpha1Evidence(run: GenerationRunResult): void {
+  const { world, evidence } = run;
+  assertV01ProceduralGenerator(world.generator);
+  assertV01ProceduralGenerator(evidence.provider);
+  const capabilities = evidence.provider.capabilities;
+  if (
+    evidence.requestSpec !== world.spec
+    || world.spec.output.assetLicense !== 'CC0-1.0'
+    || capabilities.execution !== 'local'
+    || capabilities.determinism !== 'seeded'
+    || capabilities.requiresCredentials
+    || capabilities.outputProvenance !== 'procedural'
+    || evidence.aiDisclosure.containsGenerativeAi
+    || evidence.aiDisclosure.humanCurated
+    || evidence.aiDisclosure.statement !== null
+    || evidence.model !== null
+    || evidence.providerTerms !== null
+    || evidence.sources.length !== 0
+    || !exactJson(evidence.workflow, LEGACY_WORKFLOW)
+    || !exactJson(evidence.transformations, LEGACY_TRANSFORMATIONS)
+  ) {
+    throw new Error('v0.1 portable export requires the exact runner-verified built-in procedural evidence profile.');
+  }
 }
 
 export function escapeMarkdownInline(value: string): string {
@@ -43,12 +84,14 @@ async function toFileRecord(path: string, blob: Blob): Promise<PackFileRecord> {
   return { path: safePath, media_type: blob.type.split(';')[0], bytes: blob.size, sha256: await sha256(blob) };
 }
 
-export async function buildPortablePack(world: GeneratedWorld): Promise<{ filename: string; blob: Blob }> {
+export async function buildPortablePack(run: GenerationRunResult): Promise<{ filename: string; blob: Blob }> {
+  assertTrustedGenerationRun(run);
+  const { world, evidence } = run;
+  assertLegacyAlpha1Evidence(run);
   const errors = validateGeneratedWorld(world).filter((issue) => issue.severity === 'error');
   if (errors.length > 0) {
     throw new Error(`Invalid generated world: ${errors.map((issue) => issue.code).join(', ')}`);
   }
-  assertV01ProceduralGenerator(world.generator);
 
   const version = '0.1.0-alpha.1';
   const rootName = assertSafePackPath(`mapsoo-${world.spec.id}-v${version}`);
@@ -112,7 +155,7 @@ export async function buildPortablePack(world: GeneratedWorld): Promise<{ filena
     })),
   );
   const fileRecords = payloadEntries.map(({ record }) => record);
-  const manifest = buildPackManifest(world, fileRecords, new Date().toISOString());
+  const manifest = buildPackManifest(world, fileRecords, evidence.createdAt);
 
   payloadEntries.forEach(({ path, bytes }) => root.file(path, bytes));
   root.file(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -131,8 +174,8 @@ export async function buildPortablePack(world: GeneratedWorld): Promise<{ filena
   };
 }
 
-export async function downloadPortablePack(world: GeneratedWorld): Promise<void> {
-  const pack = await buildPortablePack(world);
+export async function downloadPortablePack(run: GenerationRunResult): Promise<void> {
+  const pack = await buildPortablePack(run);
   const url = URL.createObjectURL(pack.blob);
   const link = document.createElement('a');
   link.href = url;

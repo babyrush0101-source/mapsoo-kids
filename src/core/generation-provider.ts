@@ -11,10 +11,34 @@ import {
   PROCEDURAL_PIXEL_GENERATOR_ID,
   PROCEDURAL_PIXEL_GENERATOR_VERSION,
 } from './generator-identity';
-import { validateGeneratedWorld, validateWorldSpec, type ValidationIssue } from './validate-world';
+import {
+  createGenerationRun,
+  GenerationEvidenceError,
+  materializeGeneratedWorld,
+  type GenerationRunResult,
+  type ProviderGenerationClaims,
+  type ProviderGenerationOutput,
+} from './generation-evidence';
+import { validateWorldSpec } from './validate-world';
+import { PROCEDURAL_PIXEL_PROVIDER } from '../providers/procedural-pixel-provider';
 
 const BIOMES = new Set<BiomeId>(['meadow', 'desert', 'snow']);
 const TILE_SIZES = new Set<TileSize>([16, 32, 64]);
+const CAPABILITY_KEYS = [
+  'execution',
+  'determinism',
+  'requiresCredentials',
+  'outputProvenance',
+  'supportedStyles',
+  'supportedBiomes',
+  'supportedTileSizes',
+  'maxMapSize',
+  'supportsAbort',
+  'supportsPartialRegeneration',
+] as const;
+const MAX_MAP_SIZE_KEYS = ['width', 'height'] as const;
+const reservedBuiltinProviderInstances = new WeakSet<object>([PROCEDURAL_PIXEL_PROVIDER]);
+const trustedRuns = new WeakSet<object>();
 
 export interface GeneratorCapabilities {
   readonly execution: 'local' | 'remote';
@@ -33,12 +57,17 @@ export interface GenerationOptions {
   readonly signal?: AbortSignal;
 }
 
+export interface GenerationRunOptions extends GenerationOptions {
+  /** Test seam for the runner-owned completion timestamp. Providers never receive this callback. */
+  readonly now?: () => Date;
+}
+
 export interface GeneratorProvider {
   readonly id: string;
   readonly version: string;
   readonly displayName: string;
   readonly capabilities: GeneratorCapabilities;
-  generate(spec: WorldSpec, options?: GenerationOptions): Promise<GeneratedWorld>;
+  generate(spec: WorldSpec, options?: GenerationOptions): Promise<ProviderGenerationOutput>;
 }
 
 export type GenerationProviderErrorCode =
@@ -48,6 +77,7 @@ export type GenerationProviderErrorCode =
   | 'provider.aborted'
   | 'provider.execution-failed'
   | 'provider.invalid-output'
+  | 'provider.invalid-evidence'
   | 'provider.identity-mismatch'
   | 'provider.spec-mismatch'
   | 'provider.not-found';
@@ -67,120 +97,199 @@ function invalidMetadata(message: string): never {
   throw new GenerationProviderError('provider.invalid-metadata', message);
 }
 
-function assertUniqueSupportedValues<T>(
-  values: unknown,
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function snapshotExactDataObject(value: unknown, expected: readonly string[], field: string): Record<string, unknown> {
+  if (!isPlainRecord(value)) invalidMetadata(`Provider ${field} must be a plain object.`);
+  const actual = Object.getOwnPropertyNames(value).sort();
+  const sortedExpected = [...expected].sort();
+  const snapshot: Record<string, unknown> = {};
+  if (
+    Object.getOwnPropertySymbols(value).length > 0
+    || actual.length !== sortedExpected.length
+    || actual.some((key, index) => key !== sortedExpected[index])
+  ) {
+    invalidMetadata(`Provider ${field} must contain only its declared data fields.`);
+  }
+  for (const key of actual) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
+      invalidMetadata(`Provider ${field} must contain only its declared data fields.`);
+    }
+    snapshot[key] = descriptor.value;
+  }
+  return snapshot;
+}
+
+function snapshotProviderField(provider: object, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(provider, key);
+  if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
+    invalidMetadata(`Provider ${key} must be an enumerable data field.`);
+  }
+  return descriptor.value;
+}
+
+function snapshotSupportedValues<T>(
+  value: unknown,
   allowed: ReadonlySet<T>,
   field: string,
-): asserts values is readonly T[] {
+): readonly T[] {
+  if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
+    invalidMetadata(`Provider ${field} must be a non-empty list of unique supported values.`);
+  }
+  if (Object.getOwnPropertySymbols(value).length > 0) {
+    invalidMetadata(`Provider ${field} must be a non-empty list of unique supported values.`);
+  }
+  const lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
+  const length = lengthDescriptor && 'value' in lengthDescriptor ? lengthDescriptor.value : -1;
   if (
-    !Array.isArray(values)
-    || values.length === 0
-    || new Set(values).size !== values.length
-    || values.some((value) => !allowed.has(value))
+    !Number.isSafeInteger(length)
+    || length < 1
+    || length > allowed.size
   ) {
     invalidMetadata(`Provider ${field} must be a non-empty list of unique supported values.`);
   }
+  const names = Object.getOwnPropertyNames(value);
+  if (
+    names.length !== length + 1
+    || names.some((key) => key !== 'length' && !/^(0|[1-9][0-9]*)$/.test(key))
+  ) {
+    invalidMetadata(`Provider ${field} must be a non-empty list of unique supported values.`);
+  }
+  const snapshot: T[] = [];
+  for (let index = 0; index < length; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, `${index}`);
+    if (!descriptor || !descriptor.enumerable || !('value' in descriptor) || !allowed.has(descriptor.value as T)) {
+      invalidMetadata(`Provider ${field} must be a non-empty list of unique supported values.`);
+    }
+    snapshot.push(descriptor.value as T);
+  }
+  if (new Set(snapshot).size !== snapshot.length) {
+    invalidMetadata(`Provider ${field} must be a non-empty list of unique supported values.`);
+  }
+  return snapshot;
 }
 
-export function assertValidProviderMetadata(provider: GeneratorProvider): void {
-  if (typeof provider !== 'object' || provider === null) {
+interface MaterializedProviderMetadata {
+  readonly id: string;
+  readonly version: string;
+  readonly displayName: string;
+  readonly capabilities: GeneratorCapabilities;
+  readonly generate: GeneratorProvider['generate'];
+}
+
+function materializeProviderMetadata(provider: GeneratorProvider): MaterializedProviderMetadata {
+  if (!isPlainRecord(provider)) {
     invalidMetadata('Provider must be an object.');
   }
-  if (!isValidGeneratorId(provider.id)) {
+  const id = snapshotProviderField(provider, 'id');
+  const version = snapshotProviderField(provider, 'version');
+  const displayName = snapshotProviderField(provider, 'displayName');
+  const generate = snapshotProviderField(provider, 'generate');
+  const capabilityInput = snapshotProviderField(provider, 'capabilities');
+  const capabilityRecord = snapshotExactDataObject(capabilityInput, CAPABILITY_KEYS, 'capabilities');
+  const maxMapSize = snapshotExactDataObject(capabilityRecord.maxMapSize, MAX_MAP_SIZE_KEYS, 'maxMapSize');
+  const supportedStyles = snapshotSupportedValues(
+    capabilityRecord.supportedStyles,
+    new Set(['pixel-art'] as const),
+    'supportedStyles',
+  );
+  const supportedBiomes = snapshotSupportedValues(capabilityRecord.supportedBiomes, BIOMES, 'supportedBiomes');
+  const supportedTileSizes = snapshotSupportedValues(capabilityRecord.supportedTileSizes, TILE_SIZES, 'supportedTileSizes');
+
+  if (!isValidGeneratorId(id)) {
     invalidMetadata('Provider ID must be a lowercase, path-safe identifier no longer than 80 characters.');
   }
-  if (!isValidGeneratorVersion(provider.version)) {
+  if (!isValidGeneratorVersion(version)) {
     invalidMetadata('Provider version must be a semantic version no longer than 80 characters.');
   }
   if (
-    typeof provider.displayName !== 'string'
-    || !provider.displayName.trim()
-    || provider.displayName.length > 120
-    || /[\u0000-\u001f\u007f-\u009f]/.test(provider.displayName)
+    typeof displayName !== 'string'
+    || !displayName.trim()
+    || displayName.length > 120
+    || /[\u0000-\u001f\u007f-\u009f]/.test(displayName)
   ) {
     invalidMetadata('Provider display name must be a non-empty, control-character-free string.');
   }
-  if (typeof provider.generate !== 'function') {
+  if (typeof generate !== 'function') {
     invalidMetadata('Provider must implement generate().');
   }
 
-  const capabilities = provider.capabilities;
-  if (typeof capabilities !== 'object' || capabilities === null) {
-    invalidMetadata('Provider capabilities must be an object.');
-  }
-  if (!['local', 'remote'].includes(capabilities.execution)) {
+  if (!['local', 'remote'].includes(capabilityRecord.execution as string)) {
     invalidMetadata('Provider execution capability must be local or remote.');
   }
-  if (!['seeded', 'best-effort'].includes(capabilities.determinism)) {
+  if (!['seeded', 'best-effort'].includes(capabilityRecord.determinism as string)) {
     invalidMetadata('Provider determinism capability must be seeded or best-effort.');
   }
-  if (!['procedural', 'generative-ai'].includes(capabilities.outputProvenance)) {
+  if (!['procedural', 'generative-ai'].includes(capabilityRecord.outputProvenance as string)) {
     invalidMetadata('Provider output provenance must be procedural or generative-ai.');
   }
   for (const field of ['requiresCredentials', 'supportsAbort', 'supportsPartialRegeneration'] as const) {
-    if (typeof capabilities[field] !== 'boolean') invalidMetadata(`Provider ${field} capability must be boolean.`);
+    if (typeof capabilityRecord[field] !== 'boolean') invalidMetadata(`Provider ${field} capability must be boolean.`);
   }
-
-  assertUniqueSupportedValues(capabilities.supportedStyles, new Set(['pixel-art']), 'supportedStyles');
-  assertUniqueSupportedValues(capabilities.supportedBiomes, BIOMES, 'supportedBiomes');
-  assertUniqueSupportedValues(capabilities.supportedTileSizes, TILE_SIZES, 'supportedTileSizes');
-
   if (
-    typeof capabilities.maxMapSize !== 'object'
-    || capabilities.maxMapSize === null
-    || !Number.isInteger(capabilities.maxMapSize.width)
-    || !Number.isInteger(capabilities.maxMapSize.height)
-    || capabilities.maxMapSize.width < 1
-    || capabilities.maxMapSize.height < 1
+    !Number.isInteger(maxMapSize.width)
+    || !Number.isInteger(maxMapSize.height)
+    || (maxMapSize.width as number) < 1
+    || (maxMapSize.height as number) < 1
   ) {
     invalidMetadata('Provider maxMapSize must contain positive integer dimensions.');
   }
 
-  const claimsBuiltinIdentity = provider.id === PROCEDURAL_PIXEL_GENERATOR_ID
-    && provider.version === PROCEDURAL_PIXEL_GENERATOR_VERSION;
-  if (claimsBuiltinIdentity && capabilities.outputProvenance !== 'procedural') {
+  const claimsBuiltinIdentity = id === PROCEDURAL_PIXEL_GENERATOR_ID
+    && version === PROCEDURAL_PIXEL_GENERATOR_VERSION;
+  if (claimsBuiltinIdentity && capabilityRecord.outputProvenance !== 'procedural') {
     invalidMetadata('The built-in procedural provider identity cannot declare generative-AI provenance.');
   }
+  if (claimsBuiltinIdentity && !reservedBuiltinProviderInstances.has(provider)) {
+    invalidMetadata('The built-in procedural provider identity is reserved for the bundled integration.');
+  }
+
+  return {
+    id,
+    version,
+    displayName,
+    generate: generate as GeneratorProvider['generate'],
+    capabilities: Object.freeze({
+      execution: capabilityRecord.execution as GeneratorCapabilities['execution'],
+      determinism: capabilityRecord.determinism as GeneratorCapabilities['determinism'],
+      requiresCredentials: capabilityRecord.requiresCredentials as boolean,
+      outputProvenance: capabilityRecord.outputProvenance as GeneratorCapabilities['outputProvenance'],
+      supportedStyles: Object.freeze([...supportedStyles]),
+      supportedBiomes: Object.freeze([...supportedBiomes]),
+      supportedTileSizes: Object.freeze([...supportedTileSizes]),
+      maxMapSize: Object.freeze({
+        width: maxMapSize.width as number,
+        height: maxMapSize.height as number,
+      }),
+      supportsAbort: capabilityRecord.supportsAbort as boolean,
+      supportsPartialRegeneration: capabilityRecord.supportsPartialRegeneration as boolean,
+    }),
+  };
 }
 
-function snapshotCapabilities(capabilities: GeneratorCapabilities): GeneratorCapabilities {
-  return Object.freeze({
-    ...capabilities,
-    supportedStyles: Object.freeze([...capabilities.supportedStyles]),
-    supportedBiomes: Object.freeze([...capabilities.supportedBiomes]),
-    supportedTileSizes: Object.freeze([...capabilities.supportedTileSizes]),
-    maxMapSize: Object.freeze({ ...capabilities.maxMapSize }),
-  });
+export function assertValidProviderMetadata(provider: GeneratorProvider): void {
+  materializeProviderMetadata(provider);
 }
 
 export function snapshotGeneratorProvider(provider: GeneratorProvider): GeneratorProvider {
-  assertValidProviderMetadata(provider);
-  const generate = provider.generate.bind(provider);
-  return Object.freeze({
-    id: provider.id,
-    version: provider.version,
-    displayName: provider.displayName,
-    capabilities: snapshotCapabilities(provider.capabilities),
+  const metadata = materializeProviderMetadata(provider);
+  const generate = metadata.generate.bind(provider);
+  const snapshot = Object.freeze({
+    id: metadata.id,
+    version: metadata.version,
+    displayName: metadata.displayName,
+    capabilities: metadata.capabilities,
     generate: (spec: WorldSpec, options?: GenerationOptions) => generate(spec, options),
   });
-}
-
-function structurallyEqual(left: unknown, right: unknown): boolean {
-  if (Object.is(left, right)) return true;
-  if (Array.isArray(left) || Array.isArray(right)) {
-    return Array.isArray(left)
-      && Array.isArray(right)
-      && left.length === right.length
-      && left.every((value, index) => structurallyEqual(value, right[index]));
+  if (metadata.id === PROCEDURAL_PIXEL_GENERATOR_ID && metadata.version === PROCEDURAL_PIXEL_GENERATOR_VERSION) {
+    reservedBuiltinProviderInstances.add(snapshot);
   }
-  if (typeof left !== 'object' || left === null || typeof right !== 'object' || right === null) return false;
-
-  const leftRecord = left as Record<string, unknown>;
-  const rightRecord = right as Record<string, unknown>;
-  const leftKeys = Object.keys(leftRecord).sort();
-  const rightKeys = Object.keys(rightRecord).sort();
-  return leftKeys.length === rightKeys.length
-    && leftKeys.every((key, index) => key === rightKeys[index] && structurallyEqual(leftRecord[key], rightRecord[key]));
+  return snapshot;
 }
 
 export function assertProviderSupportsSpec(provider: GeneratorProvider, spec: WorldSpec): void {
@@ -206,11 +315,59 @@ function throwIfAborted(provider: GeneratorProvider, signal?: AbortSignal): void
   }
 }
 
-export async function runGenerationProvider(
+function snapshotProviderOutputRoot(value: unknown): { world: unknown; claims: unknown } {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new GenerationProviderError('provider.invalid-output', 'Provider output must contain world and claims.');
+  }
+  const prototype = Object.getPrototypeOf(value);
+  const keys = Object.keys(value).sort();
+  const hasInvalidDescriptor = keys.some((key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return !descriptor || !descriptor.enumerable || !('value' in descriptor);
+  });
+  if (
+    (prototype !== Object.prototype && prototype !== null)
+    || Object.getOwnPropertySymbols(value).length > 0
+    || hasInvalidDescriptor
+    || keys.length !== 2
+    || keys[0] !== 'claims'
+    || keys[1] !== 'world'
+  ) {
+    throw new GenerationProviderError(
+      'provider.invalid-output',
+      'Provider output must be a plain object containing only world and claims.',
+    );
+  }
+  const world = Object.getOwnPropertyDescriptor(value, 'world');
+  const claims = Object.getOwnPropertyDescriptor(value, 'claims');
+  if (!world || !('value' in world) || !claims || !('value' in claims)) {
+    throw new GenerationProviderError('provider.invalid-output', 'Provider output fields must be data properties.');
+  }
+  return { world: world.value, claims: claims.value };
+}
+
+function runnerTimestamp(now?: () => Date): string {
+  let date: Date;
+  try {
+    date = now ? now() : new Date();
+  } catch (error) {
+    throw new GenerationProviderError(
+      'provider.invalid-evidence',
+      'Runner completion time could not be captured.',
+      { cause: error },
+    );
+  }
+  if (!(date instanceof Date) || !Number.isFinite(date.valueOf())) {
+    throw new GenerationProviderError('provider.invalid-evidence', 'Runner completion time is invalid.');
+  }
+  return date.toISOString();
+}
+
+export async function runGenerationProviderWithEvidence(
   provider: GeneratorProvider,
   specInput: WorldSpec,
-  options: GenerationOptions = {},
-): Promise<GeneratedWorld> {
+  options: GenerationRunOptions = {},
+): Promise<GenerationRunResult> {
   const providerContract = snapshotGeneratorProvider(provider);
 
   const specErrors = validateWorldSpec(specInput).filter((issue) => issue.severity === 'error');
@@ -235,9 +392,12 @@ export async function runGenerationProvider(
   assertProviderSupportsSpec(providerContract, requestedSpec);
   throwIfAborted(providerContract, options.signal);
 
-  let world: GeneratedWorld;
+  let output: ProviderGenerationOutput;
   try {
-    world = await providerContract.generate(cloneWorldSpec(requestedSpec), options);
+    output = await providerContract.generate(
+      cloneWorldSpec(requestedSpec),
+      options.signal ? { signal: options.signal } : {},
+    );
   } catch (error) {
     throwIfAborted(providerContract, options.signal);
     if (error instanceof GenerationProviderError) throw error;
@@ -249,34 +409,87 @@ export async function runGenerationProvider(
   }
 
   throwIfAborted(providerContract, options.signal);
-  let outputErrors: ValidationIssue[];
+  let outputRoot: { world: unknown; claims: unknown };
+  let world: GeneratedWorld;
   try {
-    outputErrors = validateGeneratedWorld(world).filter((issue) => issue.severity === 'error');
+    outputRoot = snapshotProviderOutputRoot(output);
+    world = materializeGeneratedWorld(outputRoot.world, requestedSpec);
   } catch (error) {
+    if (error instanceof GenerationProviderError) throw error;
+    if (error instanceof GenerationEvidenceError && error.codes.includes('evidence.spec-mismatch')) {
+      throw new GenerationProviderError(
+        'provider.spec-mismatch',
+        `Provider ${providerContract.id}@${providerContract.version} changed the requested World Spec.`,
+        { cause: error },
+      );
+    }
     throw new GenerationProviderError(
       'provider.invalid-output',
       'Provider output could not be inspected safely.',
       { cause: error },
     );
   }
-  if (outputErrors.length > 0) {
-    throw new GenerationProviderError(
-      'provider.invalid-output',
-      `Provider output validation failed: ${outputErrors.map((issue) => issue.code).join(', ')}.`,
-    );
-  }
-  if (world.generator.id !== providerContract.id || world.generator.version !== providerContract.version) {
+  if (
+    world.generator.id !== providerContract.id
+    || world.generator.version !== providerContract.version
+  ) {
     throw new GenerationProviderError(
       'provider.identity-mismatch',
       `Provider output identifies ${world.generator.id}@${world.generator.version}, expected ${providerContract.id}@${providerContract.version}.`,
     );
   }
-  if (!structurallyEqual(world.spec, requestedSpec)) {
+
+  let run: GenerationRunResult;
+  try {
+    run = createGenerationRun({
+      world,
+      requestSpec: requestedSpec,
+      provider: {
+        id: providerContract.id,
+        version: providerContract.version,
+        displayName: providerContract.displayName,
+        capabilities: providerContract.capabilities,
+      },
+      claims: outputRoot.claims as ProviderGenerationClaims,
+      createdAt: runnerTimestamp(options.now),
+    });
+  } catch (error) {
+    const codes = error instanceof GenerationEvidenceError ? error.codes.join(', ') : 'evidence.invalid';
     throw new GenerationProviderError(
-      'provider.spec-mismatch',
-      `Provider ${providerContract.id}@${providerContract.version} changed the requested World Spec.`,
+      'provider.invalid-evidence',
+      `Provider evidence validation failed: ${codes}.`,
+      { cause: error },
     );
   }
+  throwIfAborted(providerContract, options.signal);
+  trustedRuns.add(run);
+  return run;
+}
 
-  return world;
+export function assertTrustedGenerationRun(value: unknown): asserts value is GenerationRunResult {
+  if (
+    typeof value !== 'object'
+    || value === null
+    || !trustedRuns.has(value)
+    || !Object.isFrozen(value)
+  ) {
+    throw new GenerationEvidenceError(['evidence.untrusted-run']);
+  }
+}
+
+export function isTrustedGenerationRun(value: unknown): value is GenerationRunResult {
+  try {
+    assertTrustedGenerationRun(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function runGenerationProvider(
+  provider: GeneratorProvider,
+  specInput: WorldSpec,
+  options: GenerationRunOptions = {},
+): Promise<GeneratedWorld> {
+  return (await runGenerationProviderWithEvidence(provider, specInput, options)).world;
 }

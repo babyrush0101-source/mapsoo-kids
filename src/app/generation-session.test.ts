@@ -42,4 +42,26 @@ describe('generation session', () => {
 
     expect(applied).toEqual(['second']);
   });
+
+  it('commits a world and its evidence as one latest-request value', async () => {
+    const session = new GenerationSession();
+    const applied: Array<{ world: string; provider: string }> = [];
+    let releaseFirst: (() => void) | undefined;
+    const firstGate = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const first = session.begin();
+    const delayedFirst = firstGate.then(() => {
+      if (session.isCurrent(first)) applied.push({ world: 'first-world', provider: 'first-provider' });
+    });
+
+    const second = session.begin();
+    if (session.isCurrent(second)) {
+      applied.push({ world: 'second-world', provider: 'second-provider' });
+    }
+    releaseFirst?.();
+    await delayedFirst;
+
+    expect(applied).toEqual([{ world: 'second-world', provider: 'second-provider' }]);
+  });
 });

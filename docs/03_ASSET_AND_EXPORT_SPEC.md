@@ -124,7 +124,7 @@ mapsoo-sunny-meadow-v0.1.0-alpha.1/
 - `contains_generative_ai`、human curation 和公开说明；
 - 输出许可、许可通知路径、Provider 条款与所有输入/参考 source 的 hash/许可。
 
-Receipt validator 必须把这些字段与 runner 的冻结 Provider snapshot、World Spec、manifest、file records 和资产许可交叉校验。`human_curated: true` 不能把 AI 输出改写成非 AI；未知许可、缺模型/工作流、冲突 hash 或不完整 source 声明都必须 fail closed。许可只接受项目 allowlist 中的 SPDX ID；自定义条款必须显式使用 `LicenseRef-*`，source 的自定义许可还必须提供公开 HTTPS 条款 URL。Receipt 不保存 API Key、私密 prompt 正文或原始 vendor error。
+Receipt validator 必须把这些字段与 runner 的冻结 Provider snapshot、World Spec、manifest、file records 和资产许可交叉校验。`human_curated: true` 不能把 AI 输出改写成非 AI；未知许可、缺模型/工作流、冲突 hash 或不完整 source 声明都必须 fail closed。许可只接受项目 allowlist 中的 SPDX ID；自定义条款必须显式使用 `LicenseRef-*`，source 的自定义许可还必须提供公开 HTTPS 条款 URL。公开 URL 禁止凭据、query 和 fragment，CC attribution 不得省略，source 必须至少绑定 pack path 或公开 URI。Receipt 不保存 API Key、私密 prompt 正文、signed URL 或原始 vendor error。
 
 ## 7. Godot 导入流程
 
