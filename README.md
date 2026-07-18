@@ -21,7 +21,7 @@ The public `main` branch and **v0.1.0-alpha.1 pre-release** provide a determinis
 
 The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json).
 
-Local World Spec imports are capped at 128 KiB and use strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema validation. A failed or superseded import never replaces the current generated world.
+Local World Spec imports are capped at 128 KiB and use strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema validation. Initial generation, editor generation, and imported specs all run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
 ![Actual Sunny Meadow pack preview](examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png)
 
@@ -31,7 +31,7 @@ The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionall
 
 ## Why this order
 
-Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The provider SDK now wraps the offline procedural baseline with explicit capabilities, a registry, abort boundaries, and validated output. Optional AI providers come later; the v0.1 exporter deliberately rejects them until truthful provider receipts, licensing, and AI disclosure are implemented.
+Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, and imported World Specs through the provider SDK, exposes the active provider identity and capabilities, and keeps only the latest request eligible to update the preview. Optional AI providers come later; the v0.1 exporter deliberately rejects them until truthful provider receipts, licensing, and AI disclosure are implemented.
 
 ## Documentation
 

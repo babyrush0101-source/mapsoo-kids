@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { downloadPortablePack } from '../adapters/export-browser-pack';
 import { readWorldSpecFile } from '../adapters/import-world-spec';
-import { generateWorld } from '../core/generate-world';
+import { runGenerationProvider } from '../core/generation-provider';
 import {
   BIOME_PALETTES,
   DEFAULT_WORLD_SPEC,
   cloneWorldSpec,
   type BiomeId,
+  type GeneratedWorld,
   type TileSize,
   type WorldSpec,
 } from '../core/world-spec';
 import { validateGeneratedWorld, validateWorldSpec } from '../core/validate-world';
 import { WorldPreview } from '../features/world-preview/WorldPreview';
+import { DEFAULT_GENERATION_PROVIDER } from '../providers/provider-registry';
+import { GenerationSession } from './generation-session';
+import { safeGenerationFailureLog, safeGenerationFailureMessage } from './generation-status';
 
 const BIOME_LABELS: Record<BiomeId, { name: string; note: string }> = {
   meadow: { name: 'Meadow', note: 'Lush, gentle, story-ready' },
@@ -36,21 +40,52 @@ function downloadJson(filename: string, value: unknown) {
 
 export function App() {
   const worldSpecInputRef = useRef<HTMLInputElement>(null);
-  const importRequestRef = useRef(0);
+  const generationSessionRef = useRef<GenerationSession | null>(null);
+  if (generationSessionRef.current === null) generationSessionRef.current = new GenerationSession();
+  const generationSession = generationSessionRef.current;
   const [draft, setDraft] = useState<WorldSpec>(() => cloneWorldSpec(DEFAULT_WORLD_SPEC));
-  const [world, setWorld] = useState(() => generateWorld(DEFAULT_WORLD_SPEC));
+  const [world, setWorld] = useState<GeneratedWorld | null>(null);
   const [exportState, setExportState] = useState<'idle' | 'building' | 'failed'>('idle');
-  const [importState, setImportState] = useState<'idle' | 'reading'>('idle');
+  const [generationState, setGenerationState] = useState<'idle' | 'generating'>('idle');
+  const [generationNotice, setGenerationNotice] = useState<{
+    tone: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [importState, setImportState] = useState<'idle' | 'reading' | 'generating'>('idle');
   const [importNotice, setImportNotice] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
   const draftIssues = useMemo(() => validateWorldSpec(draft), [draft]);
-  const packIssues = useMemo(() => validateGeneratedWorld(world), [world]);
+  const packIssues = useMemo(() => (world ? validateGeneratedWorld(world) : []), [world]);
   const hasDraftErrors = draftIssues.some((issue) => issue.severity === 'error');
-  const hasPackErrors = packIssues.some((issue) => issue.severity === 'error');
-  const hasChanges = JSON.stringify(draft) !== JSON.stringify(world.spec);
+  const hasPackErrors = !world || packIssues.some((issue) => issue.severity === 'error');
+  const hasChanges = !world || JSON.stringify(draft) !== JSON.stringify(world.spec);
+  const operationBusy = generationState === 'generating' || importState !== 'idle';
+  const initialGenerationFailed = !world && generationState === 'idle' && generationNotice?.tone === 'error';
 
-  useEffect(() => () => {
-    importRequestRef.current += 1;
-  }, []);
+  useEffect(() => {
+    const request = generationSession.begin();
+    setGenerationState('generating');
+    setGenerationNotice(null);
+
+    void runGenerationProvider(DEFAULT_GENERATION_PROVIDER, DEFAULT_WORLD_SPEC, { signal: request.signal })
+      .then((generatedWorld) => {
+        if (!generationSession.isCurrent(request)) return;
+        setWorld(generatedWorld);
+        setGenerationNotice({
+          tone: 'success',
+          message: `Ready with ${DEFAULT_GENERATION_PROVIDER.displayName} ${DEFAULT_GENERATION_PROVIDER.version}.`,
+        });
+      })
+      .catch((error: unknown) => {
+        if (!generationSession.isCurrent(request)) return;
+        console.error(safeGenerationFailureLog(error));
+        setGenerationNotice({ tone: 'error', message: safeGenerationFailureMessage(error) });
+      })
+      .finally(() => {
+        if (generationSession.isCurrent(request)) setGenerationState('idle');
+      });
+
+    return () => generationSession.cancel();
+  }, [generationSession]);
 
   function chooseBiome(biome: BiomeId) {
     setDraft((current) => ({
@@ -60,11 +95,38 @@ export function App() {
     }));
   }
 
-  function generate() {
-    if (!hasDraftErrors) setWorld(generateWorld(draft));
+  async function generate() {
+    if (hasDraftErrors) return;
+
+    const request = generationSession.begin();
+    setGenerationState('generating');
+    setGenerationNotice(null);
+    setImportState('idle');
+    setImportNotice(null);
+
+    try {
+      const generatedWorld = await runGenerationProvider(DEFAULT_GENERATION_PROVIDER, draft, {
+        signal: request.signal,
+      });
+      if (!generationSession.isCurrent(request)) return;
+      setWorld(generatedWorld);
+      setExportState('idle');
+      setGenerationNotice({
+        tone: 'success',
+        message: `Generated with ${DEFAULT_GENERATION_PROVIDER.displayName} ${DEFAULT_GENERATION_PROVIDER.version}.`,
+      });
+    } catch (error) {
+      if (!generationSession.isCurrent(request)) return;
+      const message = safeGenerationFailureMessage(error);
+      console.error(safeGenerationFailureLog(error));
+      setGenerationNotice({ tone: 'error', message });
+    } finally {
+      if (generationSession.isCurrent(request)) setGenerationState('idle');
+    }
   }
 
   async function exportPack() {
+    if (!world) return;
     setExportState('building');
     try {
       const errors = validateGeneratedWorld(world).filter((issue) => issue.severity === 'error');
@@ -80,6 +142,7 @@ export function App() {
   }
 
   function exportWorldSpec() {
+    if (!world) return;
     const errors = validateWorldSpec(world.spec).filter((issue) => issue.severity === 'error');
     if (errors.length > 0) {
       console.error(`Invalid world spec: ${errors.map((issue) => issue.code).join(', ')}`);
@@ -95,14 +158,15 @@ export function App() {
     event.currentTarget.value = '';
     if (!file) return;
 
-    const requestId = importRequestRef.current + 1;
-    importRequestRef.current = requestId;
+    const request = generationSession.begin();
 
     setImportState('reading');
     setImportNotice(null);
+    setGenerationState('idle');
+    setGenerationNotice(null);
 
     const result = await readWorldSpecFile(file);
-    if (requestId !== importRequestRef.current) return;
+    if (!generationSession.isCurrent(request)) return;
     if (!result.ok) {
       setImportNotice({ tone: 'error', message: result.message });
       setImportState('idle');
@@ -110,8 +174,11 @@ export function App() {
     }
 
     try {
-      const generatedWorld = generateWorld(result.spec);
-      if (requestId !== importRequestRef.current) return;
+      setImportState('generating');
+      const generatedWorld = await runGenerationProvider(DEFAULT_GENERATION_PROVIDER, result.spec, {
+        signal: request.signal,
+      });
+      if (!generationSession.isCurrent(request)) return;
       setDraft(cloneWorldSpec(result.spec));
       setWorld(generatedWorld);
       setExportState('idle');
@@ -123,11 +190,15 @@ export function App() {
           : `Loaded and generated ${file.name}.`,
       });
     } catch (error) {
-      if (requestId !== importRequestRef.current) return;
-      console.error(error);
-      setImportNotice({ tone: 'error', message: 'The World Spec passed parsing but could not be generated.' });
+      if (!generationSession.isCurrent(request)) return;
+      const message = safeGenerationFailureMessage(error);
+      console.error(safeGenerationFailureLog(error));
+      setImportNotice({
+        tone: 'error',
+        message: `The World Spec passed parsing but could not be generated. ${message}`,
+      });
     } finally {
-      if (requestId === importRequestRef.current) setImportState('idle');
+      if (generationSession.isCurrent(request)) setImportState('idle');
     }
   }
 
@@ -304,39 +375,77 @@ export function App() {
               </div>
             )}
 
-            <button className="primary-action" type="button" onClick={generate} disabled={hasDraftErrors}>
-              Generate local world
+            <button
+              className="primary-action"
+              type="button"
+              onClick={generate}
+              disabled={hasDraftErrors || generationState === 'generating'}
+            >
+              {generationState === 'generating' ? 'Generating with provider…' : 'Generate local world'}
               <span>→</span>
             </button>
+            <div className="import-status" aria-live="polite" aria-busy={generationState === 'generating'}>
+              {generationState === 'generating' && (
+                <p>Validating the spec and generating through the provider contract…</p>
+              )}
+              {generationState === 'idle' && generationNotice && (
+                <p className={generationNotice.tone}>{generationNotice.message}</p>
+              )}
+            </div>
           </aside>
 
-          <section className="panel preview-panel">
+          <section className="panel preview-panel" aria-busy={operationBusy}>
             <div className="panel-heading">
               <div>
                 <span className="step">02</span>
                 <h2>World preview</h2>
               </div>
               <div className="preview-tools">
-                <span>{world.spec.map.width} × {world.spec.map.height}</span>
-                <span>{world.spec.visual.tileSize}px</span>
+                <span>
+                  {world ? `${world.spec.map.width} × ${world.spec.map.height}` : initialGenerationFailed ? 'Unavailable' : 'Preparing…'}
+                </span>
+                <span>{world ? `${world.spec.visual.tileSize}px` : `${draft.visual.tileSize}px`}</span>
               </div>
             </div>
 
-            <WorldPreview world={world} />
-
-            <div className="legend-row">
-              {world.tiles.map((tile) => (
-                <span key={tile.id}>
-                  <i style={{ background: tile.color }} /> {tile.name}
+            {world ? (
+              <>
+                <WorldPreview world={world} />
+                <div className="legend-row">
+                  {world.tiles.map((tile) => (
+                    <span key={tile.id}>
+                      <i style={{ background: tile.color }} /> {tile.name}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className={`preview-placeholder${initialGenerationFailed ? ' is-error' : ''}`} role="status">
+                <strong>{initialGenerationFailed ? 'The first world could not be generated.' : 'Preparing the first world…'}</strong>
+                <span>
+                  {initialGenerationFailed
+                    ? `${generationNotice.message} Review the spec and use Generate local world to retry.`
+                    : 'The default provider is validating the starter World Spec.'}
                 </span>
-              ))}
-            </div>
+              </div>
+            )}
 
             <div className="build-note">
-              <span>Generator</span>
-              <strong>{world.generator.id}</strong>
+              <span>Provider</span>
+              <strong title={`${DEFAULT_GENERATION_PROVIDER.id}@${DEFAULT_GENERATION_PROVIDER.version}`}>
+                {DEFAULT_GENERATION_PROVIDER.displayName}
+              </strong>
+              <span>Mode</span>
+              <strong>
+                {DEFAULT_GENERATION_PROVIDER.capabilities.execution} · {DEFAULT_GENERATION_PROVIDER.capabilities.determinism}
+                {' · '}{DEFAULT_GENERATION_PROVIDER.capabilities.outputProvenance}
+              </strong>
+              <span>Credentials</span>
+              <strong>{DEFAULT_GENERATION_PROVIDER.capabilities.requiresCredentials ? 'required' : 'none'}</strong>
               <span>Seed</span>
-              <strong>{world.spec.seed}</strong>
+              <strong>{world?.spec.seed ?? draft.seed}</strong>
+              <span>Contract</span>
+              <strong>{DEFAULT_GENERATION_PROVIDER.id}@{DEFAULT_GENERATION_PROVIDER.version}</strong>
             </div>
           </section>
 
@@ -346,18 +455,35 @@ export function App() {
                 <span className="step">03</span>
                 <h2>Pack inspector</h2>
               </div>
-              <span className="pass-badge">{packIssues.some((issue) => issue.severity === 'error') ? 'Blocked' : 'Valid'}</span>
+              <span className="pass-badge">
+                {!world
+                  ? initialGenerationFailed ? 'Failed' : 'Preparing'
+                  : packIssues.some((issue) => issue.severity === 'error') ? 'Blocked' : 'Valid'}
+              </span>
             </div>
 
             <div className="metric-grid">
-              <article><strong>{world.ground.length}</strong><span>map cells</span></article>
-              <article><strong>{world.tiles.length}</strong><span>tile types</span></article>
-              <article><strong>{world.props.length}</strong><span>props</span></article>
+              <article><strong>{world?.ground.length ?? '—'}</strong><span>map cells</span></article>
+              <article><strong>{world?.tiles.length ?? '—'}</strong><span>tile types</span></article>
+              <article><strong>{world?.props.length ?? '—'}</strong><span>props</span></article>
               <article><strong>3</strong><span>export targets</span></article>
             </div>
 
             <h3>Validation</h3>
             <div className="validation-list">
+              {!world && (
+                <article className={`validation-item ${initialGenerationFailed ? 'error' : 'info'}`}>
+                  <span>{initialGenerationFailed ? '!' : '…'}</span>
+                  <div>
+                    <strong>{initialGenerationFailed ? 'provider.failed' : 'provider.pending'}</strong>
+                    <p>
+                      {initialGenerationFailed
+                        ? `${generationNotice.message} Correct the spec or retry generation.`
+                        : 'The first generated world is still being validated.'}
+                    </p>
+                  </div>
+                </article>
+              )}
               {packIssues.map((issue) => (
                 <article key={issue.code} className={`validation-item ${issue.severity}`}>
                   <span>{issue.severity === 'error' ? '!' : issue.severity === 'warning' ? '△' : '✓'}</span>
@@ -384,22 +510,26 @@ export function App() {
                 accept=".json,application/json"
                 aria-label="Choose a World Spec JSON file"
                 onChange={importWorldSpec}
-                disabled={importState === 'reading'}
+                disabled={importState !== 'idle'}
               />
               <button
                 className="secondary-action is-ready"
                 type="button"
                 onClick={() => worldSpecInputRef.current?.click()}
-                disabled={importState === 'reading'}
+                disabled={importState !== 'idle'}
                 aria-describedby="world-spec-import-status"
               >
-                {importState === 'reading' ? 'Reading World Spec…' : 'Load World Spec JSON'}
+                {importState === 'reading'
+                  ? 'Reading World Spec…'
+                  : importState === 'generating'
+                    ? 'Generating imported world…'
+                    : 'Load World Spec JSON'}
               </button>
               <button
                 className="secondary-action is-ready"
                 type="button"
                 onClick={exportWorldSpec}
-                disabled={hasPackErrors}
+                disabled={hasPackErrors || operationBusy}
               >
                 Download World Spec
               </button>
@@ -407,7 +537,7 @@ export function App() {
                 className="primary-action"
                 type="button"
                 onClick={exportPack}
-                disabled={exportState === 'building' || hasPackErrors}
+                disabled={exportState === 'building' || hasPackErrors || operationBusy}
               >
                 {exportState === 'building' ? 'Building ZIP…' : 'Assemble Godot-compatible ZIP'}
                 <span>↓</span>
@@ -417,9 +547,10 @@ export function App() {
               id="world-spec-import-status"
               className="import-status"
               aria-live="polite"
-              aria-busy={importState === 'reading'}
+              aria-busy={importState !== 'idle'}
             >
               {importState === 'reading' && <p>Reading and validating the selected World Spec…</p>}
+              {importState === 'generating' && <p>Generating the imported spec through the active provider…</p>}
               {importState === 'idle' && importNotice && <p className={importNotice.tone}>{importNotice.message}</p>}
             </div>
             {exportState === 'failed' && <p className="export-error">Pack assembly failed. Check the browser console.</p>}

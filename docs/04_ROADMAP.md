@@ -50,6 +50,7 @@
 
 - [x] provider SDK、capabilities、注册表与执行前后验证边界；
 - [x] 把 `procedural-pixel-v1` 包装为零凭据、离线 Provider，同时保持 v0.1 输出不变；
+- [x] Workbench 首次生成、编辑器生成和 JSON 导入统一接入 Provider runner，并处理取消、过期结果和安全错误状态；
 - [ ] 至少一个可选 provider；
 - [ ] prompt 模板与风格约束；
 - [ ] 去背景、切图、nearest 缩放与调色；

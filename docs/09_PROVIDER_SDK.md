@@ -6,6 +6,8 @@ This document describes the first provider boundary in Mapsoo Worldsmith. It is 
 
 - The built-in `procedural-pixel-v1@0.1.0` provider is local, seeded, credential-free, and non-AI.
 - `runGenerationProvider()` and `GeneratorProviderRegistry` are implemented and tested.
+- The Workbench uses the runner for its initial world, edited specs, and imported specs; provider identity and declared capabilities are visible in the preview.
+- A single request session aborts superseded work and prevents stale completions from replacing the last successful world. UI and console errors expose only stable Mapsoo error codes.
 - No optional AI provider is shipped yet.
 - The portable/itch exporter accepts only the built-in procedural identity. A provider being runnable does **not** make its output publishable.
 
