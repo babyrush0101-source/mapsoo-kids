@@ -108,6 +108,8 @@ mapsoo-sunny-meadow-v0.1.0-alpha.1/
     mapsoo-world.schema.json
 ```
 
+上述树形是已发布、保持不变的 alpha.1。alpha.2 在相同结构中增加 `schema/mapsoo-generation-receipt.schema.json`，因此默认浏览器包为 12 个文件、11 条 manifest payload record；它不会把 importer addon 放进素材 ZIP。
+
 所有消费者读取同一套 PNG、JSON、manifest 和许可文件。Godot 用户从官方仓库或未来的 Godot Asset Library 独立安装 importer；素材 ZIP 只在 manifest 中声明 importer ID、最低版本和官方来源，不维护容易漂移的第二套“Godot ZIP”。
 
 ### Provider Receipt 兼容边界

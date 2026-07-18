@@ -69,6 +69,9 @@ jobs:
       - name: Install historical alpha.1 video dependencies
         run: pnpm --dir video install --frozen-lockfile
 
+      - name: Audit high-severity dependency advisories
+        run: pnpm security:audit
+
       - name: Run project checks
         run: pnpm check
 

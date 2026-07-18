@@ -16,12 +16,12 @@ The public `main` branch and **v0.1.0-alpha.1 pre-release** provide the immutabl
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same starter tiles and map again from the same seed.
 3. Preview the pixel-art result in the browser and review validation issues.
-4. Download the World Spec JSON, then load it again later to reproduce the saved project.
+4. Download/load a World Spec JSON, or load the strict synthetic STOYO Asset Request example and project it locally.
 5. Export an executable-free 12-file ZIP containing PNG atlases, a map preview, three schemas, manifest, receipt 0.2, and asset license.
 
-The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json).
+The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
-Local World Spec imports are capped at 128 KiB and use strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema validation. Initial generation, editor generation, and imported specs all run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
+Local World Spec and STOYO Asset Request imports share the same 128 KiB cap, strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema/runtime validation. A STOYO request is first projected to a World Spec with a canonical SHA-256 binding; initial generation, editor generation, and both import paths then run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
 ![Actual Sunny Meadow alpha.2 candidate preview](examples/packs/sunny-meadow-v0.1.0-alpha.2/previews/map-preview.png)
 
@@ -33,7 +33,7 @@ The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionall
 
 ## Why this order
 
-Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, and imported World Specs through the provider SDK, atomically stores a deeply frozen runner-owned world/evidence result, exposes the Provider snapshot that produced it, and keeps only the latest request eligible to update the preview. The legacy exporter rejects bare worlds and optional AI providers; full receipt/manifest projection enters a new versioned pack rather than rewriting the published alpha.
+Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, imported World Specs, and projected STOYO requests through the provider SDK, atomically stores a deeply frozen runner-owned world/evidence result, exposes the Provider snapshot that produced it, and keeps only the latest request eligible to update the preview. The legacy exporter rejects bare worlds and optional AI providers; full receipt/manifest projection enters a new versioned pack rather than rewriting the published alpha.
 
 The registered alpha.2 candidate binds runner-owned evidence and actual World Spec bytes into receipt `0.2.0`; the manifest derives time, input binding, license, and provenance from the shipped canonical receipt. A version-bound Node verifier rejects cross-version policies and 31 semantic mutation cases, while the frozen `v0.1.0-alpha.1` fixture and public attachment hashes remain unchanged. AI-provider publication remains fail-closed: the current export policy authorizes only the exact source-free CC0 built-in procedural profile.
 
@@ -49,6 +49,7 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [Open-source and Codex OSS readiness](docs/05_OPEN_SOURCE_READINESS.md)
 - [Security and migration audit](docs/06_SECURITY_AND_MIGRATION.md)
 - [STOYO integration](docs/07_STOYO_INTEGRATION.md)
+- [Executable STOYO Asset Request contract](integrations/stoyo/README.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
 - [Generation Provider SDK](docs/09_PROVIDER_SDK.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
@@ -73,11 +74,12 @@ Run the complete local verification before contributing:
 
 ```bash
 pnpm check
+pnpm security:audit
 pnpm release:history:remote
 pnpm release:browser:verify
 ```
 
-The first command is the deterministic offline project gate. The other two confirm the immutable public GitHub attachments and execute the current exporter in a real browser, comparing its raw ZIP bytes with the registered candidate pack.
+`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final two commands confirm the immutable public GitHub attachments and execute the current exporter in a real browser, comparing its raw ZIP bytes with the registered candidate pack.
 
 Build, validate, and reproduce a complete **unpublished candidate** release bundle:
 

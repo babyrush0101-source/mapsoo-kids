@@ -82,12 +82,13 @@
 - [ ] 建筑和内部场景；
 - [ ] 角色 sprite/动画合同；
 - [ ] 世界版本和增量更新；
-- [ ] STOYO World Spec 扩展字段。
+- [x] 可执行、隐私最小化的 `StoyoAssetRequest` → World Spec namespaced extension 契约与 Workbench 本地导入；
+- [ ] STOYO 稳定地点/交互锚点与版本化运行时 sidecar。
 
 ## v0.5 — Community Beta
 
 - [ ] 3–5 个高质量示例包；
-- [ ] 贡献指南、issue/PR 模板；
+- [x] 贡献指南、行为准则、issue/PR 模板；
 - [ ] 文档站或完整示例页；
 - [ ] 外部试玩与可复现反馈；
 - [ ] itch.io 免费素材页；

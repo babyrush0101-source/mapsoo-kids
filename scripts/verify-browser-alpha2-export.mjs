@@ -83,7 +83,9 @@ function decodeHarnessDom(dom) {
   assert(resultTag, 'Browser export harness did not return ZIP bytes.');
   const filename = resultTag[1].match(/\bdata-filename="([^"]+)"/i)?.[1];
   const version = resultTag[1].match(/\bdata-version="([^"]+)"/i)?.[1];
-  return { filename, version, bytes: Buffer.from(resultTag[2], 'base64') };
+  const stoyoRequestSha256 = resultTag[1].match(/\bdata-stoyo-request-sha256="([^"]+)"/i)?.[1];
+  const stoyoWorldId = resultTag[1].match(/\bdata-stoyo-world-id="([^"]+)"/i)?.[1];
+  return { filename, version, stoyoRequestSha256, stoyoWorldId, bytes: Buffer.from(resultTag[2], 'base64') };
 }
 
 function capturePath() {
@@ -131,20 +133,34 @@ async function verify() {
     const exported = decodeHarnessDom(stdout);
     assert(exported.filename === CURRENT_RELEASE_CONFIG.release.files.examplePack, 'Browser export filename differs from the release registry.');
     assert(exported.version === CURRENT_RELEASE_CONFIG.version, 'Browser export version differs from the release registry.');
+    assert(
+      exported.stoyoRequestSha256 === 'ea279ebbfd3c12693469472fbca6bbc1286e07515632bd5e34b7bf698602a144',
+      'Real browser STOYO request hash differs from the registered integration fixture.',
+    );
+    assert(
+      exported.stoyoWorldId === 'river-valley-observation',
+      'Real browser STOYO request projected to the wrong World Spec.',
+    );
     const hash = sha256(exported.bytes);
 
     const output = capturePath();
     if (output) {
       await assertSafeOutputPath(captureRoot, output, 'Browser capture output must stay inside a link-free release/browser-captures/ directory');
       await writeFile(output, exported.bytes);
-      console.log(`MAPSOO_BROWSER_ALPHA2_CAPTURED ${relative(REPOSITORY_ROOT, output)} bytes=${exported.bytes.length} sha256=${hash}`);
+      console.log(
+        `MAPSOO_BROWSER_ALPHA2_CAPTURED ${relative(REPOSITORY_ROOT, output)} bytes=${exported.bytes.length} sha256=${hash}`
+        + ` stoyo_request_sha256=${exported.stoyoRequestSha256} stoyo_world=${exported.stoyoWorldId}`,
+      );
       return;
     }
 
     const canonical = await buildExamplePackArchive(CURRENT_RELEASE_CONFIG.version);
     assert(exported.bytes.equals(canonical), 'Real browser export bytes differ from the registered canonical alpha.2 pack.');
     assert(hash === CURRENT_RELEASE_CONFIG.expectedExamplePackSha256, 'Real browser export hash differs from the registered alpha.2 hash.');
-    console.log(`MAPSOO_BROWSER_ALPHA2_OK bytes=${exported.bytes.length} sha256=${hash}`);
+    console.log(
+      `MAPSOO_BROWSER_ALPHA2_OK bytes=${exported.bytes.length} sha256=${hash}`
+      + ` stoyo_request_sha256=${exported.stoyoRequestSha256} stoyo_world=${exported.stoyoWorldId}`,
+    );
   } finally {
     vite.kill();
     await rm(profile, { recursive: true, force: true });

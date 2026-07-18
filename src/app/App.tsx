@@ -3,6 +3,7 @@ import {
   CURRENT_PACK_VERSION,
   downloadCurrentPortablePack,
 } from '../adapters/export-current-pack';
+import { readStoyoAssetRequestFile } from '../adapters/import-stoyo-asset-request';
 import { readWorldSpecFile } from '../adapters/import-world-spec';
 import type { GenerationRunResult } from '../core/generation-evidence';
 import { runGenerationProviderWithEvidence } from '../core/generation-provider';
@@ -18,7 +19,7 @@ import {
 import { validateGeneratedWorld, validateWorldSpec } from '../core/validate-world';
 import { WorldPreview } from '../features/world-preview/WorldPreview';
 import { DEFAULT_GENERATION_PROVIDER } from '../providers/provider-registry';
-import { GenerationSession } from './generation-session';
+import { GenerationSession, type GenerationRequest } from './generation-session';
 import { safeGenerationFailureLog, safeGenerationFailureMessage } from './generation-status';
 
 const BIOME_LABELS: Record<BiomeId, { name: string; note: string }> = {
@@ -44,6 +45,7 @@ function downloadJson(filename: string, value: unknown) {
 
 export function App() {
   const worldSpecInputRef = useRef<HTMLInputElement>(null);
+  const stoyoAssetRequestInputRef = useRef<HTMLInputElement>(null);
   const generationSessionRef = useRef<GenerationSession | null>(null);
   if (generationSessionRef.current === null) generationSessionRef.current = new GenerationSession();
   const generationSession = generationSessionRef.current;
@@ -57,6 +59,7 @@ export function App() {
     message: string;
   } | null>(null);
   const [importState, setImportState] = useState<'idle' | 'reading' | 'generating'>('idle');
+  const [importKind, setImportKind] = useState<'world' | 'stoyo' | null>(null);
   const [importNotice, setImportNotice] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
   const draftIssues = useMemo(() => validateWorldSpec(draft), [draft]);
   const packIssues = useMemo(() => (world ? validateGeneratedWorld(world) : []), [world]);
@@ -161,6 +164,37 @@ export function App() {
     downloadJson(`${world.spec.id}.world.json`, world.spec);
   }
 
+  async function generateImportedSpec(
+    spec: WorldSpec,
+    request: GenerationRequest,
+    successMessage: string,
+  ) {
+    try {
+      setImportState('generating');
+      const generationResult = await runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, spec, {
+        signal: request.signal,
+      });
+      if (!generationSession.isCurrent(request)) return;
+      setDraft(cloneWorldSpec(spec));
+      setGenerationRun(generationResult);
+      setExportState('idle');
+      setImportNotice({ tone: 'success', message: successMessage });
+    } catch (error) {
+      if (!generationSession.isCurrent(request)) return;
+      const message = safeGenerationFailureMessage(error);
+      console.error(safeGenerationFailureLog(error));
+      setImportNotice({
+        tone: 'error',
+        message: `The imported World Spec passed parsing but could not be generated. ${message}`,
+      });
+    } finally {
+      if (generationSession.isCurrent(request)) {
+        setImportState('idle');
+        setImportKind(null);
+      }
+    }
+  }
+
   async function importWorldSpec(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = '';
@@ -169,6 +203,7 @@ export function App() {
     const request = generationSession.begin();
 
     setImportState('reading');
+    setImportKind('world');
     setImportNotice(null);
     setGenerationState('idle');
     setGenerationNotice(null);
@@ -178,36 +213,44 @@ export function App() {
     if (!result.ok) {
       setImportNotice({ tone: 'error', message: result.message });
       setImportState('idle');
+      setImportKind(null);
       return;
     }
 
-    try {
-      setImportState('generating');
-      const generationResult = await runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, result.spec, {
-        signal: request.signal,
-      });
-      if (!generationSession.isCurrent(request)) return;
-      setDraft(cloneWorldSpec(result.spec));
-      setGenerationRun(generationResult);
-      setExportState('idle');
-      const warningCount = result.issues.filter((issue) => issue.severity === 'warning').length;
-      setImportNotice({
-        tone: 'success',
-        message: warningCount > 0
-          ? `Loaded ${file.name} with ${warningCount} validation warning${warningCount === 1 ? '' : 's'}.`
-          : `Loaded and generated ${file.name}.`,
-      });
-    } catch (error) {
-      if (!generationSession.isCurrent(request)) return;
-      const message = safeGenerationFailureMessage(error);
-      console.error(safeGenerationFailureLog(error));
-      setImportNotice({
-        tone: 'error',
-        message: `The World Spec passed parsing but could not be generated. ${message}`,
-      });
-    } finally {
-      if (generationSession.isCurrent(request)) setImportState('idle');
+    const warningCount = result.issues.filter((issue) => issue.severity === 'warning').length;
+    const successMessage = warningCount > 0
+      ? `Loaded ${file.name} with ${warningCount} validation warning${warningCount === 1 ? '' : 's'}.`
+      : `Loaded and generated ${file.name}.`;
+    await generateImportedSpec(result.spec, request, successMessage);
+  }
+
+  async function importStoyoAssetRequest(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file) return;
+
+    const request = generationSession.begin();
+    setImportState('reading');
+    setImportKind('stoyo');
+    setImportNotice(null);
+    setGenerationState('idle');
+    setGenerationNotice(null);
+
+    const result = await readStoyoAssetRequestFile(file);
+    if (!generationSession.isCurrent(request)) return;
+    if (!result.ok) {
+      setImportNotice({ tone: 'error', message: result.message });
+      setImportState('idle');
+      setImportKind(null);
+      return;
     }
+
+    const { assetRequestSha256, worldSpec } = result.projection;
+    await generateImportedSpec(
+      worldSpec,
+      request,
+      `Loaded ${file.name} as ${worldSpec.id}; request ${assetRequestSha256.slice(0, 12)}… is bound to the pack.`,
+    );
   }
 
   return (
@@ -474,7 +517,7 @@ export function App() {
               <article><strong>{world?.ground.length ?? '—'}</strong><span>map cells</span></article>
               <article><strong>{world?.tiles.length ?? '—'}</strong><span>tile types</span></article>
               <article><strong>{world?.props.length ?? '—'}</strong><span>props</span></article>
-              <article><strong>3</strong><span>export targets</span></article>
+              <article><strong>1</strong><span>portable ZIP</span></article>
             </div>
 
             <h3>Validation</h3>
@@ -503,11 +546,11 @@ export function App() {
               ))}
             </div>
 
-            <h3>Export targets</h3>
+            <h3>Pack consumers</h3>
             <ul className="target-list">
-              <li><span>Portable pack</span><small>Current · PNG + JSON</small></li>
+              <li><span>Portable source</span><small>Current · one PNG + JSON ZIP</small></li>
               <li><span>Godot 4.3+</span><small>Official importer + TileMapLayer</small></li>
-              <li><span>itch.io</span><small>Current · versioned release ZIP</small></li>
+              <li><span>itch.io</span><small>Same versioned asset ZIP</small></li>
             </ul>
 
             <div className="export-actions">
@@ -520,18 +563,40 @@ export function App() {
                 onChange={importWorldSpec}
                 disabled={operationBusy}
               />
+              <input
+                ref={stoyoAssetRequestInputRef}
+                className="file-input"
+                type="file"
+                accept=".json,application/json"
+                aria-label="Choose a STOYO Asset Request JSON file"
+                onChange={importStoyoAssetRequest}
+                disabled={operationBusy}
+              />
               <button
                 className="secondary-action is-ready"
                 type="button"
                 onClick={() => worldSpecInputRef.current?.click()}
                 disabled={operationBusy}
-                aria-describedby="world-spec-import-status"
+                aria-describedby="json-import-status"
               >
-                {importState === 'reading'
+                {importKind === 'world' && importState === 'reading'
                   ? 'Reading World Spec…'
-                  : importState === 'generating'
+                  : importKind === 'world' && importState === 'generating'
                     ? 'Generating imported world…'
                     : 'Load World Spec JSON'}
+              </button>
+              <button
+                className="secondary-action is-ready"
+                type="button"
+                onClick={() => stoyoAssetRequestInputRef.current?.click()}
+                disabled={operationBusy}
+                aria-describedby="json-import-status"
+              >
+                {importKind === 'stoyo' && importState === 'reading'
+                  ? 'Reading STOYO request…'
+                  : importKind === 'stoyo' && importState === 'generating'
+                    ? 'Generating STOYO world…'
+                    : 'Load STOYO Asset Request'}
               </button>
               <button
                 className="secondary-action is-ready"
@@ -552,12 +617,16 @@ export function App() {
               </button>
             </div>
             <div
-              id="world-spec-import-status"
+              id="json-import-status"
               className="import-status"
               aria-live="polite"
               aria-busy={importState !== 'idle'}
             >
-              {importState === 'reading' && <p>Reading and validating the selected World Spec…</p>}
+              {importState === 'reading' && (
+                <p>
+                  Reading and validating the selected {importKind === 'stoyo' ? 'STOYO Asset Request' : 'World Spec'}…
+                </p>
+              )}
               {importState === 'generating' && <p>Generating the imported spec through the active provider…</p>}
               {importState === 'idle' && importNotice && <p className={importNotice.tone}>{importNotice.message}</p>}
             </div>

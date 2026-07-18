@@ -35,9 +35,9 @@ Mapsoo Worldsmith 是一个面向独立游戏、Game Jam、教育游戏与叙事
 3. 设置 `seed`、Tile 尺寸、地图宽高和调色板；
 4. 点击 Generate；
 5. 系统生成 tilesheet、地图矩阵、道具 sprites 和封面预览；
-6. 用户查看地图并切换图层；
+6. 用户查看合成地图、图层摘要和资产清单；独立图层显隐切换仍是后续交互；
 7. Validation 面板展示错误、警告和通过项；
-8. 用户下载通用包或 Godot 包；
+8. 用户下载一份引擎中立 portable ZIP；Godot importer 从官方仓库独立安装；
 9. ZIP 中的 README 解释如何导入和使用。
 
 ## 5. v0.1 功能范围
@@ -46,7 +46,7 @@ Mapsoo Worldsmith 是一个面向独立游戏、Game Jam、教育游戏与叙事
 
 - World Spec 表单与 JSON 预览；
 - seed 驱动、可重复的程序化生成；
-- 至少一个高质量默认 biome，另外两个可用模板；
+- 一个有固定回归包的默认 meadow 示例，另有 desert/snow 程序化配色模板；
 - 32×32 默认 Tile，可选择 16×16 和 64×64；
 - 地形、道路/水域、装饰物至少三类资产；
 - 2D Tile 地图预览；
@@ -86,8 +86,8 @@ Mapsoo Worldsmith 是一个面向独立游戏、Game Jam、教育游戏与叙事
 - 1 张 cover/preview；
 - 1 个 `mapsoo.manifest.json`；
 - 1 个 `generation-receipt.json`；
-- `README.md`、`LICENSE-ASSETS.md`；
-- Godot importer 或示例项目文件。
+- `readme.md`、`license-assets.md`；
+- manifest 中声明的 Godot importer 版本与官方来源；importer 和示例项目不进入素材 ZIP。
 
 ## 7. 核心验收场景
 
