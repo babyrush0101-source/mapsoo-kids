@@ -41,7 +41,7 @@
 - [x] GitHub Pages 与 tag-gated release-draft 工作流准备；
 - [x] 完成可校验的 itch.io 封面与五张真实 release 证据图；
 - [x] 完成 75 秒中英双语、无音轨的本地 release-candidate 证据视频；
-- [ ] `v0.1.0-alpha.1` 预发布。
+- [x] `v0.1.0-alpha.1` GitHub 预发布、公开 CI 与 Pages Demo。
 
 ## v0.2 — AI-assisted Assets
 

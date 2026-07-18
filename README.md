@@ -5,11 +5,13 @@
 [![CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml)
 
+[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.1 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
+
 Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a local-first tool that turns a compact world specification into a previewable, versioned game-art asset pack. The first target is a complete path from world settings to a Godot-friendly ZIP that can also be published on itch.io.
 
 ## Project status
 
-The current worktree is a **portable v0.1 alpha**. It already provides a deterministic, offline generation and export loop without accounts, a backend, or API keys:
+The public `main` branch and **v0.1.0-alpha.1 pre-release** provide a deterministic, offline generation and export loop without accounts, a backend, or API keys:
 
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same starter tiles and map again from the same seed.
@@ -46,7 +48,7 @@ Image generation alone does not make a usable game-asset pipeline. Mapsoo first 
 - [75-second evidence video source and verification](video/README.md)
 - [v0.1.0-alpha.1 release notes](docs/releases/v0.1.0-alpha.1.md)
 
-The reviewed local release-candidate video is available as a [silent bilingual 75-second MP4](docs/media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4). It is local evidence, not a claim that the GitHub release or itch.io page is already public.
+The reviewed [silent bilingual 75-second MP4](docs/media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) is also published as a versioned [GitHub release asset](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4). It demonstrates the exact candidate pack, validator, and Godot CLI evidence; it does not claim external adoption.
 
 ## Local development
 
@@ -69,7 +71,7 @@ Build, validate, and reproduce the complete local alpha release bundle:
 pnpm release:local
 ```
 
-The generated files are written to `release/v0.1.0-alpha.1/` and include the static web build, executable-free Sunny Meadow pack, separately installed Godot importer, schemas, silent 75-second evidence video, manifest, and SHA-256 checksums. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; publishing the prerelease remains a deliberate maintainer action.
+The generated files are written to `release/v0.1.0-alpha.1/` and include the static web build, executable-free Sunny Meadow pack, separately installed Godot importer, schemas, silent 75-second evidence video, manifest, and SHA-256 checksums. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; the maintainer then deliberately publishes the verified prerelease. The public alpha was produced through that path.
 
 No environment variables are required for the portable alpha. See [`.env.example`](.env.example) for the key-handling policy before adding a future provider.
 
