@@ -134,6 +134,8 @@ interface GeneratorProvider {
 
 当前注册表内置 `procedural-pixel-v1@0.1.0`，声明本地执行、seeded determinism、零凭据、程序化 provenance、支持的 biome/Tile 尺寸、地图上限和局部重生成能力。`runGenerationProvider()` 在执行前验证并快照 Provider 元数据、World Spec 与 capabilities，向 Provider 传入第二份 spec 副本，并在执行后验证 tile/prop 完整性、Provider 身份和 spec 未被改写；AbortSignal 在调用前后都有稳定错误边界，vendor 异常则统一包装为 `provider.execution-failed`。World Spec 的程序化调用与文件导入共享 128 KiB、32 层和 10,000 节点上限，且拒绝循环和非 JSON extension 值。详见 [Provider SDK](09_PROVIDER_SDK.md)。
 
+Workbench 的首次生成、编辑器生成和 World Spec 导入都通过同一个 runner。UI 以单一 generation session 管理请求：新意图会中止并淘汰旧请求，每个异步边界后都检查请求是否仍为最新，只有最新成功结果能替换预览。失败时保留最后一个成功世界；面向用户和控制台的状态只暴露稳定错误码，不输出 Provider 自定义错误正文或 `cause`。导入读取或生成期间禁用导出，避免把旧世界误当成刚导入的结果。
+
 未来 AI Provider 不能绕过 domain validation；它们只返回标准化候选世界/资产，后续仍执行切图、缩放、命名、元数据与检查。当前 v0.1 exporter 只接受程序化 Provider，防止尚无 receipt 的模型输出被错误声明为 `contains_generative_ai: false` 或 CC0 程序化资产。
 
 Provider receipt 至少记录：
