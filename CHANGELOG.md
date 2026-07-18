@@ -4,6 +4,8 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+## [0.1.0-alpha.1] - 2026-07-18
+
 ### Added
 
 - New Mapsoo Worldsmith product direction and project documentation.
@@ -21,6 +23,9 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 - Godot 4.3/4.7 headless smoke tests, security-negative fixtures, and CI coverage.
 - Executable-free asset packs that declare the required official importer version without bundling GDScript.
 - A reusable Godot CLI verifier and a real browser ZIP-to-Godot 4.3/4.7 end-to-end acceptance path.
+- A real Sunny Meadow browser-export fixture verified in Godot 4.3 and 4.7.
+- Deterministic local release packaging with ZIP content verification, SHA-256 checksums, and byte-for-byte reproducibility checks.
+- GitHub Pages and tag-gated release-draft workflows, plus weekly dependency update configuration.
 
 ### Changed
 

@@ -14,7 +14,11 @@
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "release:build": "pnpm typecheck && vite build --base / && node scripts/build-release.mjs",
+    "release:verify": "node scripts/verify-release.mjs",
+    "release:repro": "node scripts/check-release-reproducible.mjs",
+    "release:local": "pnpm release:build && pnpm release:verify && pnpm release:repro"
   },
   "dependencies": {
     "jszip": "3.10.1",
