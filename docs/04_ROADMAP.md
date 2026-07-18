@@ -48,7 +48,8 @@
 
 目标：在不破坏本地闭环的前提下接入 AI 候选资产。
 
-- [ ] provider SDK 与 capabilities；
+- [x] provider SDK、capabilities、注册表与执行前后验证边界；
+- [x] 把 `procedural-pixel-v1` 包装为零凭据、离线 Provider，同时保持 v0.1 输出不变；
 - [ ] 至少一个可选 provider；
 - [ ] prompt 模板与风格约束；
 - [ ] 去背景、切图、nearest 缩放与调色；

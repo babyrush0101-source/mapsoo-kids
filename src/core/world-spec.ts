@@ -1,3 +1,5 @@
+import type { GeneratorIdentity } from './generator-identity';
+
 export const WORLD_SCHEMA_VERSION = '0.1.0' as const;
 
 export type BiomeId = 'meadow' | 'desert' | 'snow';
@@ -45,10 +47,7 @@ export interface WorldProp {
 }
 
 export interface GeneratedWorld {
-  generator: {
-    id: 'procedural-pixel-v1';
-    version: '0.1.0';
-  };
+  generator: GeneratorIdentity;
   spec: WorldSpec;
   tiles: TileDefinition[];
   ground: number[];

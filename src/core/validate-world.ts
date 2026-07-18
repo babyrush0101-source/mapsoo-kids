@@ -1,4 +1,11 @@
 import { WORLD_SCHEMA_VERSION, type GeneratedWorld, type WorldSpec } from './world-spec';
+import { isValidGeneratorId, isValidGeneratorVersion } from './generator-identity';
+import {
+  FORBIDDEN_WORLD_SPEC_OBJECT_KEYS,
+  MAX_WORLD_SPEC_FILE_BYTES,
+  MAX_WORLD_SPEC_JSON_DEPTH,
+  MAX_WORLD_SPEC_JSON_NODES,
+} from './world-spec-limits';
 
 export interface ValidationIssue {
   code: string;
@@ -10,8 +17,11 @@ export interface ValidationIssue {
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const WORLD_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EXTENSION_NAMESPACE = /^[a-z][a-z0-9]*(?:\.[a-z0-9]+)+$/;
+const GENERATED_ITEM_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const BIOMES = new Set(['meadow', 'desert', 'snow']);
 const TILE_SIZES = new Set([16, 32, 64]);
+const TILE_NAMES = new Set(['ground', 'water', 'path', 'detail']);
+const PROP_KINDS = new Set(['tree', 'rock', 'flower']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -43,12 +53,178 @@ function addUnknownKeyIssue(
   }
 }
 
+interface JsonTraversalEntry {
+  readonly value: unknown;
+  readonly depth: number;
+  readonly exit?: boolean;
+}
+
+function inspectWorldSpecJsonContract(value: unknown): ValidationIssue | null {
+  const pending: JsonTraversalEntry[] = [{ value, depth: 0 }];
+  const ancestors = new WeakSet<object>();
+  let visitedNodes = 0;
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current) break;
+
+    if (current.exit) {
+      ancestors.delete(current.value as object);
+      continue;
+    }
+
+    visitedNodes += 1;
+    if (visitedNodes > MAX_WORLD_SPEC_JSON_NODES) {
+      return {
+        code: 'spec.too-complex',
+        severity: 'error',
+        message: `World Spec may contain at most ${MAX_WORLD_SPEC_JSON_NODES} JSON values.`,
+      };
+    }
+    if (current.depth > MAX_WORLD_SPEC_JSON_DEPTH) {
+      return {
+        code: 'spec.too-deep',
+        severity: 'error',
+        message: `World Spec may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
+      };
+    }
+
+    const currentType = typeof current.value;
+    if (
+      current.value === null
+      || currentType === 'string'
+      || currentType === 'boolean'
+    ) {
+      continue;
+    }
+    if (currentType === 'number') {
+      if (
+        !Number.isFinite(current.value)
+        || (Number.isInteger(current.value) && !Number.isSafeInteger(current.value))
+      ) {
+        return {
+          code: 'spec.non-json-value',
+          severity: 'error',
+          message: 'World Spec numbers must be finite and integers must stay within the safe range.',
+        };
+      }
+      continue;
+    }
+    if (currentType !== 'object') {
+      return {
+        code: 'spec.non-json-value',
+        severity: 'error',
+        message: 'World Spec values must be representable as JSON.',
+      };
+    }
+
+    const objectValue = current.value as object;
+    if (ancestors.has(objectValue)) {
+      return {
+        code: 'spec.circular-json',
+        severity: 'error',
+        message: 'World Spec values must not contain circular references.',
+      };
+    }
+
+    const isArray = Array.isArray(objectValue);
+    const prototype = Object.getPrototypeOf(objectValue);
+    if (!isArray && prototype !== Object.prototype && prototype !== null) {
+      return {
+        code: 'spec.non-json-value',
+        severity: 'error',
+        message: 'World Spec objects must be plain JSON objects rather than class, Date, Map, or Set instances.',
+      };
+    }
+
+    ancestors.add(objectValue);
+    pending.push({ value: objectValue, depth: current.depth, exit: true });
+
+    if (Object.getOwnPropertySymbols(objectValue).length > 0) {
+      return {
+        code: 'spec.non-json-value',
+        severity: 'error',
+        message: 'World Spec objects must not contain symbol-keyed properties.',
+      };
+    }
+
+    if (isArray) {
+      const arrayValue = objectValue as unknown[];
+      const extraArrayKeys = Object.getOwnPropertyNames(arrayValue).filter((key) => {
+        if (key === 'length') return false;
+        const index = Number(key);
+        return !Number.isSafeInteger(index) || index < 0 || index >= arrayValue.length || `${index}` !== key;
+      });
+      if (extraArrayKeys.length > 0) {
+        return {
+          code: 'spec.non-json-value',
+          severity: 'error',
+          message: 'World Spec arrays must contain indexed JSON values only.',
+        };
+      }
+      for (let index = arrayValue.length - 1; index >= 0; index -= 1) {
+        const descriptor = Object.getOwnPropertyDescriptor(arrayValue, index);
+        if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
+          return {
+            code: 'spec.non-json-value',
+            severity: 'error',
+            message: 'World Spec arrays must contain enumerable data entries without holes or accessors.',
+          };
+        }
+        pending.push({ value: descriptor.value, depth: current.depth + 1 });
+      }
+      continue;
+    }
+
+    const descriptors = Object.getOwnPropertyDescriptors(objectValue);
+    for (const [key, descriptor] of Object.entries(descriptors)) {
+      if (FORBIDDEN_WORLD_SPEC_OBJECT_KEYS.has(key)) {
+        return {
+          code: 'spec.unsafe-json-key',
+          severity: 'error',
+          message: `World Spec contains a forbidden object key: ${key}.`,
+        };
+      }
+      if (!descriptor.enumerable || !('value' in descriptor)) {
+        return {
+          code: 'spec.non-json-value',
+          severity: 'error',
+          message: 'World Spec objects must contain data properties only.',
+        };
+      }
+      pending.push({ value: descriptor.value, depth: current.depth + 1 });
+    }
+  }
+
+  const encodedBytes = new TextEncoder().encode(JSON.stringify(value)).byteLength;
+  if (encodedBytes > MAX_WORLD_SPEC_FILE_BYTES) {
+    return {
+      code: 'spec.too-large',
+      severity: 'error',
+      message: `World Spec JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
+    };
+  }
+
+  return null;
+}
+
 export function validateWorldSpec(spec: unknown): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const candidate: unknown = spec;
 
   if (!isRecord(candidate)) {
     return [{ code: 'spec.invalid-root', severity: 'error', message: 'World spec must be an object.' }];
+  }
+
+  try {
+    const jsonContractIssue = inspectWorldSpecJsonContract(candidate);
+    if (jsonContractIssue) return [jsonContractIssue];
+  } catch {
+    return [{
+      code: 'spec.non-json-value',
+      severity: 'error',
+      message: 'World Spec could not be inspected as a plain JSON value.',
+    }];
   }
 
   addUnknownKeyIssue(
@@ -228,6 +404,18 @@ export function validateGeneratedWorld(world: GeneratedWorld): ValidationIssue[]
 
   const spec = candidate.spec as WorldSpec;
   const issues = validateWorldSpec(spec);
+  const generator = candidate.generator;
+  if (
+    !isRecord(generator)
+    || !isValidGeneratorId(generator.id)
+    || !isValidGeneratorVersion(generator.version)
+  ) {
+    issues.push({
+      code: 'world.generator',
+      severity: 'error',
+      message: 'Generated world must identify a path-safe provider ID and semantic provider version.',
+    });
+  }
   if (!isRecord(spec) || !isRecord(spec.map)) return issues;
 
   const width = spec.map.width;
@@ -251,33 +439,129 @@ export function validateGeneratedWorld(world: GeneratedWorld): ValidationIssue[]
     }
   }
 
+  const tileIds = new Set<number>();
   if (!tiles) {
     issues.push({ code: 'world.tiles', severity: 'error', message: 'Tile definitions must be an array.' });
-  } else if (ground) {
-    const tileIds = new Set(
-      tiles.flatMap((tile) => (isRecord(tile) && typeof tile.id === 'number' ? [tile.id] : [])),
-    );
-    if (ground.some((tileId) => typeof tileId !== 'number' || !tileIds.has(tileId))) {
+  } else {
+    const tileNames = new Set<string>();
+    let invalidTileDefinition = tiles.length < 1 || tiles.length > TILE_NAMES.size;
+    let duplicateTileDefinition = false;
+
+    for (const tile of tiles.slice(0, TILE_NAMES.size)) {
+      if (
+        !isRecord(tile)
+        || !Number.isSafeInteger(tile.id)
+        || (tile.id as number) < 0
+        || typeof tile.name !== 'string'
+        || !TILE_NAMES.has(tile.name)
+        || typeof tile.color !== 'string'
+        || !HEX_COLOR.test(tile.color)
+        || typeof tile.accent !== 'string'
+        || !HEX_COLOR.test(tile.accent)
+        || typeof tile.walkable !== 'boolean'
+      ) {
+        invalidTileDefinition = true;
+        continue;
+      }
+      if (tileIds.has(tile.id as number) || tileNames.has(tile.name)) duplicateTileDefinition = true;
+      tileIds.add(tile.id as number);
+      tileNames.add(tile.name);
+    }
+
+    if (invalidTileDefinition) {
+      issues.push({
+        code: 'world.tile-definition',
+        severity: 'error',
+        message: 'Every tile needs a unique non-negative integer ID, supported name, two colors, and walkable flag.',
+      });
+    }
+    if (duplicateTileDefinition) {
+      issues.push({
+        code: 'world.duplicate-tile',
+        severity: 'error',
+        message: 'Tile IDs and tile names must be unique.',
+      });
+    }
+  }
+
+  if (ground && tiles && dimensionsAreValid) {
+    const expectedCells = width * height;
+    let invalidGroundValue = false;
+    for (let index = 0; index < Math.min(ground.length, expectedCells); index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(ground, index);
+      if (
+        !descriptor
+        || !descriptor.enumerable
+        || !('value' in descriptor)
+        || !Number.isSafeInteger(descriptor.value)
+        || !tileIds.has(descriptor.value as number)
+      ) {
+        invalidGroundValue = true;
+        break;
+      }
+    }
+    if (invalidGroundValue) {
       issues.push({ code: 'world.unknown-tile', severity: 'error', message: 'The map references an unknown tile ID.' });
     }
   }
 
   if (!props) {
     issues.push({ code: 'world.props', severity: 'error', message: 'Props must be an array.' });
-  } else if (dimensionsAreValid && props.some((prop) => (
-    !isRecord(prop)
-    || typeof prop.x !== 'number'
-    || typeof prop.y !== 'number'
-    || !Number.isFinite(prop.x)
-    || !Number.isFinite(prop.y)
-    || !Number.isInteger(prop.x)
-    || !Number.isInteger(prop.y)
-    || prop.x < 0
-    || prop.y < 0
-    || prop.x >= width
-    || prop.y >= height
-  ))) {
-    issues.push({ code: 'world.prop-bounds', severity: 'error', message: 'One or more props have invalid map coordinates.' });
+  } else if (dimensionsAreValid) {
+    const propIds = new Set<string>();
+    const occupiedCells = new Set<string>();
+    let invalidProp = props.length > width * height;
+    let invalidPropBounds = false;
+    let duplicateProp = false;
+
+    for (const prop of props.slice(0, width * height)) {
+      if (
+        !isRecord(prop)
+        || typeof prop.id !== 'string'
+        || prop.id.length > 120
+        || !GENERATED_ITEM_ID.test(prop.id)
+        || typeof prop.kind !== 'string'
+        || !PROP_KINDS.has(prop.kind)
+      ) {
+        invalidProp = true;
+        continue;
+      }
+
+      if (
+        !Number.isSafeInteger(prop.x)
+        || !Number.isSafeInteger(prop.y)
+        || (prop.x as number) < 0
+        || (prop.y as number) < 0
+        || (prop.x as number) >= width
+        || (prop.y as number) >= height
+      ) {
+        invalidPropBounds = true;
+        continue;
+      }
+
+      const cell = `${prop.x},${prop.y}`;
+      if (propIds.has(prop.id) || occupiedCells.has(cell)) duplicateProp = true;
+      propIds.add(prop.id);
+      occupiedCells.add(cell);
+    }
+
+    if (invalidProp) {
+      issues.push({
+        code: 'world.prop-definition',
+        severity: 'error',
+        message: 'Every prop needs a path-safe ID and a supported prop kind.',
+      });
+    }
+    if (invalidPropBounds) {
+      issues.push({ code: 'world.prop-bounds', severity: 'error', message: 'One or more props have invalid map coordinates.' });
+    }
+    if (duplicateProp) {
+      issues.push({
+        code: 'world.duplicate-prop',
+        severity: 'error',
+        message: 'Prop IDs and occupied map cells must be unique.',
+      });
+    }
   }
 
   if (!issues.some((issue) => issue.severity === 'error') && ground && props) {

@@ -63,9 +63,9 @@ describe('world spec validation', () => {
     spec.map.height = 12.5;
 
     expect(validateWorldSpec(spec)).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: 'spec.map-size', severity: 'error' })]),
+      expect.arrayContaining([expect.objectContaining({ code: 'spec.non-json-value', severity: 'error' })]),
     );
-    expect(() => generateWorld(spec)).toThrow(/spec\.map-size/);
+    expect(() => generateWorld(spec)).toThrow(/spec\.non-json-value/);
   });
 
   it('enforces the schema constants, bounded strings, palette, biome, and output tuple', () => {
@@ -125,6 +125,37 @@ describe('world spec validation', () => {
     noDotNamespace.extensions = { 'dev-stoyo': {} };
     expect(validateWorldSpec(noDotNamespace)).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'spec.extension-namespace', severity: 'error' })]),
+    );
+  });
+
+  it('rejects non-JSON and circular extension data before cloning or export', () => {
+    const withFunction = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    withFunction.extensions = { 'dev.stoyo': { callback: () => undefined } };
+    expect(validateWorldSpec(withFunction)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'spec.non-json-value', severity: 'error' })]),
+    );
+
+    const circularValue: Record<string, unknown> = {};
+    circularValue.self = circularValue;
+    const circular = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    circular.extensions = { 'dev.stoyo': circularValue };
+    expect(validateWorldSpec(circular)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'spec.circular-json', severity: 'error' })]),
+    );
+
+    expect(() => generateWorld(withFunction)).toThrow(/spec\.non-json-value/);
+    expect(() => generateWorld(circular)).toThrow(/spec\.circular-json/);
+
+    const accessor = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    Object.defineProperty(accessor, 'title', {
+      configurable: true,
+      enumerable: true,
+      get() {
+        throw new Error('must not be evaluated');
+      },
+    });
+    expect(validateWorldSpec(accessor)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'spec.non-json-value', severity: 'error' })]),
     );
   });
 
@@ -209,5 +240,23 @@ describe('pack manifest', () => {
     expect(() =>
       buildPackManifest(world, [...manifestFiles(), { ...manifestFiles()[0], path: '../escape.json' }], createdAt),
     ).toThrow('Unsafe pack path');
+  });
+
+  it('refuses to label an unknown provider as procedural provenance', () => {
+    const world = generateWorld(DEFAULT_WORLD_SPEC);
+    world.generator = { id: 'future-ai-provider', version: '1.0.0' };
+
+    expect(() => buildPackManifest(world, manifestFiles(), '2026-07-18T12:00:00.000Z')).toThrow(
+      'v0.1 portable export supports only procedural-pixel-v1@0.1.0',
+    );
+  });
+
+  it('rejects malformed generator identities with a controlled export error', () => {
+    const world = generateWorld(DEFAULT_WORLD_SPEC);
+    world.generator = null as unknown as typeof world.generator;
+
+    expect(() => buildPackManifest(world, manifestFiles(), '2026-07-18T12:00:00.000Z')).toThrow(
+      'v0.1 portable export supports only procedural-pixel-v1@0.1.0',
+    );
   });
 });
