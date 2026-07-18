@@ -5,12 +5,15 @@ import { join } from 'node:path';
 
 import JSZip from 'jszip';
 
+import { verifyLegacyAlpha1Receipt } from './receipt-verifier.mjs';
+
 import {
   DEFAULT_RELEASE_ROOT,
   HASHED_RELEASE_FILE_NAMES,
   RELEASE_FILES,
   RELEASE_TAG,
   REPOSITORY_ROOT,
+  VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES,
   VERSION,
   assertNoLocalAbsolutePath,
   assertPortableRelativePath,
@@ -149,6 +152,12 @@ async function verify() {
   );
 
   await verifyChecksums();
+  const pinnedExamplePackHash = VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES[RELEASE_TAG];
+  assert(pinnedExamplePackHash, `No immutable public example-pack hash is pinned for ${RELEASE_TAG}`);
+  assert(
+    sha256(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.examplePack))) === pinnedExamplePackHash,
+    `Sunny Meadow ZIP differs from the immutable public hash for ${RELEASE_TAG}`,
+  );
   await assertZipMatches(RELEASE_FILES.web, await expectedWebEntries());
   await assertZipMatches(RELEASE_FILES.godotImporter, await expectedImporterEntries());
   await assertZipMatches(RELEASE_FILES.examplePack, await expectedExamplePackEntries());
@@ -241,6 +250,15 @@ async function verify() {
     assert(bytes.length === fileRecord.bytes, `Sunny Meadow byte count mismatch: ${fileRecord.path}`);
     assert(sha256(bytes) === fileRecord.sha256, `Sunny Meadow SHA-256 mismatch: ${fileRecord.path}`);
   }
+
+  await verifyLegacyAlpha1Receipt({
+    manifest: exampleManifest,
+    context: 'Sunny Meadow release pack',
+    readPackFile: async (path) => {
+      const entry = exampleFiles.get(path);
+      return entry ? entry.async('nodebuffer') : undefined;
+    },
+  });
 
   const sourceJsonChecks = [
     ['worlds/sunny-meadow.world.json', join(REPOSITORY_ROOT, 'examples', 'sunny-meadow.world.json')],

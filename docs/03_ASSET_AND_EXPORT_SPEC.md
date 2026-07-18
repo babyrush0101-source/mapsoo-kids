@@ -110,6 +110,22 @@ mapsoo-sunny-meadow-v0.1.0-alpha.1/
 
 所有消费者读取同一套 PNG、JSON、manifest 和许可文件。Godot 用户从官方仓库或未来的 Godot Asset Library 独立安装 importer；素材 ZIP 只在 manifest 中声明 importer ID、最低版本和官方来源，不维护容易漂移的第二套“Godot ZIP”。
 
+### Provider Receipt 兼容边界
+
+已公开的 `v0.1.0-alpha.1` 示例包含早期 `schema_version: 0.1.0` generation receipt。该文件属于已发布证据，保持原字节、manifest file record 和公开 ZIP hash 不变；它只对 allowlist 中的 `procedural-pixel-v1@0.1.0` 有效，不能作为 AI Provider 的发布凭证。
+
+下一 pack release 使用独立 `mapsoo-generation-receipt.schema.json` 的 `0.2.0` 合同。所有顶层证据字段必填，语义上不存在的值写成 `null` 或空数组，而不是省略。Receipt 至少绑定：
+
+- `created_at` 与 manifest 创建时间；
+- World ID、seed、World Spec pack 路径与精确字节 SHA-256；
+- Provider ID/version、local/remote execution 和 procedural/generative-AI provenance；
+- 显式 model（程序化输出为 `null`）与版本化 workflow；
+- 按执行顺序记录的 versioned transformations；
+- `contains_generative_ai`、human curation 和公开说明；
+- 输出许可、许可通知路径、Provider 条款与所有输入/参考 source 的 hash/许可。
+
+Receipt validator 必须把这些字段与 runner 的冻结 Provider snapshot、World Spec、manifest、file records 和资产许可交叉校验。`human_curated: true` 不能把 AI 输出改写成非 AI；未知许可、缺模型/工作流、冲突 hash 或不完整 source 声明都必须 fail closed。许可只接受项目 allowlist 中的 SPDX ID；自定义条款必须显式使用 `LicenseRef-*`，source 的自定义许可还必须提供公开 HTTPS 条款 URL。Receipt 不保存 API Key、私密 prompt 正文或原始 vendor error。
+
 ## 7. Godot 导入流程
 
 Godot 资源通常在导入时产生 UID 和 `.godot/imported` 状态，因此 v0.1 由 Godot 内运行的普通 `EditorPlugin` 创建 TileSet/场景，而不是在浏览器里手写依赖特定 UID 的 `.tres`，也不抢占通用 `.json` 扩展名注册 `EditorImportPlugin`。`.godot/` 和 `.import` 缓存不进入导出包。参考：[Godot editor plugins](https://docs.godotengine.org/en/4.3/tutorials/plugins/editor/making_plugins.html)。
@@ -154,7 +170,7 @@ itch.io 不应成为私有格式。发布包在通用 ZIP 上增加：
 
 导出器不能用“Mapsoo 是 MIT”推导“所有输出资产都是 MIT”。
 
-Provider SDK 的存在不等于任意 Provider 已可发布。v0.1 exporter 只接受 `procedural-pixel-v1@0.1.0`；其他 Provider 必须等 provider receipt、模型/工作流字段、许可选择和 itch.io AI Disclosure 能被完整写入并校验后，才允许进入 portable/itch 输出。
+Provider SDK 的存在不等于任意 Provider 已可发布。v0.1 exporter 只接受 `procedural-pixel-v1@0.1.0`；`0.2.0` receipt schema/runtime validator 只是下一版本的安全基础。其他 Provider 必须等 runner evidence envelope、manifest/export 接线、许可选择和 itch.io Graphics Disclosure 全部完成并评审后，才允许进入 portable/itch 输出。
 
 ## 10. 验收清单
 

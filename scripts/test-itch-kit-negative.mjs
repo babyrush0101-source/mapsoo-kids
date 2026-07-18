@@ -75,6 +75,30 @@ async function createZip(entries) {
   return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
+async function rewriteLegacyReceipt(mutator) {
+  await buildItchKit(testRoot);
+  const packPath = join(testRoot, 'uploads', RELEASE_FILES.examplePack);
+  const zip = await JSZip.loadAsync(await readFile(packPath), { createFolders: false });
+  const packRoot = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
+  const receiptPath = `${packRoot}/generation-receipt.json`;
+  const manifestPath = `${packRoot}/mapsoo.manifest.json`;
+  const receiptEntry = zip.file(receiptPath);
+  const manifestEntry = zip.file(manifestPath);
+  if (!receiptEntry || !manifestEntry) throw new Error('negative fixture is missing receipt or manifest');
+
+  const receipt = JSON.parse(await receiptEntry.async('string'));
+  const manifest = JSON.parse(await manifestEntry.async('string'));
+  await mutator({ receipt, manifest });
+  const receiptBytes = Buffer.from(`${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
+  const receiptRecord = manifest.files.find((record) => record.path === 'generation-receipt.json');
+  if (!receiptRecord) throw new Error('negative fixture manifest is missing its receipt record');
+  receiptRecord.bytes = receiptBytes.length;
+  receiptRecord.sha256 = sha256(receiptBytes);
+  zip.file(receiptPath, receiptBytes, { createFolders: false });
+  zip.file(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, { createFolders: false });
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } });
+}
+
 async function rewriteKitIntegrityRecords(packBytes) {
   const packHash = sha256(packBytes);
   const checksumBytes = Buffer.from(`${packHash}  ${RELEASE_FILES.examplePack}\n`, 'utf8');
@@ -247,6 +271,22 @@ try {
     'ZIP oversized entry',
     () => createZip([[`${packRoot}/oversized.json`, Buffer.alloc(10 * 1024 * 1024 + 1)]]),
     /declared size limit/,
+  );
+
+  await expectPackFailure(
+    'receipt and manifest AI semantic conflict with recomputed inner integrity',
+    () => rewriteLegacyReceipt(({ receipt }) => {
+      receipt.contains_generative_ai = true;
+    }),
+    /legacy receipt must declare contains_generative_ai=false/,
+  );
+
+  await expectPackFailure(
+    'forged non-builtin receipt generator with recomputed inner integrity',
+    () => rewriteLegacyReceipt(({ receipt }) => {
+      receipt.generator = { id: 'future-ai-provider', version: '1.0.0' };
+    }),
+    /legacy receipt must use builtin procedural-pixel-v1@0\.1\.0/,
   );
 
   await expectFailure(

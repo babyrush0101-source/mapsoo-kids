@@ -3,11 +3,14 @@ import { join } from 'node:path';
 
 import JSZip from 'jszip';
 
+import { verifyLegacyAlpha1Receipt } from './receipt-verifier.mjs';
+
 import {
   DEFAULT_RELEASE_ROOT,
   RELEASE_FILES,
   RELEASE_TAG,
   REPOSITORY_ROOT,
+  VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES,
   VERSION,
   assertNoLocalAbsolutePath,
   assertPortableRelativePath,
@@ -61,9 +64,6 @@ const MAX_ZIP_ENTRIES = 64;
 const MAX_ZIP_ENTRY_BYTES = 10 * 1024 * 1024;
 const MAX_ZIP_TOTAL_BYTES = 50 * 1024 * 1024;
 const MAX_TEXT_ENTRY_BYTES = 1024 * 1024;
-const VERIFIED_PUBLIC_PACK_HASHES = Object.freeze({
-  'v0.1.0-alpha.1': 'e9434cebdecdc9ad2c1cdfa1629cb323c0384385dc70b6943426bfbf96205c8a',
-});
 const EXPECTED_SHORT_DESCRIPTION =
   'Free CC0 pixel-art tiles, props, map JSON, and an import workflow tested on Godot 4.3 and 4.7.';
 const EXPECTED_TAGS = Object.freeze([
@@ -315,7 +315,7 @@ async function loadAuthoritativePack() {
   const checksumText = await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.checksums), 'utf8');
   assertLfText(checksumText, 'verified GitHub release SHA256SUMS');
   const expectedHash = parseReleaseChecksum(checksumText, RELEASE_FILES.examplePack);
-  const pinnedPublicHash = VERIFIED_PUBLIC_PACK_HASHES[RELEASE_TAG];
+  const pinnedPublicHash = VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES[RELEASE_TAG];
   assert(pinnedPublicHash, `no public pack hash is pinned for ${RELEASE_TAG}`);
   assert(expectedHash === pinnedPublicHash, 'release SHA256SUMS differs from the pinned public pack hash');
   assert(sha256(packBytes) === expectedHash, 'verified GitHub release pack differs from SHA256SUMS');
@@ -447,6 +447,11 @@ export async function verifyPackZip(packPath, authoritativeHash) {
     assert(contents.length === record.bytes, `itch asset byte count mismatch: ${record.path}`);
     assert(sha256(contents) === record.sha256, `itch asset SHA-256 mismatch: ${record.path}`);
   }
+  await verifyLegacyAlpha1Receipt({
+    manifest,
+    context: 'itch Sunny Meadow pack',
+    readPackFile: async (path) => entryBytes.get(path),
+  });
   return bytes;
 }
 

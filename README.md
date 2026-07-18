@@ -33,6 +33,8 @@ The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionall
 
 Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, and imported World Specs through the provider SDK, exposes the active provider identity and capabilities, and keeps only the latest request eligible to update the preview. Optional AI providers come later; the v0.1 exporter deliberately rejects them until truthful provider receipts, licensing, and AI disclosure are implemented.
 
+The repository defines the next full generation-receipt contract separately from the frozen `v0.1.0-alpha.1` example. The published alpha keeps its legacy receipt bytes and procedural-only allowlist; a later release will adopt the new receipt only with a new fixture, version, and public hash.
+
 ## Documentation
 
 - [Master plan](docs/00_MASTER_PLAN.md)
