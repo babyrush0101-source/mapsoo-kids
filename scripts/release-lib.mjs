@@ -1,48 +1,67 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, rm, mkdir, writeFile, lstat } from 'node:fs/promises';
 import * as nodePath from 'node:path';
-import { dirname, join, relative, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, relative, resolve, sep } from 'node:path';
 
 import JSZip from 'jszip';
 
-export const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const PACKAGE_JSON_PATH = join(REPOSITORY_ROOT, 'package.json');
+import {
+  CURRENT_RELEASE_CONFIG,
+  PACKAGE_JSON_PATH,
+  REPOSITORY_ROOT,
+  assertReleaseBuildAllowed,
+  assertReceiptVerifierBinding,
+  assertRegisteredReleaseConfig,
+  getReleaseConfig,
+  listPublishedReleaseConfigs,
+  listReleaseConfigs,
+} from './release-config.mjs';
 
-const packageJson = JSON.parse(await readFile(PACKAGE_JSON_PATH, 'utf8'));
+export {
+  CURRENT_RELEASE_CONFIG,
+  PACKAGE_JSON_PATH,
+  REPOSITORY_ROOT,
+  assertReleaseBuildAllowed,
+  assertReceiptVerifierBinding,
+  assertRegisteredReleaseConfig,
+  getReleaseConfig,
+  listPublishedReleaseConfigs,
+  listReleaseConfigs,
+};
 
-export const VERSION = packageJson.version;
-export const RELEASE_TAG = `v${VERSION}`;
+export const VERSION = CURRENT_RELEASE_CONFIG.version;
+export const RELEASE_TAG = CURRENT_RELEASE_CONFIG.tag;
 export const DEFAULT_RELEASE_ROOT = join(REPOSITORY_ROOT, 'release', RELEASE_TAG);
 export const ZIP_DATE = new Date(Date.UTC(1980, 0, 1, 0, 0, 0, 0));
 
 // Published hashes are immutable evidence. Add a new tag entry for a new pack;
 // never replace an existing value to make a rebuilt historical release pass.
 export const VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES = Object.freeze({
-  'v0.1.0-alpha.1': 'e9434cebdecdc9ad2c1cdfa1629cb323c0384385dc70b6943426bfbf96205c8a',
+  ...Object.fromEntries(
+    listPublishedReleaseConfigs().map(({ tag, publicExamplePackSha256 }) => [
+      tag,
+      publicExamplePackSha256,
+    ]),
+  ),
 });
 
 export function comparePortablePaths(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-export const RELEASE_FILES = Object.freeze({
-  web: `mapsoo-worldsmith-web-${RELEASE_TAG}.zip`,
-  godotImporter: `mapsoo-godot-importer-${RELEASE_TAG}.zip`,
-  examplePack: `mapsoo-sunny-meadow-${RELEASE_TAG}.zip`,
-  evidenceVideo: `mapsoo-worldsmith-${RELEASE_TAG}-75s.mp4`,
-  exampleWorldSpec: `sunny-meadow-${RELEASE_TAG}.world.json`,
-  worldSchema: `mapsoo-world.schema-${RELEASE_TAG}.json`,
-  packSchema: `mapsoo-pack.schema-${RELEASE_TAG}.json`,
-  license: 'LICENSE',
-  changelog: 'CHANGELOG.md',
-  manifest: 'release-manifest.json',
-  checksums: 'SHA256SUMS',
-});
+export const RELEASE_FILES = CURRENT_RELEASE_CONFIG.release.files;
+
+export function hashedReleaseFileNames(config = CURRENT_RELEASE_CONFIG) {
+  return Object.freeze(
+    Object.values(config.release.files)
+      .filter((name) => name !== config.release.files.checksums)
+      .sort(comparePortablePaths),
+  );
+}
 
 export const HASHED_RELEASE_FILE_NAMES = Object.freeze(
-  Object.values(RELEASE_FILES)
-    .filter((name) => name !== RELEASE_FILES.checksums)
+  Object.values(CURRENT_RELEASE_CONFIG.release.files)
+    .filter((name) => name !== CURRENT_RELEASE_CONFIG.release.files.checksums)
     .sort(comparePortablePaths),
 );
 
@@ -254,15 +273,28 @@ function stableJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
-  if (!VERSION || VERSION !== '0.1.0-alpha.1') {
-    throw new Error(`This release pipeline targets 0.1.0-alpha.1; package.json reports ${VERSION}`);
-  }
+export async function buildExamplePackArchive(version = VERSION) {
+  const config = getReleaseConfig(version);
+  const examplePackRoot = join(REPOSITORY_ROOT, config.release.examplePack.sourceDirectory);
+  const examplePackFiles = await listFiles(examplePackRoot);
+  const examplePackZipEntries = examplePackFiles.map((entry) => ({
+    ...entry,
+    archivePath: `${config.release.examplePack.archiveRoot}/${entry.archivePath}`,
+  }));
+  return createDeterministicZip(examplePackZipEntries);
+}
+
+export async function buildRelease(outputRoot, version = VERSION) {
+  const config = assertReleaseBuildAllowed(getReleaseConfig(version));
+  const releaseTag = config.tag;
+  const releaseFiles = config.release.files;
+  const hashedFileNames = hashedReleaseFileNames(config);
+  const requestedOutputRoot = outputRoot ?? join(REPOSITORY_ROOT, 'release', releaseTag);
 
   const releaseParent = resolve(REPOSITORY_ROOT, 'release');
   const resolvedOutputRoot = await replaceSafeOutputDirectory(
     releaseParent,
-    outputRoot,
+    requestedOutputRoot,
     'Refusing to replace output outside release/',
   );
 
@@ -273,10 +305,10 @@ export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
   }
   const webZipEntries = webFiles.map((entry) => ({
     ...entry,
-    archivePath: `mapsoo-worldsmith-web-${RELEASE_TAG}/${entry.archivePath}`,
+    archivePath: `mapsoo-worldsmith-web-${releaseTag}/${entry.archivePath}`,
   }));
   await writeFile(
-    join(resolvedOutputRoot, RELEASE_FILES.web),
+    join(resolvedOutputRoot, releaseFiles.web),
     await createDeterministicZip(webZipEntries),
   );
 
@@ -291,44 +323,24 @@ export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
     bytes: await readPortableFile(join(REPOSITORY_ROOT, 'LICENSE'), 'LICENSE.txt'),
   });
   await writeFile(
-    join(resolvedOutputRoot, RELEASE_FILES.godotImporter),
+    join(resolvedOutputRoot, releaseFiles.godotImporter),
     await createDeterministicZip(importerZipEntries),
   );
 
-  const examplePackRootName = `mapsoo-sunny-meadow-${RELEASE_TAG}`;
-  const examplePackRoot = join(
-    REPOSITORY_ROOT,
-    'examples',
-    'packs',
-    `sunny-meadow-${RELEASE_TAG}`,
-  );
-  const examplePackFiles = await listFiles(examplePackRoot);
-  const examplePackZipEntries = examplePackFiles.map((entry) => ({
-    ...entry,
-    archivePath: `${examplePackRootName}/${entry.archivePath}`,
-  }));
   await writeFile(
-    join(resolvedOutputRoot, RELEASE_FILES.examplePack),
-    await createDeterministicZip(examplePackZipEntries),
+    join(resolvedOutputRoot, releaseFiles.examplePack),
+    await buildExamplePackArchive(version),
   );
 
   const copiedFiles = [
-    [join(REPOSITORY_ROOT, 'examples', 'sunny-meadow.world.json'), RELEASE_FILES.exampleWorldSpec],
-    [join(REPOSITORY_ROOT, 'schemas', 'mapsoo-world.schema.json'), RELEASE_FILES.worldSchema],
-    [join(REPOSITORY_ROOT, 'schemas', 'mapsoo-pack.schema.json'), RELEASE_FILES.packSchema],
-    [join(REPOSITORY_ROOT, 'LICENSE'), RELEASE_FILES.license],
-    [join(REPOSITORY_ROOT, 'CHANGELOG.md'), RELEASE_FILES.changelog],
-    [
-      join(
-        REPOSITORY_ROOT,
-        'docs',
-        'media',
-        RELEASE_TAG,
-        'video',
-        `mapsoo-worldsmith-${RELEASE_TAG}-75s.mp4`,
-      ),
-      RELEASE_FILES.evidenceVideo,
-    ],
+    [join(REPOSITORY_ROOT, config.release.inputs.exampleWorldSpec), releaseFiles.exampleWorldSpec],
+    ...config.release.schemas.map(({ releaseFileKey, source }) => [
+      join(REPOSITORY_ROOT, source),
+      releaseFiles[releaseFileKey],
+    ]),
+    [join(REPOSITORY_ROOT, config.release.inputs.license), releaseFiles.license],
+    [join(REPOSITORY_ROOT, config.release.inputs.changelog), releaseFiles.changelog],
+    [join(REPOSITORY_ROOT, config.release.inputs.evidenceVideo), releaseFiles.evidenceVideo],
   ];
 
   for (const [source, targetName] of copiedFiles) {
@@ -342,52 +354,52 @@ export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
   const releaseManifest = {
     schemaVersion: 1,
     project: 'Mapsoo Worldsmith',
-    version: VERSION,
-    releaseTag: RELEASE_TAG,
+    version: config.version,
+    releaseTag,
     artifacts: {
       web: {
-        file: RELEASE_FILES.web,
+        file: releaseFiles.web,
         purpose: 'Static web generator build',
       },
       godotImporter: {
-        file: RELEASE_FILES.godotImporter,
+        file: releaseFiles.godotImporter,
         purpose: 'Godot 4.3+ editor plugin; extract into a Godot project root',
       },
       examplePack: {
-        file: RELEASE_FILES.examplePack,
+        file: releaseFiles.examplePack,
         purpose: 'Executable-free Sunny Meadow PNG + JSON pack verified in Godot 4.3 and 4.7',
       },
       evidenceVideo: {
-        file: RELEASE_FILES.evidenceVideo,
+        file: releaseFiles.evidenceVideo,
         purpose: 'Silent bilingual 75-second H.264 evidence cut for the verified release candidate',
       },
       exampleWorldSpec: {
-        file: RELEASE_FILES.exampleWorldSpec,
+        file: releaseFiles.exampleWorldSpec,
         purpose: 'Versioned Sunny Meadow input example',
       },
-      schemas: [RELEASE_FILES.worldSchema, RELEASE_FILES.packSchema],
-      license: RELEASE_FILES.license,
-      changelog: RELEASE_FILES.changelog,
-      checksums: RELEASE_FILES.checksums,
+      schemas: config.release.schemas.map(({ releaseFileKey }) => releaseFiles[releaseFileKey]),
+      license: releaseFiles.license,
+      changelog: releaseFiles.changelog,
+      checksums: releaseFiles.checksums,
     },
   };
   const manifestText = stableJson(releaseManifest);
-  assertNoLocalAbsolutePath(manifestText, RELEASE_FILES.manifest);
-  await writeFile(join(resolvedOutputRoot, RELEASE_FILES.manifest), manifestText, 'utf8');
+  assertNoLocalAbsolutePath(manifestText, releaseFiles.manifest);
+  await writeFile(join(resolvedOutputRoot, releaseFiles.manifest), manifestText, 'utf8');
 
   const checksumLines = [];
-  for (const fileName of HASHED_RELEASE_FILE_NAMES) {
+  for (const fileName of hashedFileNames) {
     const bytes = await readFile(join(resolvedOutputRoot, fileName));
     checksumLines.push(`${sha256(bytes)}  ${fileName}`);
   }
   await writeFile(
-    join(resolvedOutputRoot, RELEASE_FILES.checksums),
+    join(resolvedOutputRoot, releaseFiles.checksums),
     `${checksumLines.join('\n')}\n`,
     'utf8',
   );
 
   return {
     outputRoot: resolvedOutputRoot,
-    files: [...HASHED_RELEASE_FILE_NAMES, RELEASE_FILES.checksums],
+    files: [...hashedFileNames, releaseFiles.checksums],
   };
 }
