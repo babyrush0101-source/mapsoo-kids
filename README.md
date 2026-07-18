@@ -39,6 +39,7 @@ Image generation alone does not make a usable game-asset pipeline. Mapsoo first 
 - [Security and migration audit](docs/06_SECURITY_AND_MIGRATION.md)
 - [STOYO integration](docs/07_STOYO_INTEGRATION.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
+- [Deterministic itch.io release visuals](docs/release-visuals/README.md)
 - [v0.1.0-alpha.1 release notes](docs/releases/v0.1.0-alpha.1.md)
 
 ## Local development
