@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a focused World Spec, generator, validator, exporter, or Godot workflow improvement.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Creator problem
+      description: What Godot/world-asset task is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe the smallest useful outcome, not only a UI solution.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - World Spec / schema
+        - Procedural generation
+        - AI provider
+        - Validation
+        - Portable export
+        - Godot importer
+        - Documentation
+    validations:
+      required: true

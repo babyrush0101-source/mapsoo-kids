@@ -1,2 +1,12 @@
 node_modules
 dist
+coverage
+.env
+.env.*
+!.env.example
+.DS_Store
+._*
+.godot/
+*.import
+*.zip
+*.tsbuildinfo
