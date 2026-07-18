@@ -31,7 +31,7 @@ The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionall
 
 ## Why this order
 
-Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. AI providers will plug into the same contract later.
+Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The provider SDK now wraps the offline procedural baseline with explicit capabilities, a registry, abort boundaries, and validated output. Optional AI providers come later; the v0.1 exporter deliberately rejects them until truthful provider receipts, licensing, and AI disclosure are implemented.
 
 ## Documentation
 
@@ -44,6 +44,7 @@ Image generation alone does not make a usable game-asset pipeline. Mapsoo first 
 - [Security and migration audit](docs/06_SECURITY_AND_MIGRATION.md)
 - [STOYO integration](docs/07_STOYO_INTEGRATION.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
+- [Generation Provider SDK](docs/09_PROVIDER_SDK.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
 - [Verified itch.io operator upload kit](docs/itch-kit/README.md)
 - [75-second evidence video source and verification](video/README.md)

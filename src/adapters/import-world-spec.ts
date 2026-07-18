@@ -1,11 +1,13 @@
 import { cloneWorldSpec, type WorldSpec } from '../core/world-spec';
 import { validateWorldSpec, type ValidationIssue } from '../core/validate-world';
+import {
+  FORBIDDEN_WORLD_SPEC_OBJECT_KEYS,
+  MAX_WORLD_SPEC_FILE_BYTES,
+  MAX_WORLD_SPEC_JSON_DEPTH,
+  MAX_WORLD_SPEC_JSON_NODES,
+} from '../core/world-spec-limits';
 
-export const MAX_WORLD_SPEC_FILE_BYTES = 128 * 1024;
-
-const MAX_JSON_DEPTH = 32;
-const MAX_JSON_NODES = 10_000;
-const FORBIDDEN_OBJECT_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+export { MAX_WORLD_SPEC_FILE_BYTES } from '../core/world-spec-limits';
 
 export type WorldSpecImportErrorCode =
   | 'import.empty'
@@ -67,12 +69,18 @@ function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
     if (!current) break;
 
     visitedNodes += 1;
-    if (visitedNodes > MAX_JSON_NODES) {
-      return failure('import.too-complex', `World Spec JSON may contain at most ${MAX_JSON_NODES} values.`);
+    if (visitedNodes > MAX_WORLD_SPEC_JSON_NODES) {
+      return failure(
+        'import.too-complex',
+        `World Spec JSON may contain at most ${MAX_WORLD_SPEC_JSON_NODES} values.`,
+      );
     }
 
-    if (current.depth > MAX_JSON_DEPTH) {
-      return failure('import.too-deep', `World Spec JSON may be nested at most ${MAX_JSON_DEPTH} levels.`);
+    if (current.depth > MAX_WORLD_SPEC_JSON_DEPTH) {
+      return failure(
+        'import.too-deep',
+        `World Spec JSON may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
+      );
     }
 
     if (typeof current.value === 'number') {
@@ -92,7 +100,7 @@ function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
     if (typeof current.value !== 'object' || current.value === null) continue;
 
     for (const [key, child] of Object.entries(current.value)) {
-      if (FORBIDDEN_OBJECT_KEYS.has(key)) {
+      if (FORBIDDEN_WORLD_SPEC_OBJECT_KEYS.has(key)) {
         return failure('import.unsafe-key', `World Spec JSON contains a forbidden object key: ${key}.`);
       }
       pending.push({ value: child, depth: current.depth + 1 });
@@ -131,16 +139,16 @@ function assertNoDuplicateObjectKeys(text: string): void {
 
   function readValue(depth: number): void {
     visitedNodes += 1;
-    if (visitedNodes > MAX_JSON_NODES) {
+    if (visitedNodes > MAX_WORLD_SPEC_JSON_NODES) {
       throw new JsonStructureLimitError(
         'import.too-complex',
-        `World Spec JSON may contain at most ${MAX_JSON_NODES} values.`,
+        `World Spec JSON may contain at most ${MAX_WORLD_SPEC_JSON_NODES} values.`,
       );
     }
-    if (depth > MAX_JSON_DEPTH) {
+    if (depth > MAX_WORLD_SPEC_JSON_DEPTH) {
       throw new JsonStructureLimitError(
         'import.too-deep',
-        `World Spec JSON may be nested at most ${MAX_JSON_DEPTH} levels.`,
+        `World Spec JSON may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
       );
     }
 

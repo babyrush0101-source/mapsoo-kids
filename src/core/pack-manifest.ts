@@ -1,4 +1,5 @@
 import type { GeneratedWorld } from './world-spec';
+import { assertV01ProceduralGenerator } from './generator-identity';
 
 export interface PackFileRecord {
   path: string;
@@ -136,6 +137,7 @@ export function buildPackManifest(
   files: PackFileRecord[],
   createdAt: string,
 ): PackManifest {
+  assertV01ProceduralGenerator(world.generator);
   const tileSize = world.spec.visual.tileSize;
   const propKinds = ['tree', 'rock', 'flower'] as const;
   const filesByPath = indexPackFiles(files);

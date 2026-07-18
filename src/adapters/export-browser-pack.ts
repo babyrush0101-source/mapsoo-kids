@@ -7,6 +7,7 @@ import {
   type PackFileRecord,
 } from '../core/pack-manifest';
 import type { GeneratedWorld } from '../core/world-spec';
+import { assertV01ProceduralGenerator } from '../core/generator-identity';
 import { validateGeneratedWorld } from '../core/validate-world';
 import { renderPropsAtlas, renderTerrainAtlas, renderWorldToCanvas } from './canvas/render-world';
 
@@ -47,6 +48,7 @@ export async function buildPortablePack(world: GeneratedWorld): Promise<{ filena
   if (errors.length > 0) {
     throw new Error(`Invalid generated world: ${errors.map((issue) => issue.code).join(', ')}`);
   }
+  assertV01ProceduralGenerator(world.generator);
 
   const version = '0.1.0-alpha.1';
   const rootName = assertSafePackPath(`mapsoo-${world.spec.id}-v${version}`);

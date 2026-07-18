@@ -154,6 +154,8 @@ itch.io 不应成为私有格式。发布包在通用 ZIP 上增加：
 
 导出器不能用“Mapsoo 是 MIT”推导“所有输出资产都是 MIT”。
 
+Provider SDK 的存在不等于任意 Provider 已可发布。v0.1 exporter 只接受 `procedural-pixel-v1@0.1.0`；其他 Provider 必须等 provider receipt、模型/工作流字段、许可选择和 itch.io AI Disclosure 能被完整写入并校验后，才允许进入 portable/itch 输出。
+
 ## 10. 验收清单
 
 - [x] 所有 PNG 尺寸与 manifest 一致；

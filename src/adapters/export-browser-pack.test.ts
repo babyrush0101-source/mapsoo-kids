@@ -112,4 +112,13 @@ describe('portable pack browser download', () => {
     expect(readme).not.toContain('<script>');
     expect(readme).toContain('&lt;script&gt;alert\\(1\\)&lt;/script&gt; \\# \\*unsafe\\*');
   });
+
+  it('blocks non-procedural providers until a truthful provider receipt exists', async () => {
+    const world = generateWorld(DEFAULT_WORLD_SPEC);
+    world.generator = { id: 'future-ai-provider', version: '1.0.0' };
+
+    await expect(buildPortablePack(world)).rejects.toThrow(
+      'v0.1 portable export supports only procedural-pixel-v1@0.1.0',
+    );
+  });
 });

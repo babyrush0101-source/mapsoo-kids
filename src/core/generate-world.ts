@@ -1,5 +1,9 @@
 import { createSeededRandom } from './seeded-random';
 import {
+  PROCEDURAL_PIXEL_GENERATOR_ID,
+  PROCEDURAL_PIXEL_GENERATOR_VERSION,
+} from './generator-identity';
+import {
   cloneWorldSpec,
   type GeneratedWorld,
   type PropKind,
@@ -73,7 +77,7 @@ export function generateWorld(specInput: WorldSpec): GeneratedWorld {
   }
 
   return {
-    generator: { id: 'procedural-pixel-v1', version: '0.1.0' },
+    generator: { id: PROCEDURAL_PIXEL_GENERATOR_ID, version: PROCEDURAL_PIXEL_GENERATOR_VERSION },
     spec,
     tiles: buildTiles(spec),
     ground,

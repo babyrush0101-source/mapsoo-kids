@@ -80,6 +80,8 @@ schemas/
 
 旧网站已经存在于 Git 历史，不需要在新工作树中额外保存 `legacy` 副本。
 
+当前代码仍采用较浅目录：Provider 契约位于 `src/core/generation-provider.ts`，身份规则位于 `src/core/generator-identity.ts`，内置 Provider 与注册表位于 `src/providers/`。只有模块继续增长时才做机械目录迁移，避免为了理想树形打乱已发布路径。
+
 ## 4. World Spec
 
 World Spec 是系统的主要输入，也是 STOYO 与 Mapsoo 的共享协议。示意：
@@ -100,10 +102,6 @@ World Spec 是系统的主要输入，也是 STOYO 与 Mapsoo 的共享协议。
     "width": 24,
     "height": 16,
     "biome": "meadow"
-  },
-  "content": {
-    "terrain": ["grass", "water", "path"],
-    "props": ["tree", "rock", "flower"]
   },
   "output": {
     "targets": ["common", "godot", "itch"],
@@ -128,12 +126,15 @@ World Spec 是系统的主要输入，也是 STOYO 与 Mapsoo 的共享协议。
 interface GeneratorProvider {
   readonly id: string;
   readonly version: string;
-  capabilities(): GeneratorCapabilities;
-  generate(spec: WorldSpec, signal?: AbortSignal): Promise<GeneratedPack>;
+  readonly displayName: string;
+  readonly capabilities: GeneratorCapabilities;
+  generate(spec: WorldSpec, options?: { signal?: AbortSignal }): Promise<GeneratedWorld>;
 }
 ```
 
-v0.1 内置 `procedural-pixel-v1`。未来 AI provider 不能绕过 domain validation；它们只返回标准化候选资产，后续仍执行切图、缩放、命名、元数据与检查。
+当前注册表内置 `procedural-pixel-v1@0.1.0`，声明本地执行、seeded determinism、零凭据、程序化 provenance、支持的 biome/Tile 尺寸、地图上限和局部重生成能力。`runGenerationProvider()` 在执行前验证并快照 Provider 元数据、World Spec 与 capabilities，向 Provider 传入第二份 spec 副本，并在执行后验证 tile/prop 完整性、Provider 身份和 spec 未被改写；AbortSignal 在调用前后都有稳定错误边界，vendor 异常则统一包装为 `provider.execution-failed`。World Spec 的程序化调用与文件导入共享 128 KiB、32 层和 10,000 节点上限，且拒绝循环和非 JSON extension 值。详见 [Provider SDK](09_PROVIDER_SDK.md)。
+
+未来 AI Provider 不能绕过 domain validation；它们只返回标准化候选世界/资产，后续仍执行切图、缩放、命名、元数据与检查。当前 v0.1 exporter 只接受程序化 Provider，防止尚无 receipt 的模型输出被错误声明为 `contains_generative_ai: false` 或 CC0 程序化资产。
 
 Provider receipt 至少记录：
 
