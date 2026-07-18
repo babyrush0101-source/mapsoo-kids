@@ -9,7 +9,7 @@ export interface ValidationIssue {
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const WORLD_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const EXTENSION_NAMESPACE = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$/;
+const EXTENSION_NAMESPACE = /^[a-z][a-z0-9]*(?:\.[a-z0-9]+)+$/;
 const BIOMES = new Set(['meadow', 'desert', 'snow']);
 const TILE_SIZES = new Set([16, 32, 64]);
 
@@ -18,7 +18,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isBoundedString(value: unknown, minimum: number, maximum: number): value is string {
-  return typeof value === 'string' && value.length >= minimum && value.length <= maximum;
+  if (typeof value !== 'string') return false;
+  const length = Array.from(value).length;
+  return length >= minimum && length <= maximum;
+}
+
+function hasControlCharacters(value: string): boolean {
+  return /[\u0000-\u001f\u007f-\u009f]/.test(value);
 }
 
 function addUnknownKeyIssue(
@@ -37,7 +43,7 @@ function addUnknownKeyIssue(
   }
 }
 
-export function validateWorldSpec(spec: WorldSpec): ValidationIssue[] {
+export function validateWorldSpec(spec: unknown): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const candidate: unknown = spec;
 
@@ -69,11 +75,15 @@ export function validateWorldSpec(spec: WorldSpec): ValidationIssue[] {
     });
   }
 
-  if (!isBoundedString(candidate.title, 1, 120) || !candidate.title.trim()) {
+  if (
+    !isBoundedString(candidate.title, 1, 120)
+    || !candidate.title.trim()
+    || hasControlCharacters(candidate.title)
+  ) {
     issues.push({
       code: 'spec.title',
       severity: 'error',
-      message: 'World title is required and must be no more than 120 characters.',
+      message: 'World title is required, must contain no control characters, and must be no more than 120 characters.',
     });
   }
 
@@ -91,7 +101,11 @@ export function validateWorldSpec(spec: WorldSpec): ValidationIssue[] {
     });
   }
 
-  if (!isBoundedString(candidate.seed, 1, 160) || !candidate.seed.trim()) {
+  if (
+    !isBoundedString(candidate.seed, 1, 160)
+    || !candidate.seed.trim()
+    || hasControlCharacters(candidate.seed)
+  ) {
     issues.push({
       code: 'spec.seed',
       severity: 'error',

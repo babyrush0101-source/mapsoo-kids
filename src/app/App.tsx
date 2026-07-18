@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { downloadPortablePack } from '../adapters/export-browser-pack';
+import { readWorldSpecFile } from '../adapters/import-world-spec';
 import { generateWorld } from '../core/generate-world';
 import {
   BIOME_PALETTES,
@@ -34,14 +35,22 @@ function downloadJson(filename: string, value: unknown) {
 }
 
 export function App() {
+  const worldSpecInputRef = useRef<HTMLInputElement>(null);
+  const importRequestRef = useRef(0);
   const [draft, setDraft] = useState<WorldSpec>(() => cloneWorldSpec(DEFAULT_WORLD_SPEC));
   const [world, setWorld] = useState(() => generateWorld(DEFAULT_WORLD_SPEC));
   const [exportState, setExportState] = useState<'idle' | 'building' | 'failed'>('idle');
+  const [importState, setImportState] = useState<'idle' | 'reading'>('idle');
+  const [importNotice, setImportNotice] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
   const draftIssues = useMemo(() => validateWorldSpec(draft), [draft]);
   const packIssues = useMemo(() => validateGeneratedWorld(world), [world]);
   const hasDraftErrors = draftIssues.some((issue) => issue.severity === 'error');
   const hasPackErrors = packIssues.some((issue) => issue.severity === 'error');
   const hasChanges = JSON.stringify(draft) !== JSON.stringify(world.spec);
+
+  useEffect(() => () => {
+    importRequestRef.current += 1;
+  }, []);
 
   function chooseBiome(biome: BiomeId) {
     setDraft((current) => ({
@@ -79,6 +88,47 @@ export function App() {
     }
 
     downloadJson(`${world.spec.id}.world.json`, world.spec);
+  }
+
+  async function importWorldSpec(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file) return;
+
+    const requestId = importRequestRef.current + 1;
+    importRequestRef.current = requestId;
+
+    setImportState('reading');
+    setImportNotice(null);
+
+    const result = await readWorldSpecFile(file);
+    if (requestId !== importRequestRef.current) return;
+    if (!result.ok) {
+      setImportNotice({ tone: 'error', message: result.message });
+      setImportState('idle');
+      return;
+    }
+
+    try {
+      const generatedWorld = generateWorld(result.spec);
+      if (requestId !== importRequestRef.current) return;
+      setDraft(cloneWorldSpec(result.spec));
+      setWorld(generatedWorld);
+      setExportState('idle');
+      const warningCount = result.issues.filter((issue) => issue.severity === 'warning').length;
+      setImportNotice({
+        tone: 'success',
+        message: warningCount > 0
+          ? `Loaded ${file.name} with ${warningCount} validation warning${warningCount === 1 ? '' : 's'}.`
+          : `Loaded and generated ${file.name}.`,
+      });
+    } catch (error) {
+      if (requestId !== importRequestRef.current) return;
+      console.error(error);
+      setImportNotice({ tone: 'error', message: 'The World Spec passed parsing but could not be generated.' });
+    } finally {
+      if (requestId === importRequestRef.current) setImportState('idle');
+    }
   }
 
   return (
@@ -327,6 +377,24 @@ export function App() {
             </ul>
 
             <div className="export-actions">
+              <input
+                ref={worldSpecInputRef}
+                className="file-input"
+                type="file"
+                accept=".json,application/json"
+                aria-label="Choose a World Spec JSON file"
+                onChange={importWorldSpec}
+                disabled={importState === 'reading'}
+              />
+              <button
+                className="secondary-action is-ready"
+                type="button"
+                onClick={() => worldSpecInputRef.current?.click()}
+                disabled={importState === 'reading'}
+                aria-describedby="world-spec-import-status"
+              >
+                {importState === 'reading' ? 'Reading World Spec…' : 'Load World Spec JSON'}
+              </button>
               <button
                 className="secondary-action is-ready"
                 type="button"
@@ -344,6 +412,15 @@ export function App() {
                 {exportState === 'building' ? 'Building ZIP…' : 'Assemble Godot-compatible ZIP'}
                 <span>↓</span>
               </button>
+            </div>
+            <div
+              id="world-spec-import-status"
+              className="import-status"
+              aria-live="polite"
+              aria-busy={importState === 'reading'}
+            >
+              {importState === 'reading' && <p>Reading and validating the selected World Spec…</p>}
+              {importState === 'idle' && importNotice && <p className={importNotice.tone}>{importNotice.message}</p>}
             </div>
             {exportState === 'failed' && <p className="export-error">Pack assembly failed. Check the browser console.</p>}
           </aside>

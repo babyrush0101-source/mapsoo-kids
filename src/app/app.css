@@ -110,9 +110,15 @@ textarea { resize: vertical; line-height: 1.45; }
 .primary-action { display: flex; justify-content: space-between; background: var(--accent); color: var(--accent-ink); }
 .primary-action:disabled { cursor: not-allowed; opacity: .45; }
 .export-actions { display: grid; gap: 8px; margin-top: 20px; }
+.file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .secondary-action { margin-top: 0; color: var(--muted); background: #19231f; border: 1px solid var(--line); cursor: not-allowed; }
 .secondary-action.is-ready { color: var(--ink); background: transparent; cursor: pointer; }
 .secondary-action.is-ready:hover { border-color: var(--accent); color: var(--accent); }
+.secondary-action:disabled { cursor: not-allowed; opacity: .45; }
+.import-status { min-height: 18px; margin-top: 8px; }
+.import-status p { margin: 0; font-size: 10px; line-height: 1.5; }
+.import-status p.success { color: var(--accent); }
+.import-status p.error { color: #ff8f87; }
 .export-error { color: #ff8f87; font-size: 10px; line-height: 1.4; }
 
 .preview-panel { display: flex; flex-direction: column; min-height: 670px; background: #0e1714; }

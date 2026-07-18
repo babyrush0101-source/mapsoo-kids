@@ -28,6 +28,7 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 - GitHub Pages and tag-gated release-draft workflows, plus weekly dependency update configuration.
 - A deterministic itch.io cover and five evidence-based release visuals with automated dimension and source-fact verification.
 - A reproducible 75-second bilingual H.264 evidence video, committed MP4 metadata checks, and release-bundle integration.
+- Strict local World Spec JSON save/load with UTF-8, duplicate-key, depth, complexity, safe-number, prototype-key, schema, race, and Markdown-output protections.
 
 ### Changed
 

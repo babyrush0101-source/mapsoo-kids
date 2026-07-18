@@ -8,9 +8,19 @@
   "properties": {
     "schemaVersion": { "const": "0.1.0" },
     "id": { "type": "string", "maxLength": 80, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]*\\S[^\\u0000-\\u001F\\u007F-\\u009F]*$"
+    },
     "description": { "type": "string", "maxLength": 1000 },
-    "seed": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "seed": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]*\\S[^\\u0000-\\u001F\\u007F-\\u009F]*$"
+    },
     "visual": {
       "type": "object",
       "additionalProperties": false,
@@ -57,7 +67,7 @@
       "type": "object",
       "description": "Namespaced integration metadata. Keys should use reverse-DNS notation, for example dev.stoyo.",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"
+        "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9]+)+$"
       },
       "additionalProperties": true
     }

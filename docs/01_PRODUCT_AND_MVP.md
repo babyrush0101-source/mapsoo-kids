@@ -54,8 +54,10 @@ Mapsoo Worldsmith 是一个面向独立游戏、Game Jam、教育游戏与叙事
 - Godot 导入说明或 importer；
 - itch.io 友好的 ZIP 目录；
 - 许可证与 generation receipt；
-- 本地项目保存/加载；
+- 本地项目保存/加载（World Spec JSON 下载与严格导入，失败时不覆盖当前世界）；
 - 对核心 schema、生成和导出函数的测试。
+
+当前 alpha 的加载边界：单文件最大 128 KiB，只接受严格 UTF-8 JSON；拒绝重复键、危险原型键、过深/过复杂结构、不可安全往返的数字和不符合 schema 的字段。加载成功后立即重建预览，失败或较早的异步读取结果不会修改现有项目。
 
 ### 应该有
 

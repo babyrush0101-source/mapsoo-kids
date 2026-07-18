@@ -2,7 +2,7 @@
 
 状态：执行中
 
-当前阶段：v0.1 Local Pack — portable alpha 已可运行，补齐自动验收并进入 Godot importer
+当前阶段：`v0.1.0-alpha.1` 本地 release candidate 已闭环，等待推送、公开预发布与外部反馈
 
 主分支：`main`
 
@@ -90,7 +90,7 @@
 | v0.5 Community Beta | 示例、文档、贡献流程、预发布 | 至少 3 个示例包、外部 issue/反馈、首个 beta release |
 | v1.0 Stable | 稳定 schema 和兼容策略 | schema 版本化、迁移策略、跨平台测试和正式 release |
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、确定性生成、Canvas 预览、严格校验、portable ZIP、Godot importer、示例工程、桌面/390px 浏览器视觉验收，以及真实浏览器 ZIP 在 Godot 4.3/4.7 中的跨管线验收；尚未完成公开预发布。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Godot 4.3/4.7 中的跨管线验收；尚未完成推送、公开预发布和外部反馈。
 
 ## 6. 总控节奏
 

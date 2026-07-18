@@ -101,4 +101,15 @@ describe('portable pack browser download', () => {
     const schema = JSON.parse(schemaText ?? '{}') as { required?: string[] };
     expect(schema.required).toEqual(expect.arrayContaining(['world_spec', 'demo', 'layers', 'receipt']));
   });
+
+  it('escapes an imported title before writing the pack README', async () => {
+    const spec = structuredClone(DEFAULT_WORLD_SPEC);
+    spec.title = '<script>alert(1)</script> # *unsafe*';
+    const pack = await buildPortablePack(generateWorld(spec));
+    const zip = await JSZip.loadAsync(await pack.blob.arrayBuffer());
+    const readme = await zip.file('mapsoo-sunny-meadow-v0.1.0-alpha.1/readme.md')?.async('string');
+
+    expect(readme).not.toContain('<script>');
+    expect(readme).toContain('&lt;script&gt;alert\\(1\\)&lt;/script&gt; \\# \\*unsafe\\*');
+  });
 });

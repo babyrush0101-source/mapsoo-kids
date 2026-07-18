@@ -120,6 +120,30 @@ describe('world spec validation', () => {
     expect(validateWorldSpec(invalidNamespace)).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'spec.extension-namespace', severity: 'error' })]),
     );
+
+    const noDotNamespace = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    noDotNamespace.extensions = { 'dev-stoyo': {} };
+    expect(validateWorldSpec(noDotNamespace)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'spec.extension-namespace', severity: 'error' })]),
+    );
+  });
+
+  it('counts Unicode code points and rejects title or seed control characters', () => {
+    const validEmojiTitle = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    validEmojiTitle.title = '🌍'.repeat(120);
+    expect(validateWorldSpec(validEmojiTitle).some((issue) => issue.code === 'spec.title')).toBe(false);
+
+    const invalidEmojiTitle = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    invalidEmojiTitle.title = '🌍'.repeat(121);
+    expect(validateWorldSpec(invalidEmojiTitle)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'spec.title', severity: 'error' })]),
+    );
+
+    const controlCharacters = cloneWorldSpec(DEFAULT_WORLD_SPEC);
+    controlCharacters.title = 'Injected\nHeading';
+    controlCharacters.seed = 'seed\tvalue';
+    const codes = validateWorldSpec(controlCharacters).map((issue) => issue.code);
+    expect(codes).toEqual(expect.arrayContaining(['spec.title', 'spec.seed']));
   });
 });
 

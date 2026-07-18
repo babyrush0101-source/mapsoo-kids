@@ -309,8 +309,8 @@
     {
       "path": "schema/mapsoo-world.schema.json",
       "media_type": "application/json",
-      "bytes": 2752,
-      "sha256": "5409aa5012552b7f95c0b8dacf9e31aaedef2a49e831294dda4db65ba8c26a40"
+      "bytes": 2939,
+      "sha256": "ea4456e641fe956fee0d04703b326d48816c366caf31ae394341f7fb157ac7ed"
     }
   ],
   "license": {

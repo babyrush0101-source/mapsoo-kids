@@ -32,6 +32,7 @@
 - [x] 基础 validation report；
 - [x] v0.1 manifest、JSON Schema 和 generation receipt；
 - [x] 浏览器端 PNG + JSON portable ZIP 导出；
+- [x] World Spec JSON 本地下载/严格加载闭环与浏览器验收；
 - [x] 确定性生成、基础校验、稳定 Godot ID/atlas 坐标单元测试；
 - [x] 版本化示例 World Spec 与 ZIP 文件清单/hash 回归测试；
 - [x] Godot 4.3+ importer alpha 与 4.3/4.7 headless smoke；

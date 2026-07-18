@@ -14,9 +14,12 @@ The current worktree is a **portable v0.1 alpha**. It already provides a determi
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same starter tiles and map again from the same seed.
 3. Preview the pixel-art result in the browser and review validation issues.
-4. Download the World Spec JSON or an executable-free ZIP containing PNG atlases, a map preview, schemas, manifest, provenance receipt, and asset license.
+4. Download the World Spec JSON, then load it again later to reproduce the saved project.
+5. Export an executable-free ZIP containing PNG atlases, a map preview, schemas, manifest, provenance receipt, and asset license.
 
 The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json).
+
+Local World Spec imports are capped at 128 KiB and use strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema validation. A failed or superseded import never replaces the current generated world.
 
 ![Actual Sunny Meadow pack preview](examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png)
 
