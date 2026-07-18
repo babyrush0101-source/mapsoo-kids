@@ -21,7 +21,7 @@
 - 本地 1260×1000 封面、五张 1600×900 证据图和已验证的 75 秒中英双语 H.264 证据视频；
 - README、路线图、贡献指南、安全政策、issue/PR 模板与 MIT 源码许可。
 - alpha 已在公开 `main` 合并，tag 指向 merge commit `f36ef4d29020b3f7ceaf87d314ca1d80c0e44500`；后续 release 套件与输入安全加固已通过 [PR #14](https://github.com/babyrush0101-source/mapsoo-kids/pull/14) 和 [PR #15](https://github.com/babyrush0101-source/mapsoo-kids/pull/15) 公开合入；
-- [最新 main GitHub Actions](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223) 的 `check`、Godot 4.3 和 Godot 4.7 jobs 全绿；
+- [产品提交 `08c5af6` 的 main GitHub Actions](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223) 中，`check`、Godot 4.3 和 Godot 4.7 jobs 全绿；此固定证据链接不随纯文档提交滚动；
 - [GitHub Pages Demo](https://babyrush0101-source.github.io/mapsoo-kids/) 可匿名访问；
 - [`v0.1.0-alpha.1` GitHub pre-release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) 已公开，11 个版本化附件和证据视频可下载；
 - [统一反馈 issue](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) 已公开。
@@ -472,8 +472,8 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 | --- | --- | --- |
 | Public repository | 新版、发布工具与输入安全加固已在默认分支 | [main commit `08c5af6`](https://github.com/babyrush0101-source/mapsoo-kids/tree/08c5af6275790e54df7c28f41a72f9dba875839c) |
 | 源码与资产许可边界 | 已公开 | [`LICENSE`](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/LICENSE)、release 素材 ZIP 内 `license-assets.md` |
-| 可复现构建与测试 | 最新公开 `main` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223)、[`check` job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892789) |
-| Godot 4.3/4.7 兼容 | 最新公开 `main` 的两个 jobs 已通过 | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892787)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892790) |
+| 可复现构建与测试 | 产品提交 `08c5af6` 的公开 `main` CI 已通过 | [main CI run](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223)、[`check` job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892789) |
+| Godot 4.3/4.7 兼容 | 产品提交 `08c5af6` 的两个 jobs 已通过 | [4.3 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892787)、[4.7 job](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223/job/88100892790) |
 | 公开维护活动 | 4 个功能、发布、证据和安全加固 PR 已合并 | [PR #1](https://github.com/babyrush0101-source/mapsoo-kids/pull/1)、[PR #13](https://github.com/babyrush0101-source/mapsoo-kids/pull/13)、[PR #14](https://github.com/babyrush0101-source/mapsoo-kids/pull/14)、[PR #15](https://github.com/babyrush0101-source/mapsoo-kids/pull/15) |
 | GitHub alpha release | 已发布 pre-release | [`v0.1.0-alpha.1`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1) |
 | 在线 Demo | 已部署并匿名访问验证 | [GitHub Pages](https://babyrush0101-source.github.io/mapsoo-kids/) |
