@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-generation-receipt.schema.json",
+  "title": "Mapsoo Generation Receipt",
+  "description": "Auditable provenance, transformation, disclosure, and licensing evidence for a generated Mapsoo world pack.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "created_at",
+    "world",
+    "provider",
+    "model",
+    "workflow",
+    "transformations",
+    "ai_disclosure",
+    "licensing",
+    "sources"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "input_spec", "seed"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "input_spec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "$ref": "#/$defs/packPath" },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "seed": { "$ref": "#/$defs/bounded160" }
+      }
+    },
+    "provider": { "$ref": "#/$defs/provider" },
+    "model": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/model" }
+      ]
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "definition_sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/semver" },
+        "definition_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256" }
+          ]
+        }
+      }
+    },
+    "transformations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "version": { "$ref": "#/$defs/semver" }
+        }
+      }
+    },
+    "ai_disclosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contains_generative_ai", "human_curated", "statement"],
+      "properties": {
+        "contains_generative_ai": { "type": "boolean" },
+        "human_curated": { "type": "boolean" },
+        "statement": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/bounded2000" }
+          ]
+        }
+      }
+    },
+    "licensing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output", "provider_terms"],
+      "properties": {
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "notice_path"],
+          "properties": {
+            "id": { "$ref": "#/$defs/licenseId" },
+            "notice_path": { "$ref": "#/$defs/packPath" }
+          }
+        },
+        "provider_terms": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/providerTerms" }
+          ]
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "Source records. The runtime validator additionally requires every source id to be unique.",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source" }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "output_provenance": { "const": "generative-ai" }
+            },
+            "required": ["output_provenance"]
+          }
+        },
+        "required": ["provider"]
+      },
+      "then": {
+        "properties": {
+          "model": { "$ref": "#/$defs/model" },
+          "ai_disclosure": {
+            "properties": {
+              "contains_generative_ai": { "const": true },
+              "statement": { "$ref": "#/$defs/bounded2000" }
+            }
+          },
+          "licensing": {
+            "properties": {
+              "provider_terms": { "$ref": "#/$defs/providerTerms" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "model": { "type": "null" },
+          "ai_disclosure": {
+            "properties": {
+              "contains_generative_ai": { "const": false },
+              "statement": { "type": "null" }
+            }
+          },
+          "licensing": {
+            "properties": {
+              "provider_terms": { "type": "null" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "id": { "const": "procedural-pixel-v1" },
+              "version": { "const": "0.1.0" }
+            },
+            "required": ["id", "version"]
+          }
+        },
+        "required": ["provider"]
+      },
+      "then": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "execution": { "const": "local" },
+              "output_provenance": { "const": "procedural" }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "semver": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 80,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "packPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[a-z0-9][a-z0-9._-]*(?:/[a-z0-9][a-z0-9._-]*)*$"
+    },
+    "bounded120": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "bounded160": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "bounded1000": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "bounded2000": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https://(?![^/?#]*@)"
+    },
+    "licenseId": {
+      "oneOf": [
+        {
+          "enum": [
+            "Apache-2.0",
+            "BSD-2-Clause",
+            "BSD-3-Clause",
+            "CC-BY-4.0",
+            "CC-BY-NC-4.0",
+            "CC-BY-NC-ND-4.0",
+            "CC-BY-NC-SA-4.0",
+            "CC-BY-ND-4.0",
+            "CC-BY-SA-4.0",
+            "CC0-1.0",
+            "ISC",
+            "MIT",
+            "MPL-2.0",
+            "OFL-1.1",
+            "Unlicense"
+          ]
+        },
+        {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 80,
+          "pattern": "^LicenseRef-[A-Za-z0-9][A-Za-z0-9.-]{0,68}$"
+        }
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "execution", "output_provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/semver" },
+        "execution": { "enum": ["local", "remote"] },
+        "output_provenance": { "enum": ["procedural", "generative-ai"] }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "id", "revision"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/bounded120" },
+        "id": { "$ref": "#/$defs/bounded160" },
+        "revision": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/bounded160" }
+          ]
+        }
+      }
+    },
+    "providerTerms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "version"],
+      "properties": {
+        "url": { "$ref": "#/$defs/httpsUrl" },
+        "version": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/bounded120" }
+          ]
+        }
+      }
+    },
+    "licenseDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "url", "attribution"],
+      "properties": {
+        "id": { "$ref": "#/$defs/licenseId" },
+        "url": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/httpsUrl" }
+          ]
+        },
+        "attribution": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/bounded1000" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": { "type": "string", "pattern": "^LicenseRef-" }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "properties": {
+              "url": { "$ref": "#/$defs/httpsUrl" }
+            }
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "sha256", "license"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["user-input", "reference-asset", "third-party-asset"] },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "path": { "$ref": "#/$defs/packPath" },
+        "uri": { "$ref": "#/$defs/httpsUrl" },
+        "license": { "$ref": "#/$defs/licenseDeclaration" }
+      }
+    }
+  }
+}

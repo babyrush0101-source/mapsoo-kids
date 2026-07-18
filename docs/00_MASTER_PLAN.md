@@ -117,6 +117,7 @@
 | D-007 | portable PNG + JSON 是跨引擎真源，Godot 资源由编辑器内 importer 派生 | 避免浏览器手写 UID 相关资源，并让 itch.io 与其他引擎也能复用 | 已采纳 |
 | D-008 | v0.1 schema 严格拒绝未声明字段；生态扩展只能放入已显式声明的 `extensions` 对象，并使用 reverse-DNS namespace | 兼顾验证确定性与 STOYO 等集成需求，不让“保留任意未知字段”成为隐式兼容承诺 | 已采纳 |
 | D-009 | Provider SDK 先包装程序化基线；在 provider receipt、许可和 AI disclosure 完成前，v0.1 exporter 拒绝其他 Provider | 防止未来模型输出被错误标记为非生成式 AI 或沿用 CC0 程序化许可 | 已采纳 |
+| D-010 | 已公开 alpha.1 receipt/fixture/hash 永不原位改写；完整 receipt 使用 `0.2.0` 合同并进入新版本 release | 保留可验证的公开证据，避免同一 tag 对应多组来源与许可语义 | 已采纳 |
 
 ## 8. 当前风险
 

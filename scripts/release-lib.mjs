@@ -16,6 +16,12 @@ export const RELEASE_TAG = `v${VERSION}`;
 export const DEFAULT_RELEASE_ROOT = join(REPOSITORY_ROOT, 'release', RELEASE_TAG);
 export const ZIP_DATE = new Date(Date.UTC(1980, 0, 1, 0, 0, 0, 0));
 
+// Published hashes are immutable evidence. Add a new tag entry for a new pack;
+// never replace an existing value to make a rebuilt historical release pass.
+export const VERIFIED_PUBLIC_EXAMPLE_PACK_HASHES = Object.freeze({
+  'v0.1.0-alpha.1': 'e9434cebdecdc9ad2c1cdfa1629cb323c0384385dc70b6943426bfbf96205c8a',
+});
+
 export function comparePortablePaths(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }

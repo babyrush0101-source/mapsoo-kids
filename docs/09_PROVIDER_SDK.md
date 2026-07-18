@@ -8,6 +8,7 @@ This document describes the first provider boundary in Mapsoo Worldsmith. It is 
 - `runGenerationProvider()` and `GeneratorProviderRegistry` are implemented and tested.
 - The Workbench uses the runner for its initial world, edited specs, and imported specs; provider identity and declared capabilities are visible in the preview.
 - A single request session aborts superseded work and prevents stale completions from replacing the last successful world. UI and console errors expose only stable Mapsoo error codes.
+- The next-release `0.2.0` Provider Receipt schema and runtime validator are implemented without rewriting the published alpha receipt.
 - No optional AI provider is shipped yet.
 - The portable/itch exporter accepts only the built-in procedural identity. A provider being runnable does **not** make its output publishable.
 
@@ -102,12 +103,26 @@ export const EXAMPLE_PROVIDER = {
 
 The example is deliberately incomplete: copying it must not create a provider that appears production-ready.
 
+## Provider Receipt contract
+
+`schemas/mapsoo-generation-receipt.schema.json` defines the full `0.2.0` receipt planned for the next pack release. Its runtime validator requires and cross-checks:
+
+- receipt time, World ID, seed, World Spec pack path, and exact SHA-256;
+- provider identity, execution mode, and output provenance from the frozen provider snapshot;
+- explicit model and workflow records plus ordered, versioned transformations;
+- generative-AI and human-curation disclosure;
+- output licensing, provider terms, and hashed/licensed source declarations.
+
+Procedural receipts require `model: null`, `contains_generative_ai: false`, a null disclosure statement, and null provider terms. Generative-AI receipts require a model, a non-empty disclosure statement, and provider terms. Human curation never overrides AI provenance. Unknown fields, unsafe paths, malformed timestamps/hashes, duplicate sources, unknown bare license names, and context mismatches are rejected. Custom licenses use an explicit `LicenseRef-*`; custom source licenses also require a public HTTPS terms URL.
+
+The public `v0.1.0-alpha.1` fixture remains byte-for-byte immutable with its legacy `0.1.0` receipt. Release and itch verification pin the published asset ZIP SHA-256, accept that legacy shape only for the exact built-in procedural identity, and cross-check its world, seed, license, transformations, and non-AI provenance. The new receipt will enter a new versioned fixture; it is not a reason to rewrite an existing tag.
+
 ## Publication gate for future AI providers
 
 Before any AI provider can enter portable or itch.io output, the project still needs:
 
-- a versioned provider receipt schema and receipt validation;
-- model/provider/workflow identifiers and transformation records;
+- runner-owned evidence that instantiates the implemented receipt contract from a frozen provider snapshot;
+- manifest/export projection of the validated receipt in a new versioned pack;
 - a license decision for every output and any source/reference asset;
 - truthful `contains_generative_ai` manifest and itch.io AI Disclosure mapping;
 - secret handling outside browser bundles and repository history;

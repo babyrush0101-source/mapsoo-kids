@@ -56,7 +56,8 @@
 - [ ] 去背景、切图、nearest 缩放与调色；
 - [ ] 单个 Tile/prop 局部重生成；
 - [ ] 成本/错误/重试 UI；
-- [ ] provider receipt；
+- [x] 下一版本的 `0.2.0` provider receipt 类型、JSON Schema、runtime validator 与 legacy release 语义校验；
+- [ ] runner evidence envelope、manifest/export receipt 投影与新版本 fixture；
 - [ ] 内容安全和许可提醒。
 
 ## v0.3 — Godot-native Workflow
