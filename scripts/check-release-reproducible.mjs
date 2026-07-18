@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -8,14 +8,21 @@ import {
   RELEASE_FILES,
   REPOSITORY_ROOT,
   buildRelease,
+  removeSafeOutputDirectory,
+  replaceSafeOutputDirectory,
   sha256,
 } from './release-lib.mjs';
 
 const releaseNames = [...HASHED_RELEASE_FILE_NAMES, RELEASE_FILES.checksums];
-let temporaryRoot;
+const releaseParent = join(REPOSITORY_ROOT, 'release');
+const temporaryRoot = join(releaseParent, '.repro');
 
 try {
-  temporaryRoot = await mkdtemp(join(REPOSITORY_ROOT, 'release', '.repro-'));
+  await replaceSafeOutputDirectory(
+    releaseParent,
+    temporaryRoot,
+    'Refusing to replace release reproducibility output outside release/',
+  );
   const firstRoot = join(temporaryRoot, 'first');
   const secondRoot = join(temporaryRoot, 'second');
 
@@ -35,7 +42,9 @@ try {
   console.error(error instanceof Error ? error.stack : error);
   process.exitCode = 1;
 } finally {
-  if (temporaryRoot) {
-    await rm(temporaryRoot, { recursive: true, force: true });
-  }
+  await removeSafeOutputDirectory(
+    releaseParent,
+    temporaryRoot,
+    'Refusing to remove release reproducibility output outside release/',
+  );
 }

@@ -45,6 +45,7 @@ Image generation alone does not make a usable game-asset pipeline. Mapsoo first 
 - [STOYO integration](docs/07_STOYO_INTEGRATION.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
+- [Verified itch.io operator upload kit](docs/itch-kit/README.md)
 - [75-second evidence video source and verification](video/README.md)
 - [v0.1.0-alpha.1 release notes](docs/releases/v0.1.0-alpha.1.md)
 
@@ -71,7 +72,13 @@ Build, validate, and reproduce the complete local alpha release bundle:
 pnpm release:local
 ```
 
-The generated files are written to `release/v0.1.0-alpha.1/` and include the static web build, executable-free Sunny Meadow pack, separately installed Godot importer, schemas, silent 75-second evidence video, manifest, and SHA-256 checksums. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; the maintainer then deliberately publishes the verified prerelease. The public alpha was produced through that path.
+Build the exact itch.io operator directory—including the executable-free asset ZIP, itch-specific checksum, page metadata/copy, cover, five screenshots, and byte manifest:
+
+```bash
+pnpm release:itch
+```
+
+The GitHub files are written to `release/v0.1.0-alpha.1/`; the separate itch.io operator kit is written to `release/itch/v0.1.0-alpha.1/`. The itch kit intentionally excludes the importer and preserves page visibility as `Draft` until the maintainer previews the real page. An explicit matching version tag creates a GitHub release **draft** only after the branch has been reviewed and merged; the maintainer then deliberately publishes the verified prerelease. The public alpha was produced through that path.
 
 No environment variables are required for the portable alpha. See [`.env.example`](.env.example) for the key-handling policy before adding a future provider.
 

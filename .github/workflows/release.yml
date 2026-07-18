@@ -8,13 +8,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
-    name: Verify and publish release artifacts
+  build:
+    name: Build and verify release artifacts
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: write
     steps:
       - name: Check out tagged source
         uses: actions/checkout@v4
@@ -72,6 +74,9 @@ jobs:
       - name: Build and verify reproducible release assets
         run: pnpm release:local
 
+      - name: Build and verify reproducible itch.io upload kit
+        run: pnpm release:itch:build && pnpm release:itch:verify && pnpm release:itch:repro && pnpm release:itch:negative
+
       - name: Preserve release bundle as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +84,33 @@ jobs:
           path: release/${{ github.ref_name }}/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Preserve itch.io operator kit as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapsoo-itch-upload-kit-${{ github.ref_name }}
+          path: release/itch/${{ github.ref_name }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-draft:
+    name: Publish verified GitHub release draft
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Check out tagged release notes
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download verified release bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: mapsoo-worldsmith-${{ github.ref_name }}
+          path: release/${{ github.ref_name }}
 
       - name: Create GitHub release draft
         shell: bash
