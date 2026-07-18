@@ -37,6 +37,15 @@ class DuplicateJsonKeyError extends Error {
   }
 }
 
+class JsonStructureLimitError extends Error {
+  constructor(
+    readonly code: Extract<WorldSpecImportErrorCode, 'import.too-deep' | 'import.too-complex'>,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 function failure(
   code: WorldSpecImportErrorCode,
   message: string,
@@ -95,6 +104,7 @@ function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
 
 function assertNoDuplicateObjectKeys(text: string): void {
   let cursor = 0;
+  let visitedNodes = 0;
 
   function skipWhitespace(): void {
     while (/\s/.test(text[cursor] ?? '')) cursor += 1;
@@ -119,29 +129,29 @@ function assertNoDuplicateObjectKeys(text: string): void {
     while (cursor < text.length && !/[\s,}\]]/.test(text[cursor])) cursor += 1;
   }
 
-  function readValue(): void {
+  function readValue(depth: number): void {
+    visitedNodes += 1;
+    if (visitedNodes > MAX_JSON_NODES) {
+      throw new JsonStructureLimitError(
+        'import.too-complex',
+        `World Spec JSON may contain at most ${MAX_JSON_NODES} values.`,
+      );
+    }
+    if (depth > MAX_JSON_DEPTH) {
+      throw new JsonStructureLimitError(
+        'import.too-deep',
+        `World Spec JSON may be nested at most ${MAX_JSON_DEPTH} levels.`,
+      );
+    }
+
     skipWhitespace();
     const character = text[cursor];
     if (character === '{') {
-      readObject();
+      readObject(depth);
       return;
     }
     if (character === '[') {
-      cursor += 1;
-      skipWhitespace();
-      if (text[cursor] === ']') {
-        cursor += 1;
-        return;
-      }
-      while (cursor < text.length) {
-        readValue();
-        skipWhitespace();
-        if (text[cursor] === ']') {
-          cursor += 1;
-          return;
-        }
-        cursor += 1;
-      }
+      readArray(depth);
       return;
     }
     if (character === '"') {
@@ -151,7 +161,25 @@ function assertNoDuplicateObjectKeys(text: string): void {
     readPrimitive();
   }
 
-  function readObject(): void {
+  function readArray(depth: number): void {
+    cursor += 1;
+    skipWhitespace();
+    if (text[cursor] === ']') {
+      cursor += 1;
+      return;
+    }
+    while (cursor < text.length) {
+      readValue(depth + 1);
+      skipWhitespace();
+      if (text[cursor] === ']') {
+        cursor += 1;
+        return;
+      }
+      cursor += 1;
+    }
+  }
+
+  function readObject(depth: number): void {
     cursor += 1;
     const keys = new Set<string>();
     skipWhitespace();
@@ -166,7 +194,7 @@ function assertNoDuplicateObjectKeys(text: string): void {
       keys.add(key);
       skipWhitespace();
       cursor += 1;
-      readValue();
+      readValue(depth + 1);
       skipWhitespace();
       if (text[cursor] === '}') {
         cursor += 1;
@@ -176,7 +204,7 @@ function assertNoDuplicateObjectKeys(text: string): void {
     }
   }
 
-  readValue();
+  readValue(0);
 }
 
 export function parseWorldSpecJson(text: string): WorldSpecImportResult {
@@ -204,6 +232,9 @@ export function parseWorldSpecJson(text: string): WorldSpecImportResult {
   try {
     assertNoDuplicateObjectKeys(normalizedText);
   } catch (error) {
+    if (error instanceof JsonStructureLimitError) {
+      return failure(error.code, error.message);
+    }
     if (error instanceof DuplicateJsonKeyError) {
       const displayKey = error.key.length > 80 ? `${error.key.slice(0, 77)}...` : error.key;
       return failure('import.duplicate-key', `World Spec JSON repeats the object key: ${displayKey}.`);
@@ -241,6 +272,12 @@ export async function readWorldSpecFile(file: ReadableWorldSpecFile): Promise<Wo
 
   try {
     const bytes = await file.arrayBuffer();
+    if (bytes.byteLength > MAX_WORLD_SPEC_FILE_BYTES) {
+      return failure(
+        'import.too-large',
+        `World Spec JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
+      );
+    }
     let text: string;
     try {
       text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
