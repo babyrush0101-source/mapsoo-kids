@@ -40,6 +40,9 @@ jobs:
       - name: Run project checks
         run: pnpm check
 
+      - name: Build and verify reproducible release and itch.io operator bundles
+        run: pnpm release:itch
+
       - name: Verify release-video source and committed MP4
         run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output
 

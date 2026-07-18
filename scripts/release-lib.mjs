@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, rm, mkdir, writeFile, lstat } from 'node:fs/promises';
+import * as nodePath from 'node:path';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -119,6 +120,69 @@ export function assertNoLocalAbsolutePath(text, context) {
   }
 }
 
+export function assertDescendantPath(parent, candidate, context, pathApi = nodePath) {
+  const resolvedParent = pathApi.resolve(parent);
+  const resolvedCandidate = pathApi.resolve(candidate);
+  const child = pathApi.relative(resolvedParent, resolvedCandidate);
+  if (
+    !child ||
+    pathApi.isAbsolute(child) ||
+    child === '..' ||
+    child.startsWith(`..${pathApi.sep}`)
+  ) {
+    throw new Error(`${context}: ${resolvedCandidate}`);
+  }
+  return resolvedCandidate;
+}
+
+async function assertNoLinkedPathComponents(parent, candidate, context) {
+  const resolvedParent = resolve(parent);
+  const resolvedCandidate = assertDescendantPath(resolvedParent, candidate, context);
+  const components = [resolvedParent];
+  let current = resolvedParent;
+  for (const segment of relative(resolvedParent, resolvedCandidate).split(sep)) {
+    current = join(current, segment);
+    components.push(current);
+  }
+
+  for (const component of components) {
+    let componentStat;
+    try {
+      componentStat = await lstat(component);
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        break;
+      }
+      throw error;
+    }
+    if (componentStat.isSymbolicLink()) {
+      throw new Error(`${context}; path contains a symbolic link or junction: ${component}`);
+    }
+  }
+  return resolvedCandidate;
+}
+
+export async function assertSafeOutputPath(parent, candidate, context) {
+  const resolvedCandidate = assertDescendantPath(parent, candidate, context);
+  assertDescendantPath(REPOSITORY_ROOT, parent, `${context}; parent must stay inside the repository`);
+  await assertNoLinkedPathComponents(REPOSITORY_ROOT, parent, context);
+  await mkdir(parent, { recursive: true });
+  await assertNoLinkedPathComponents(REPOSITORY_ROOT, resolvedCandidate, context);
+  return resolvedCandidate;
+}
+
+export async function replaceSafeOutputDirectory(parent, candidate, context) {
+  const resolvedCandidate = await assertSafeOutputPath(parent, candidate, context);
+  await rm(resolvedCandidate, { recursive: true, force: true });
+  await mkdir(resolvedCandidate, { recursive: true });
+  return resolvedCandidate;
+}
+
+export async function removeSafeOutputDirectory(parent, candidate, context) {
+  const resolvedCandidate = await assertSafeOutputPath(parent, candidate, context);
+  await rm(resolvedCandidate, { recursive: true, force: true });
+}
+
 export async function listFiles(root) {
   const rootStat = await lstat(root);
   if (!rootStat.isDirectory()) {
@@ -189,15 +253,12 @@ export async function buildRelease(outputRoot = DEFAULT_RELEASE_ROOT) {
     throw new Error(`This release pipeline targets 0.1.0-alpha.1; package.json reports ${VERSION}`);
   }
 
-  const resolvedOutputRoot = resolve(outputRoot);
   const releaseParent = resolve(REPOSITORY_ROOT, 'release');
-  const relativeOutput = relative(releaseParent, resolvedOutputRoot);
-  if (!relativeOutput || relativeOutput.startsWith('..') || relativeOutput.includes(`..${sep}`)) {
-    throw new Error(`Refusing to replace output outside release/: ${resolvedOutputRoot}`);
-  }
-
-  await rm(resolvedOutputRoot, { recursive: true, force: true });
-  await mkdir(resolvedOutputRoot, { recursive: true });
+  const resolvedOutputRoot = await replaceSafeOutputDirectory(
+    releaseParent,
+    outputRoot,
+    'Refusing to replace output outside release/',
+  );
 
   const distRoot = join(REPOSITORY_ROOT, 'dist');
   const webFiles = await listFiles(distRoot);

@@ -4,6 +4,10 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+### Added
+
+- A deterministic, verified itch.io operator kit containing only the executable-free sample pack, its dedicated checksum, exact page metadata/copy, cover, five screenshots, and a byte-level upload manifest.
+
 ## [0.1.0-alpha.1] - 2026-07-18
 
 ### Added
