@@ -8,8 +8,8 @@ import {
 } from './current-public-release';
 
 describe('current public release links', () => {
-  it('keeps the workbench and public links on published alpha.5', () => {
-    expect(packageJson.version).toBe('0.1.0-alpha.5');
+  it('keeps the alpha.6 workbench separate from the published alpha.5 links', () => {
+    expect(packageJson.version).toBe('0.1.0-alpha.6');
     expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
     expect(CURRENT_PUBLIC_RELEASE_VERSION).toBe('0.1.0-alpha.5');
     expect(CURRENT_PUBLIC_RELEASE.version).toBe(CURRENT_PUBLIC_RELEASE_VERSION);

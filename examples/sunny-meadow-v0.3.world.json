@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "0.3.0",
+  "id": "sunny-meadow",
+  "title": "Sunny Meadow",
+  "description": "A gentle meadow crossed by a winding stream.",
+  "seed": "mapsoo-demo-001",
+  "visual": {
+    "style": "pixel-art",
+    "tileSize": 32,
+    "palette": ["#2f5d3a", "#76a950", "#b8d978", "#4f91ad", "#d6c18b"]
+  },
+  "map": {
+    "width": 24,
+    "height": 16,
+    "biome": "meadow"
+  },
+  "output": {
+    "targets": ["common", "godot", "itch"],
+    "assetLicense": "CC0-1.0"
+  },
+  "places": [
+    {
+      "id": "spawn",
+      "label": "Meadow Spawn",
+      "kind": "spawn",
+      "placement": "center",
+      "tags": ["start", "safe"]
+    },
+    {
+      "id": "landmark",
+      "label": "Riverside Landmark",
+      "kind": "landmark",
+      "placement": "near-water",
+      "tags": ["water", "navigation"]
+    },
+    {
+      "id": "exit",
+      "label": "Road Exit",
+      "kind": "exit",
+      "placement": "map-edge",
+      "tags": ["travel"]
+    }
+  ],
+  "structures": [
+    { "id": "spawn-cottage", "placeId": "spawn", "archetype": "cottage" },
+    { "id": "landmark-shrine", "placeId": "landmark", "archetype": "shrine" }
+  ]
+}

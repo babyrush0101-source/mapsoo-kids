@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-structures-0.1.0.json",
+  "title": "Mapsoo Resolved Structures 0.1",
+  "description": "Strict deterministic projection of World Spec 0.3 place-linked exterior structures.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack",
+    "world_spec",
+    "places",
+    "coordinate_space",
+    "resolution_algorithm",
+    "atlas",
+    "structures"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/packId"
+        },
+        "version": {
+          "const": "0.1.0-alpha.6"
+        }
+      }
+    },
+    "world_spec": {
+      "$ref": "#/$defs/fileReference"
+    },
+    "places": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/fileReference"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "runtime/places.json"
+            }
+          }
+        }
+      ]
+    },
+    "coordinate_space": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "unit",
+        "tile_size"
+      ],
+      "properties": {
+        "origin": {
+          "const": "top-left"
+        },
+        "unit": {
+          "const": "cell"
+        },
+        "tile_size": {
+          "enum": [
+            16,
+            32,
+            64
+          ]
+        }
+      }
+    },
+    "resolution_algorithm": {
+      "const": {
+        "id": "mapsoo-semantic-structure-resolver",
+        "version": "0.1.0"
+      }
+    },
+    "atlas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sprite_size_px",
+        "pivot_px"
+      ],
+      "properties": {
+        "path": {
+          "const": "atlases/structures.png"
+        },
+        "sprite_size_px": {
+          "$ref": "#/$defs/positivePair"
+        },
+        "pivot_px": {
+          "$ref": "#/$defs/nonNegativePair"
+        }
+      }
+    },
+    "structures": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/resolvedStructure"
+      }
+    }
+  },
+  "$defs": {
+    "packId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "semanticId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*(?:/[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*)*$"
+    },
+    "fileReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "positivePair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 4096
+      }
+    },
+    "nonNegativePair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 4096
+      }
+    },
+    "region": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16384
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16384
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        }
+      ],
+      "items": false
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        }
+      }
+    },
+    "resolvedStructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "archetype": {
+                  "const": "cottage"
+                },
+                "sprite_id": {
+                  "const": "structure-cottage-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "archetype": {
+                  "const": "workshop"
+                },
+                "sprite_id": {
+                  "const": "structure-workshop-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "archetype": {
+                  "const": "tower"
+                },
+                "sprite_id": {
+                  "const": "structure-tower-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "archetype": {
+                  "const": "shrine"
+                },
+                "sprite_id": {
+                  "const": "structure-shrine-01"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "required": [
+        "id",
+        "order",
+        "place_id",
+        "archetype",
+        "sprite_id",
+        "cell",
+        "pixel_center",
+        "region_px",
+        "pivot_px"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/semanticId"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "place_id": {
+          "$ref": "#/$defs/semanticId"
+        },
+        "archetype": {
+          "enum": [
+            "cottage",
+            "workshop",
+            "tower",
+            "shrine"
+          ]
+        },
+        "sprite_id": {
+          "enum": [
+            "structure-cottage-01",
+            "structure-workshop-01",
+            "structure-tower-01",
+            "structure-shrine-01"
+          ]
+        },
+        "cell": {
+          "$ref": "#/$defs/point"
+        },
+        "pixel_center": {
+          "$ref": "#/$defs/point"
+        },
+        "region_px": {
+          "$ref": "#/$defs/region"
+        },
+        "pivot_px": {
+          "$ref": "#/$defs/nonNegativePair"
+        }
+      }
+    }
+  }
+}

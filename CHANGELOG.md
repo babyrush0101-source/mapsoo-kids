@@ -4,6 +4,18 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+### Added
+
+- An unpublished Alpha.6 candidate with World Spec 0.3 place-linked exterior structures, four deterministic archetypes, a transparent structure atlas, and a portable structures sidecar.
+- Pack schema 0.4 bindings across the World Spec, semantic places, structures metadata, atlas regions, and per-file SHA-256 records.
+- Browser structure preview/list controls and Godot `Sprite2D` derivation under the existing managed re-import boundary.
+- A real-browser 18-file Sunny Meadow candidate fixture pinned to SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`.
+
+### Changed
+
+- Advanced the local candidate Workbench/export contract to Alpha.6 without changing the immutable Alpha.1–Alpha.5 public release bytes.
+- Kept v0.1.0-alpha.5 as the current public prerelease. Alpha.6 has not been tagged or published, and itch.io upload remains postponed.
+
 ## [0.1.0-alpha.5] - 2026-07-19
 
 ### Added

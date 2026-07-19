@@ -105,6 +105,19 @@
 
 详细范围、验收、不做项与停止条件见 [`13_ALPHA5_SEMANTIC_PLACES.md`](13_ALPHA5_SEMANTIC_PLACES.md)。
 
+### alpha.6 — Place-linked Exterior Structures（候选）
+
+- [ ] 首个切片：World Spec 0.3 候选合同、四种 exterior structure archetype、确定性核心解析与浏览器预览；
+- [ ] 透明 structure atlas 与可复核 pivot/region/像素元数据；
+- [ ] engine-neutral runtime structures sidecar 及 manifest/receipt/verifier 绑定；
+- [ ] 浏览器结构图层、列表、桌面/390px 真实视觉验收；
+- [ ] Godot importer 派生与地点锚点关联的 `Sprite2D` 及安全重导入；
+- [ ] 以 `addons/mapsoo_importer` 为归档根的可安装 Godot addon（含插件 README/LICENSE/icon）及全新项目首次使用向导；不声称已上架 Godot Asset Library；
+- [ ] 真实浏览器 ZIP、Linux/Windows × Godot 4.3/4.7 exact-pack、发布与摘要门禁；
+- [ ] Alpha.1–Alpha.5 fixture、hash、tag 与合同保持不可变。
+
+本候选只覆盖地点关联的四类建筑外观及可安装采用入口，不包含内部、门、碰撞、导航、玩法、STOYO 专用映射/采用、itch.io 上传或 Godot Asset Library 上架声明。完整范围、分切片顺序、门禁与停止条件见 [`15_ALPHA6_EXTERIOR_STRUCTURES.md`](15_ALPHA6_EXTERIOR_STRUCTURES.md)。
+
 ## v0.4 — World System
 
 - [ ] 多 biome 与 transition；

@@ -1,7 +1,10 @@
 import {
+  ALPHA6_WORLD_SCHEMA_VERSION,
   PLACE_KINDS,
   PLACE_PLACEMENTS,
   LEGACY_WORLD_SCHEMA_VERSION,
+  PLACES_WORLD_SCHEMA_VERSION,
+  STRUCTURE_ARCHETYPES,
   WORLD_SCHEMA_VERSION,
   type GeneratedWorld,
   type WorldSpec,
@@ -33,6 +36,8 @@ const PLACE_KIND_SET = new Set<string>(PLACE_KINDS);
 const PLACE_PLACEMENT_SET = new Set<string>(PLACE_PLACEMENTS);
 const PLACE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PLACE_TAG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const STRUCTURE_ARCHETYPE_SET = new Set<string>(STRUCTURE_ARCHETYPES);
+const STRUCTURE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -239,22 +244,25 @@ export function validateWorldSpec(spec: unknown): ValidationIssue[] {
   }
 
   const legacySchema = candidate.schemaVersion === LEGACY_WORLD_SCHEMA_VERSION;
-  const currentSchema = candidate.schemaVersion === WORLD_SCHEMA_VERSION;
+  const placesSchema = candidate.schemaVersion === PLACES_WORLD_SCHEMA_VERSION;
+  const currentSchema = candidate.schemaVersion === ALPHA6_WORLD_SCHEMA_VERSION;
 
   addUnknownKeyIssue(
     issues,
     candidate,
     legacySchema
       ? ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'extensions']
-      : ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'places', 'extensions'],
+      : placesSchema
+        ? ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'places', 'extensions']
+        : ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'places', 'structures', 'extensions'],
     'root',
   );
 
-  if (!legacySchema && !currentSchema) {
+  if (!legacySchema && !placesSchema && !currentSchema) {
     issues.push({
       code: 'spec.schema-version',
       severity: 'error',
-      message: `Schema version must be ${LEGACY_WORLD_SCHEMA_VERSION} or ${WORLD_SCHEMA_VERSION}.`,
+      message: `Schema version must be ${LEGACY_WORLD_SCHEMA_VERSION}, ${PLACES_WORLD_SCHEMA_VERSION}, or ${ALPHA6_WORLD_SCHEMA_VERSION}.`,
     });
   }
 
@@ -393,7 +401,7 @@ export function validateWorldSpec(spec: unknown): ValidationIssue[] {
     }
   }
 
-  if (currentSchema && candidate.places !== undefined) {
+  if ((placesSchema || currentSchema) && candidate.places !== undefined) {
     if (!Array.isArray(candidate.places) || candidate.places.length < 1 || candidate.places.length > 8) {
       issues.push({
         code: 'spec.places',
@@ -489,6 +497,83 @@ export function validateWorldSpec(spec: unknown): ValidationIssue[] {
           severity: 'error',
           message: 'Place IDs must be unique within a world spec.',
         });
+      }
+    }
+  }
+
+  if (currentSchema && candidate.structures !== undefined) {
+    if (!Array.isArray(candidate.structures) || candidate.structures.length < 1 || candidate.structures.length > 8) {
+      issues.push({
+        code: 'spec.structures',
+        severity: 'error',
+        message: 'Structures, when declared, must contain from 1 through 8 semantic structures.',
+      });
+    } else {
+      const placeIds = new Set<string>();
+      if (Array.isArray(candidate.places)) {
+        for (const place of candidate.places) {
+          if (isRecord(place) && typeof place.id === 'string') placeIds.add(place.id);
+        }
+      }
+      const structureIds = new Set<string>();
+      const occupiedPlaceIds = new Set<string>();
+
+      for (const structure of candidate.structures) {
+        if (!isRecord(structure)) {
+          issues.push({ code: 'spec.structure', severity: 'error', message: 'Every structure must be an object.' });
+          continue;
+        }
+
+        addUnknownKeyIssue(issues, structure, ['id', 'placeId', 'archetype'], 'structure');
+
+        if (!isBoundedString(structure.id, 1, 64) || !STRUCTURE_ID.test(structure.id)) {
+          issues.push({
+            code: 'spec.structure-id',
+            severity: 'error',
+            message: 'Structure IDs must be 1 to 64 characters using lowercase letters, numbers, and single hyphens.',
+          });
+        } else if (structureIds.has(structure.id)) {
+          issues.push({
+            code: 'spec.duplicate-structure-id',
+            severity: 'error',
+            message: 'Structure IDs must be unique within a world spec.',
+          });
+        } else {
+          structureIds.add(structure.id);
+        }
+
+        if (!isBoundedString(structure.placeId, 1, 64) || !STRUCTURE_ID.test(structure.placeId)) {
+          issues.push({
+            code: 'spec.structure-place-id',
+            severity: 'error',
+            message: 'Structure placeId must be a path-safe place identifier.',
+          });
+        } else {
+          if (!placeIds.has(structure.placeId)) {
+            issues.push({
+              code: 'spec.structure-place-reference',
+              severity: 'error',
+              message: `Structure placeId must reference a declared place: ${structure.placeId}.`,
+            });
+          }
+          if (occupiedPlaceIds.has(structure.placeId)) {
+            issues.push({
+              code: 'spec.duplicate-structure-place',
+              severity: 'error',
+              message: `At most one structure may reference place: ${structure.placeId}.`,
+            });
+          } else {
+            occupiedPlaceIds.add(structure.placeId);
+          }
+        }
+
+        if (typeof structure.archetype !== 'string' || !STRUCTURE_ARCHETYPE_SET.has(structure.archetype)) {
+          issues.push({
+            code: 'spec.structure-archetype',
+            severity: 'error',
+            message: `Structure archetype must be one of: ${STRUCTURE_ARCHETYPES.join(', ')}.`,
+          });
+        }
       }
     }
   }
