@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "0.3.0",
+  "id": "dustwind-outpost",
+  "title": "Dustwind Outpost",
+  "description": "A wind-carved desert outpost built around a guarded oasis route.",
+  "seed": "mapsoo-dustwind-001",
+  "visual": {
+    "style": "pixel-art",
+    "tileSize": 32,
+    "palette": [
+      "#6f4e37",
+      "#c88b4a",
+      "#e9c46a",
+      "#5d91a8",
+      "#f4e1b6"
+    ]
+  },
+  "map": {
+    "width": 24,
+    "height": 16,
+    "biome": "desert"
+  },
+  "output": {
+    "targets": [
+      "common",
+      "godot",
+      "itch"
+    ],
+    "assetLicense": "CC0-1.0"
+  },
+  "places": [
+    {
+      "id": "outpost-spawn",
+      "label": "Outpost Courtyard",
+      "kind": "spawn",
+      "placement": "center",
+      "tags": [
+        "start",
+        "safe"
+      ]
+    },
+    {
+      "id": "oasis-workyard",
+      "label": "Oasis Workyard",
+      "kind": "resource",
+      "placement": "near-water",
+      "tags": [
+        "water",
+        "craft"
+      ]
+    },
+    {
+      "id": "dustwatch",
+      "label": "Dustwatch Tower",
+      "kind": "landmark",
+      "placement": "on-road",
+      "tags": [
+        "navigation",
+        "lookout"
+      ]
+    },
+    {
+      "id": "caravan-gate",
+      "label": "Caravan Gate",
+      "kind": "exit",
+      "placement": "map-edge",
+      "tags": [
+        "travel"
+      ]
+    }
+  ],
+  "structures": [
+    {
+      "id": "oasis-workshop",
+      "placeId": "oasis-workyard",
+      "archetype": "workshop"
+    },
+    {
+      "id": "dustwatch-tower",
+      "placeId": "dustwatch",
+      "archetype": "tower"
+    }
+  ]
+}

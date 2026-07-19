@@ -18,9 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
-      pack_file: ${{ steps.candidate-pack.outputs.file }}
-      pack_hash: ${{ steps.candidate-pack.outputs.hash }}
-      pack_root: ${{ steps.candidate-pack.outputs.root }}
+      pack_artifact: ${{ steps.candidate-pack.outputs.artifact }}
     steps:
       - name: Check out tagged source
         uses: actions/checkout@v4
@@ -89,39 +87,52 @@ jobs:
       - name: Build and verify reproducible release assets
         run: pnpm release:local
 
-      - name: Build and verify reproducible itch.io upload kit
-        run: pnpm release:itch:build && pnpm release:itch:verify && pnpm release:itch:repro && pnpm release:itch:negative
-
-      - name: Bind the exact release pack for Godot jobs
+      - name: Bind the exact three-pack release set for Godot jobs
         id: candidate-pack
         shell: bash
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
           import { appendFileSync } from 'node:fs';
-          import { CURRENT_RELEASE_CONFIG } from './scripts/release-config.mjs';
+          import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+          import { join } from 'node:path';
+          import { CURRENT_RELEASE_CONFIG, REPOSITORY_ROOT } from './scripts/release-config.mjs';
+          import { examplePacksForConfig, sha256 } from './scripts/release-lib.mjs';
           const config = CURRENT_RELEASE_CONFIG;
-          const values = {
-            file: config.release.files.examplePack,
-            hash: config.expectedExamplePackSha256,
-            root: config.release.examplePack.archiveRoot,
-          };
-          appendFileSync(process.env.GITHUB_OUTPUT, `${Object.entries(values).map(([key, value]) => `${key}=${value}`).join('\n')}\n`);
+          const stage = join(REPOSITORY_ROOT, 'release', 'godot-pack-set');
+          await mkdir(stage, { recursive: true });
+          const descriptors = [];
+          for (const pack of examplePacksForConfig(config)) {
+            const file = config.release.files[pack.releaseFileKey];
+            const source = join(REPOSITORY_ROOT, 'release', config.tag, file);
+            const bytes = await readFile(source);
+            if (sha256(bytes) !== pack.expectedSha256) throw new Error(`${pack.id} staged hash mismatch`);
+            await cp(source, join(stage, file));
+            const fixture = join(REPOSITORY_ROOT, pack.sourceDirectory);
+            const manifest = JSON.parse(await readFile(join(fixture, 'mapsoo.manifest.json'), 'utf8'));
+            const world = JSON.parse(await readFile(join(fixture, 'worlds', `${pack.id}.world.json`), 'utf8'));
+            const demo = JSON.parse(await readFile(join(fixture, 'worlds', 'demo-world.json'), 'utf8'));
+            const places = JSON.parse(await readFile(join(fixture, 'runtime', 'places.json'), 'utf8'));
+            const structures = JSON.parse(await readFile(join(fixture, 'runtime', 'structures.json'), 'utf8'));
+            descriptors.push({ id: pack.id, file, sha256: pack.expectedSha256, archiveRoot: pack.archiveRoot, schemaVersion: manifest.schema_version, cellCount: world.map.width * world.map.height, propCount: demo.props.length, placeCount: places.places.length, structureCount: structures.structures.length });
+          }
+          await writeFile(join(stage, 'pack-set.json'), `${JSON.stringify({ schemaVersion: 1, packs: descriptors }, null, 2)}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `artifact=mapsoo-example-packs-${config.tag}\npath=${stage}\n`);
           NODE
+
+      - name: Preserve the verified release pack set for Godot jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.candidate-pack.outputs.artifact }}
+          path: ${{ steps.candidate-pack.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Preserve release bundle as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: mapsoo-worldsmith-${{ github.ref_name }}
           path: release/${{ github.ref_name }}/
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Preserve itch.io operator kit as a workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mapsoo-itch-upload-kit-${{ github.ref_name }}
-          path: release/itch/${{ github.ref_name }}/
           if-no-files-found: error
           retention-days: 30
 
@@ -149,36 +160,31 @@ jobs:
       - name: Check out tagged source
         uses: actions/checkout@v4
 
-      - name: Download the verified release bundle
+      - name: Download the verified release pack set
         uses: actions/download-artifact@v4
         with:
-          name: mapsoo-worldsmith-${{ github.ref_name }}
-          path: release/${{ github.ref_name }}
+          name: ${{ needs.build.outputs.pack_artifact }}
+          path: ${{ runner.temp }}/mapsoo-release-packs
 
-      - name: Verify and extract the exact release pack
-        shell: bash
-        env:
-          MAPSOO_PACK_FILE: ${{ needs.build.outputs.pack_file }}
-          MAPSOO_PACK_HASH: ${{ needs.build.outputs.pack_hash }}
-          MAPSOO_PACK_ROOT: ${{ needs.build.outputs.pack_root }}
+      - name: Verify and extract the exact release pack set
+        shell: pwsh
         run: |
-          set -euo pipefail
-          pack_path="$GITHUB_WORKSPACE/release/$GITHUB_REF_NAME/$MAPSOO_PACK_FILE"
-          extract_dir="$RUNNER_TEMP/mapsoo-release-extracted"
-          test -f "$pack_path"
-          printf '%s  %s\n' "$MAPSOO_PACK_HASH" "$pack_path" | sha256sum --check --strict -
-          mkdir -p "$extract_dir"
-          unzip -q "$pack_path" -d "$extract_dir"
-          test "$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
-          test "$(find "$extract_dir" -type f ! -path "$extract_dir/$MAPSOO_PACK_ROOT/*" | wc -l)" -eq 0
-          manifest_path="$extract_dir/$MAPSOO_PACK_ROOT/mapsoo.manifest.json"
-          test -f "$manifest_path"
-          actual_files="$(find "$extract_dir" -type f | wc -l)"
-          expected_files="$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(!Array.isArray(m.files))process.exit(2);process.stdout.write(String(m.files.length+1))' "$manifest_path")"
-          test "$actual_files" -eq "$expected_files"
-          pack_schema="$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(typeof m.schema_version!=="string"||!/^\d+\.\d+\.\d+$/.test(m.schema_version))process.exit(2);process.stdout.write(m.schema_version)' "$manifest_path")"
-          printf 'MAPSOO_RELEASE_MANIFEST=%s\n' "$manifest_path" >> "$GITHUB_ENV"
-          printf 'MAPSOO_RELEASE_SCHEMA=%s\n' "$pack_schema" >> "$GITHUB_ENV"
+          $ErrorActionPreference = 'Stop'
+          $artifact = Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs'
+          $descriptorPath = Join-Path $artifact 'pack-set.json'
+          $descriptor = Get-Content -LiteralPath $descriptorPath -Raw | ConvertFrom-Json
+          if ($descriptor.schemaVersion -ne 1 -or @($descriptor.packs).Count -ne 3) { throw 'Invalid three-pack descriptor.' }
+          $extractRoot = Join-Path $env:RUNNER_TEMP 'mapsoo-release-extracted'
+          New-Item -ItemType Directory -Path $extractRoot | Out-Null
+          foreach ($pack in @($descriptor.packs)) {
+            $zip = Join-Path $artifact $pack.file
+            if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $pack.sha256) { throw "$($pack.id) SHA-256 mismatch." }
+            Expand-Archive -LiteralPath $zip -DestinationPath $extractRoot
+            $manifest = Get-Content -LiteralPath (Join-Path (Join-Path $extractRoot $pack.archiveRoot) 'mapsoo.manifest.json') -Raw | ConvertFrom-Json
+            if ($manifest.pack.id -ne $pack.id -or $manifest.schema_version -ne $pack.schemaVersion) { throw "$($pack.id) manifest identity mismatch." }
+          }
+          "MAPSOO_PACK_SET_DESCRIPTOR=$descriptorPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MAPSOO_PACK_SET_EXTRACTED=$extractRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Download and verify Godot ${{ matrix.version }}
         shell: bash
@@ -229,19 +235,13 @@ jobs:
           set -euo pipefail
           pwsh -NoLogo -NoProfile -File godot/tests/run-smoke.ps1 -GodotConsole "$GODOT_BIN"
 
-      - name: Import the exact verified release pack
-        shell: bash
+      - name: Import all three exact verified release packs
+        shell: pwsh
         run: |
-          set -euo pipefail
-          log_file="$RUNNER_TEMP/mapsoo-release-pack-${{ matrix.version }}.log"
-          "$GODOT_BIN" --headless --path godot \
-            --script res://tests/import_pack_cli.gd -- \
-            --manifest="$MAPSOO_RELEASE_MANIFEST" 2>&1 | tee "$log_file"
-          if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
-            echo "Godot emitted an engine error while importing the exact release pack." >&2
-            exit 1
-          fi
-          grep -Fx "MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=$MAPSOO_RELEASE_SCHEMA cells=384 props=29 first=created second=unchanged" "$log_file"
+          & scripts/run-exact-pack-set.ps1 `
+            -DescriptorPath $env:MAPSOO_PACK_SET_DESCRIPTOR `
+            -ExtractedRoot $env:MAPSOO_PACK_SET_EXTRACTED `
+            -GodotConsole $env:GODOT_BIN
 
   godot-release-windows-smoke:
     name: Godot ${{ matrix.version }} Windows release transaction
@@ -267,43 +267,31 @@ jobs:
       - name: Check out tagged source
         uses: actions/checkout@v4
 
-      - name: Download the verified release bundle
+      - name: Download the verified release pack set
         uses: actions/download-artifact@v4
         with:
-          name: mapsoo-worldsmith-${{ github.ref_name }}
-          path: release/${{ github.ref_name }}
+          name: ${{ needs.build.outputs.pack_artifact }}
+          path: ${{ runner.temp }}/mapsoo-release-packs
 
-      - name: Verify and extract the exact release pack
+      - name: Verify and extract the exact release pack set
         shell: pwsh
-        env:
-          MAPSOO_PACK_FILE: ${{ needs.build.outputs.pack_file }}
-          MAPSOO_PACK_HASH: ${{ needs.build.outputs.pack_hash }}
-          MAPSOO_PACK_ROOT: ${{ needs.build.outputs.pack_root }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $packPath = Join-Path $env:GITHUB_WORKSPACE "release\$env:GITHUB_REF_NAME\$env:MAPSOO_PACK_FILE"
-          $actualHash = (Get-FileHash -LiteralPath $packPath -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actualHash -ne $env:MAPSOO_PACK_HASH) { throw "Release pack SHA-256 mismatch: $actualHash" }
-          $extractDir = Join-Path $env:RUNNER_TEMP 'mapsoo-release-extracted'
-          Expand-Archive -LiteralPath $packPath -DestinationPath $extractDir
-          $files = @(Get-ChildItem -LiteralPath $extractDir -Recurse -File)
-          $rootDirectories = @(Get-ChildItem -LiteralPath $extractDir -Directory)
-          if ($rootDirectories.Count -ne 1 -or $rootDirectories[0].Name -ne $env:MAPSOO_PACK_ROOT) { throw 'Unexpected archive root.' }
-          $rootPath = $rootDirectories[0].FullName
-          $rootPrefix = $rootPath + [IO.Path]::DirectorySeparatorChar
-          foreach ($file in $files) {
-            if (-not $file.FullName.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
-              throw "Release pack contains a file outside its archive root: $($file.FullName)"
-            }
+          $artifact = Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs'
+          $descriptorPath = Join-Path $artifact 'pack-set.json'
+          $descriptor = Get-Content -LiteralPath $descriptorPath -Raw | ConvertFrom-Json
+          if ($descriptor.schemaVersion -ne 1 -or @($descriptor.packs).Count -ne 3) { throw 'Invalid three-pack descriptor.' }
+          $extractRoot = Join-Path $env:RUNNER_TEMP 'mapsoo-release-extracted'
+          New-Item -ItemType Directory -Path $extractRoot | Out-Null
+          foreach ($pack in @($descriptor.packs)) {
+            $zip = Join-Path $artifact $pack.file
+            if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $pack.sha256) { throw "$($pack.id) SHA-256 mismatch." }
+            Expand-Archive -LiteralPath $zip -DestinationPath $extractRoot
+            $manifest = Get-Content -LiteralPath (Join-Path (Join-Path $extractRoot $pack.archiveRoot) 'mapsoo.manifest.json') -Raw | ConvertFrom-Json
+            if ($manifest.pack.id -ne $pack.id -or $manifest.schema_version -ne $pack.schemaVersion) { throw "$($pack.id) manifest identity mismatch." }
           }
-          $manifestPath = Join-Path $rootPath 'mapsoo.manifest.json'
-          if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'Release manifest is missing.' }
-          $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-          $expectedFiles = @($manifest.files).Count + 1
-          if ($files.Count -ne $expectedFiles) { throw "Expected $expectedFiles manifest-covered files, got $($files.Count)." }
-          if (-not ($manifest.schema_version -is [string]) -or $manifest.schema_version -notmatch '^\d+\.\d+\.\d+$') { throw 'Release manifest schema_version is invalid.' }
-          "MAPSOO_RELEASE_MANIFEST=$manifestPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "MAPSOO_RELEASE_SCHEMA=$($manifest.schema_version)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MAPSOO_PACK_SET_DESCRIPTOR=$descriptorPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MAPSOO_PACK_SET_EXTRACTED=$extractRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Download and verify Godot ${{ matrix.version }}
         shell: pwsh
@@ -359,17 +347,13 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File godot/tests/run-smoke.ps1 -GodotConsole $env:GODOT_BIN
 
-      - name: Import the exact verified release pack twice
+      - name: Import all three exact verified release packs
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          $output = @(& $env:GODOT_BIN --headless --path godot --script res://tests/import_pack_cli.gd -- "--manifest=$env:MAPSOO_RELEASE_MANIFEST" 2>&1)
-          $output | ForEach-Object { Write-Host $_.ToString() }
-          if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
-            throw 'Exact release pack import emitted an error.'
-          }
-          $expected = "MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=$env:MAPSOO_RELEASE_SCHEMA cells=384 props=29 first=created second=unchanged"
-          if (-not (($output | ForEach-Object { $_.ToString() }) -contains $expected)) { throw 'Exact release pack re-import sentinel is missing.' }
+          & scripts/run-exact-pack-set.ps1 `
+            -DescriptorPath $env:MAPSOO_PACK_SET_DESCRIPTOR `
+            -ExtractedRoot $env:MAPSOO_PACK_SET_EXTRACTED `
+            -GodotConsole $env:GODOT_BIN
 
   publish-draft:
     name: Publish verified GitHub release draft

@@ -1,0 +1,87 @@
+{
+  "schema_version": "0.2.0",
+  "pack": {
+    "id": "dustwind-outpost",
+    "version": "0.1.0-alpha.7"
+  },
+  "world_spec": {
+    "path": "worlds/dustwind-outpost.world.json",
+    "sha256": "a2b6f9e533bc24699b23c8738a222f5e2dd1c6ef7940065f8e911e00cb3b38e4"
+  },
+  "places": {
+    "path": "runtime/places.json",
+    "sha256": "a8d0bf4041fa0c583f0c8e9eec6bbcc21ade3fe798ff59243a3731034f4c7b55"
+  },
+  "coordinate_space": {
+    "origin": "top-left",
+    "unit": "cell",
+    "tile_size": 32
+  },
+  "resolution_algorithm": {
+    "id": "mapsoo-semantic-structure-resolver",
+    "version": "0.1.0"
+  },
+  "atlas": {
+    "path": "atlases/structures.png",
+    "sprite_size_px": [
+      64,
+      64
+    ],
+    "pivot_px": [
+      32,
+      64
+    ]
+  },
+  "structures": [
+    {
+      "id": "oasis-workshop",
+      "order": 0,
+      "place_id": "oasis-workyard",
+      "archetype": "workshop",
+      "sprite_id": "structure-workshop-01",
+      "cell": {
+        "x": 6,
+        "y": 8
+      },
+      "pixel_center": {
+        "x": 208,
+        "y": 272
+      },
+      "region_px": [
+        64,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ]
+    },
+    {
+      "id": "dustwatch-tower",
+      "order": 1,
+      "place_id": "dustwatch",
+      "archetype": "tower",
+      "sprite_id": "structure-tower-01",
+      "cell": {
+        "x": 11,
+        "y": 6
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 208
+      },
+      "region_px": [
+        128,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ]
+    }
+  ]
+}

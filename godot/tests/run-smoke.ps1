@@ -58,6 +58,7 @@ try {
     Invoke-Godot "Alpha.4 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha4_fixture.gd")
     Invoke-Godot "Alpha.5 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha5_fixture.gd")
     Invoke-Godot "Alpha.6 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha6_fixture.gd")
+    Invoke-Godot "Alpha.7 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha7_fixture.gd")
 
     # A separate editor pass imports the freshly generated PNGs before the importer loads them.
     Invoke-Godot "Godot resource import" @("--headless", "--editor", "--path", $godotRoot, "--import")
@@ -66,6 +67,13 @@ try {
     Invoke-Godot "Alpha.4 importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_alpha4_smoke.gd")
     Invoke-Godot "Alpha.5 importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_alpha5_smoke.gd")
     Invoke-Godot "Alpha.6 importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_alpha6_smoke.gd")
+    Invoke-Godot "Alpha.7 exact-pack smoke test" @(
+        "--headless", "--path", $godotRoot, "--script", "res://tests/import_pack_cli.gd", "--",
+        "--manifest=res://tests/.generated/pack-alpha7/mapsoo.manifest.json",
+        "--expected-pack-id=alpha7-smoke-pack", "--expected-schema=0.5.0",
+        "--expected-cells=64", "--expected-props=6", "--expected-places=4", "--expected-structures=4",
+        "--check-conflict=true"
+    )
 }
 finally {
     if (-not $KeepGenerated) {

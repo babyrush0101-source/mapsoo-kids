@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-state="loading">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapsoo alpha.7 three-world browser export harness</title>
+  </head>
+  <body>
+    <main>
+      <p>This local-only harness exports all three Alpha.7 example worlds with one fixed runner clock.</p>
+      <pre id="result"></pre>
+      <pre id="error"></pre>
+    </main>
+    <script>
+      window.addEventListener('error', (event) => {
+        document.querySelector('#error').textContent = event.error?.stack || event.message;
+        document.documentElement.dataset.state = 'failed';
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        document.querySelector('#error').textContent = event.reason?.stack || String(event.reason);
+        document.documentElement.dataset.state = 'failed';
+      });
+    </script>
+    <script type="module" src="./alpha7-export.ts"></script>
+  </body>
+</html>

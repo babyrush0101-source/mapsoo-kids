@@ -2,12 +2,19 @@ extends SceneTree
 
 const Importer = preload("res://addons/mapsoo_importer/mapsoo_pack_importer.gd")
 const OUTPUT_ROOT := "res://mapsoo_imports"
+const PLAYABLE_SCHEMAS := ["0.2.0", "0.3.0", "0.4.0", "0.5.0"]
+const PLACES_SCHEMAS := ["0.3.0", "0.4.0", "0.5.0"]
+const STRUCTURES_SCHEMAS := ["0.4.0", "0.5.0"]
 
 
 func _init() -> void:
 	var manifest_path := _argument_value("--manifest=")
 	if manifest_path.is_empty():
 		_fail("Pass an extracted pack manifest with --manifest=<absolute-or-res-path>.")
+		return
+	var expectations := _read_expectations()
+	if expectations.get("ok", false) != true:
+		_fail(str(expectations.get("error", "Invalid exact-pack expectations.")))
 		return
 
 	var result: Dictionary = Importer.import_pack(manifest_path, OUTPUT_ROOT)
@@ -66,7 +73,9 @@ func _init() -> void:
 		_fail("Validated manifest could not be re-read for the CLI scene contract.")
 		return
 	var schema_version := str((manifest_parser.data as Dictionary).get("schema_version", ""))
-	if schema_version in ["0.2.0", "0.3.0", "0.4.0"]:
+	var expected_places_count := 0
+	var expected_structures_count := 0
+	if schema_version in PLAYABLE_SCHEMAS:
 		if water == null or roads == null:
 			world.free()
 			_fail("Playable-terrain scene is missing Water or Roads: TileMapLayer.")
@@ -80,7 +89,7 @@ func _init() -> void:
 			world.free()
 			_fail("Playable-terrain scene layer z-order differs from the portable contract.")
 			return
-	if schema_version in ["0.3.0", "0.4.0"]:
+	if schema_version in PLACES_SCHEMAS:
 		var manifest: Dictionary = manifest_parser.data
 		var runtime: Dictionary = manifest.get("runtime", {})
 		var places_ref: Dictionary = runtime.get("places", {})
@@ -91,6 +100,7 @@ func _init() -> void:
 			_fail("Schema %s places sidecar could not be re-read for the CLI scene contract." % schema_version)
 			return
 		var expected_places: Array = (sidecar_parser.data as Dictionary).get("places", [])
+		expected_places_count = expected_places.size()
 		var places_root := world.get_node_or_null("Places") as Node2D
 		if (places_root == null and not expected_places.is_empty()) or (places_root != null and places_root.get_child_count() != expected_places.size()):
 			world.free()
@@ -103,21 +113,22 @@ func _init() -> void:
 				world.free()
 				_fail("Schema %s scene marker %d differs from the validated sidecar." % [schema_version, index])
 				return
-	if schema_version == "0.4.0":
+	if schema_version in STRUCTURES_SCHEMAS:
 		var manifest: Dictionary = manifest_parser.data
 		var structures_ref: Dictionary = (manifest.get("runtime", {}) as Dictionary).get("structures", {})
 		var structures_path := manifest_path.get_base_dir().path_join(str(structures_ref.get("path", "")))
 		var structures_parser := JSON.new()
 		if structures_parser.parse(FileAccess.get_file_as_string(structures_path)) != OK or typeof(structures_parser.data) != TYPE_DICTIONARY:
 			world.free()
-			_fail("Schema 0.4.0 structures sidecar could not be re-read for the CLI scene contract.")
+			_fail("Schema %s structures sidecar could not be re-read for the CLI scene contract." % schema_version)
 			return
 		var expected_structures: Array = (structures_parser.data as Dictionary).get("structures", [])
+		expected_structures_count = expected_structures.size()
 		var structures_root := world.get_node_or_null("Structures") as Node2D
 		var places_root := world.get_node_or_null("Places") as Node2D
 		if (structures_root == null and not expected_structures.is_empty()) or (structures_root != null and structures_root.get_child_count() != expected_structures.size()):
 			world.free()
-			_fail("Schema 0.4.0 scene Structures count differs from the validated sidecar.")
+			_fail("Schema %s scene Structures count differs from the validated sidecar." % schema_version)
 			return
 		for index: int in expected_structures.size():
 			var expected: Dictionary = expected_structures[index]
@@ -140,10 +151,23 @@ func _init() -> void:
 				or atlas_texture.region != Rect2(expected_region[0], expected_region[1], expected_region[2], expected_region[3])
 			):
 				world.free()
-				_fail("Schema 0.4.0 scene structure %d differs from the validated sidecar/place linkage." % index)
+				_fail("Schema %s scene structure %d differs from the validated sidecar/place linkage." % [schema_version, index])
 				return
 
 	var pack_id := str(result.get("pack_id", ""))
+	var expectation_error := _expectation_error(
+		expectations,
+		pack_id,
+		schema_version,
+		expected_cells,
+		expected_props,
+		expected_places_count,
+		expected_structures_count
+	)
+	if not expectation_error.is_empty():
+		world.free()
+		_fail(expectation_error)
+		return
 	world.free()
 	var managed_paths := [tileset_path, scene_path, state_path]
 	var before_bytes := {}
@@ -160,7 +184,28 @@ func _init() -> void:
 		if FileAccess.get_file_as_bytes(path) != before_bytes[path] or FileAccess.get_modified_time(path) != before_mtimes[path]:
 			_fail("Unchanged exact-pack import rewrote %s." % path)
 			return
-	print("MAPSOO_PACK_CLI_OK pack_id=%s schema=%s cells=%d props=%d first=%s second=unchanged" % [pack_id, schema_version, expected_cells, expected_props, first_status])
+	var conflict_status := "not-checked"
+	if expectations.check_conflict:
+		var scene_file := FileAccess.open(scene_path, FileAccess.READ_WRITE)
+		if scene_file == null:
+			_fail("Managed scene could not be opened for the exact-pack conflict check.")
+			return
+		scene_file.seek_end()
+		scene_file.store_string("\n# exact-pack conflict preservation check\n")
+		scene_file.close()
+		var tampered_scene := FileAccess.get_file_as_bytes(scene_path)
+		var conflict: Dictionary = Importer.import_pack(manifest_path, OUTPUT_ROOT)
+		if conflict.get("ok", true) != false or conflict.get("status", "") != "conflict":
+			_fail("Edited exact-pack output must fail closed: %s" % conflict)
+			return
+		if FileAccess.get_file_as_bytes(scene_path) != tampered_scene:
+			_fail("Exact-pack conflict did not preserve the edited scene bytes.")
+			return
+		conflict_status = "preserved"
+	if expectations.has_trusted_values:
+		print("MAPSOO_PACK_CLI_OK pack_id=%s schema=%s cells=%d props=%d places=%d structures=%d first=%s second=unchanged conflict=%s" % [pack_id, schema_version, expected_cells, expected_props, expected_places_count, expected_structures_count, first_status, conflict_status])
+	else:
+		print("MAPSOO_PACK_CLI_OK pack_id=%s schema=%s cells=%d props=%d first=%s second=unchanged" % [pack_id, schema_version, expected_cells, expected_props, first_status])
 	quit(0)
 
 
@@ -168,6 +213,80 @@ func _argument_value(prefix: String) -> String:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with(prefix):
 			return argument.trim_prefix(prefix)
+	return ""
+
+
+func _read_expectations() -> Dictionary:
+	var expectations := {
+		"ok": true,
+		"error": "",
+		"has_trusted_values": false,
+		"pack_id": _argument_value("--expected-pack-id="),
+		"schema": _argument_value("--expected-schema="),
+		"cells": -1,
+		"props": -1,
+		"places": -1,
+		"structures": -1,
+		"check_conflict": false,
+	}
+	var numeric_arguments := {
+		"cells": "--expected-cells=",
+		"props": "--expected-props=",
+		"places": "--expected-places=",
+		"structures": "--expected-structures=",
+	}
+	for key: String in numeric_arguments:
+		var raw := _argument_value(numeric_arguments[key])
+		if raw.is_empty():
+			continue
+		if not raw.is_valid_int() or int(raw) < 0:
+			return {"ok": false, "error": "%s must be a non-negative integer." % numeric_arguments[key]}
+		expectations[key] = int(raw)
+	var conflict_raw := _argument_value("--check-conflict=")
+	if not conflict_raw.is_empty():
+		if conflict_raw not in ["true", "false"]:
+			return {"ok": false, "error": "--check-conflict must be true or false."}
+		expectations.check_conflict = conflict_raw == "true"
+	var supplied := [
+		not expectations.pack_id.is_empty(),
+		not expectations.schema.is_empty(),
+		expectations.cells >= 0,
+		expectations.props >= 0,
+		expectations.places >= 0,
+		expectations.structures >= 0,
+	]
+	var supplied_count := 0
+	for value: bool in supplied:
+		if value:
+			supplied_count += 1
+	if supplied_count not in [0, supplied.size()]:
+		return {"ok": false, "error": "All trusted --expected-* values must be supplied together."}
+	expectations.has_trusted_values = supplied_count == supplied.size()
+	return expectations
+
+
+func _expectation_error(
+	expectations: Dictionary,
+	pack_id: String,
+	schema_version: String,
+	cells: int,
+	props: int,
+	places: int,
+	structures: int
+) -> String:
+	if not expectations.has_trusted_values:
+		return ""
+	var actual := {
+		"pack_id": pack_id,
+		"schema": schema_version,
+		"cells": cells,
+		"props": props,
+		"places": places,
+		"structures": structures,
+	}
+	for key: String in actual:
+		if actual[key] != expectations[key]:
+			return "Exact-pack %s differs from trusted expectation: expected %s, got %s." % [key, expectations[key], actual[key]]
 	return ""
 
 

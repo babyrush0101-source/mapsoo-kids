@@ -1,6 +1,6 @@
 # Godot importer smoke tests
 
-`run-smoke.ps1` generates and tests the historical schema `0.1.0` contract, schema `0.2.0` playable terrain, and schema `0.3.0` semantic places in isolated Godot processes:
+`run-smoke.ps1` generates and tests schemas `0.1.0` through `0.5.0` in isolated Godot processes, covering historical import, playable terrain, semantic places, exterior structures, and the Alpha.7 multi-world release binding:
 
 1. generate a deterministic PNG/JSON/manifest fixture;
 2. let the editor import the new PNG resources;
@@ -33,7 +33,9 @@ The re-import transaction contract additionally proves:
 - a deterministic promote failure restores the complete previous directory;
 - a deterministic edit after `final → backup` returns `conflict`, restores that edit, and leaves no backup/staging residue.
 
-The exact-pack CLI imports a fixed candidate or published release pack twice and requires `created → unchanged`. For schemas `0.2.0`/`0.3.0`, it also requires Water/Roads layers, two TerrainSets, one physics layer, and the documented z-order. Schema `0.3.0` additionally checks every stable marker against the validated places sidecar. PR and tag CI are configured to run the synthetic and exact-pack contracts on Linux and Windows with Godot 4.3 and 4.7. Windows archive SHA-512 values are pinned from the official Godot release checksum files.
+The exact-pack CLI imports a fixed candidate or published release pack twice and requires `created → unchanged`. For schemas `0.2.0` through `0.5.0`, it also requires Water/Roads layers, two TerrainSets, one physics layer, and the documented z-order. Schemas `0.3.0` through `0.5.0` check every stable marker against the validated places sidecar; schemas `0.4.0`/`0.5.0` additionally check every structure sprite, atlas region, metadata field, and place linkage. Trusted `--expected-*` arguments bind ID/schema/cell/prop/place/structure counts, and `--check-conflict=true` proves an edited managed scene is rejected without changing its bytes. PR and tag CI are configured to run the synthetic and exact-pack contracts on Linux and Windows with Godot 4.3 and 4.7. Windows archive SHA-512 values are pinned from the official Godot release checksum files.
+
+Alpha.7 CI can pass a trusted three-pack descriptor to `scripts/run-exact-pack-set.ps1`. The descriptor has `schemaVersion: 1` and exactly the IDs `sunny-meadow`, `dustwind-outpost`, and `frostwatch-vale`; each pack record supplies `archiveRoot`, `schemaVersion`, `cellCount`, `propCount`, `placeCount`, and `structureCount`. The runner locates each extracted manifest below the trusted root, invokes the exact CLI with all expectations, and requires `created → unchanged → conflict/preserved` for every pack while reusing one OS/Godot job.
 
 Run when `godot4` or `godot` is on `PATH` (or `GODOT_BIN` points to the console executable):
 

@@ -1,0 +1,87 @@
+{
+  "schema_version": "0.2.0",
+  "pack": {
+    "id": "frostwatch-vale",
+    "version": "0.1.0-alpha.7"
+  },
+  "world_spec": {
+    "path": "worlds/frostwatch-vale.world.json",
+    "sha256": "41547ed2c93bb72266c40a37ec0d6a85a391b97423ad78339b1144d1274216cb"
+  },
+  "places": {
+    "path": "runtime/places.json",
+    "sha256": "548d29510e08d1bee8dc51806f2c90c9d6c85502269d1237dcbacf52d050261a"
+  },
+  "coordinate_space": {
+    "origin": "top-left",
+    "unit": "cell",
+    "tile_size": 32
+  },
+  "resolution_algorithm": {
+    "id": "mapsoo-semantic-structure-resolver",
+    "version": "0.1.0"
+  },
+  "atlas": {
+    "path": "atlases/structures.png",
+    "sprite_size_px": [
+      64,
+      64
+    ],
+    "pivot_px": [
+      32,
+      64
+    ]
+  },
+  "structures": [
+    {
+      "id": "icewater-shrine",
+      "order": 0,
+      "place_id": "ice-shrine",
+      "archetype": "shrine",
+      "sprite_id": "structure-shrine-01",
+      "cell": {
+        "x": 11,
+        "y": 8
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 272
+      },
+      "region_px": [
+        192,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ]
+    },
+    {
+      "id": "frostwatch-tower",
+      "order": 1,
+      "place_id": "frostwatch",
+      "archetype": "tower",
+      "sprite_id": "structure-tower-01",
+      "cell": {
+        "x": 12,
+        "y": 8
+      },
+      "pixel_center": {
+        "x": 400,
+        "y": 272
+      },
+      "region_px": [
+        128,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ]
+    }
+  ]
+}

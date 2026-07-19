@@ -184,6 +184,40 @@ async function runAlpha6(config) {
   for (const [name, mutate, expected] of cases) await expectFailure(config, name, mutate, expected);
 }
 
+async function runAlpha7(config) {
+  const cases = [
+    ['extra receipt field', ({ receipt }) => { receipt.extra = true; }, /unexpected or missing fields/],
+    ['provider identity conflict', ({ receipt }) => { receipt.provider.id = 'future-provider'; }, /provider evidence mismatch/],
+    ['workflow conflict', ({ receipt }) => { receipt.workflow.id = 'future-workflow'; }, /workflow evidence mismatch/],
+    ['transformation reorder', ({ receipt }) => { receipt.transformations.reverse(); }, /transformations mismatch/],
+    ['AI disclosure conflict', ({ receipt }) => { receipt.ai_disclosure.contains_generative_ai = true; }, /AI disclosure mismatch/],
+    ['license conflict', ({ receipt }) => { receipt.licensing.output.id = 'MIT'; }, /license evidence mismatch/],
+    ['manifest provenance conflict', ({ manifest }) => { manifest.provenance.seed = 'forged'; }, /manifest provenance mismatch/],
+    ['missing structures payload', ({ manifest, files }) => {
+      files.delete('runtime/structures.json');
+      manifest.files = manifest.files.filter(({ path }) => path !== 'runtime/structures.json');
+    }, /exact 17-file payload|payload path set mismatch/],
+    ['structure projection conflict', ({ manifest, files }) => {
+      const path = 'runtime/structures.json';
+      const structures = JSON.parse(files.get(path).toString('utf8'));
+      structures.structures[0].archetype = structures.structures[0].archetype === 'tower' ? 'shrine' : 'tower';
+      const bytes = jsonBytes(structures);
+      files.set(path, bytes);
+      updateRecord(manifest, path, bytes);
+      manifest.runtime.structures.sha256 = sha256(bytes);
+    }, /structure projection mismatch/],
+    ['pack schema version drift', ({ manifest, files }) => {
+      const path = 'schema/mapsoo-pack-0.5.schema.json';
+      const schema = JSON.parse(files.get(path).toString('utf8'));
+      schema.properties.schema_version.const = '9.0.0';
+      const bytes = jsonBytes(schema);
+      files.set(path, bytes);
+      updateRecord(manifest, path, bytes);
+    }, /pack schema const mismatch/],
+  ];
+  for (const [name, mutate, expected] of cases) await expectFailure(config, name, mutate, expected);
+}
+
 async function buildSyntheticAlpha4(config) {
   const worldPath = 'worlds/sunny-meadow.world.json';
   const receiptPath = 'generation-receipt.json';
@@ -357,6 +391,7 @@ try {
       || config.receiptVerifier === 'builtin-semantic-places-alpha5-v0.2'
     ) await runReceiptV02(config);
     else if (config.receiptVerifier === 'builtin-semantic-structures-alpha6-v0.2') await runAlpha6(config);
+    else if (config.receiptVerifier === 'builtin-world-gallery-alpha7-v0.2') await runAlpha7(config);
     else throw new Error(`No negative suite for ${config.receiptVerifier}`);
   }
   for (const config of configs) {

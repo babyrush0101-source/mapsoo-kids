@@ -24,6 +24,7 @@ function releaseFiles(tag, {
   receiptSchema = false,
   placesSchema = false,
   structuresSchema = false,
+  worldGallery = false,
 } = {}) {
   const files = {
     web: `mapsoo-worldsmith-web-${tag}.zip`,
@@ -43,6 +44,12 @@ function releaseFiles(tag, {
   }
   if (placesSchema) files.placesSchema = `mapsoo-places.schema-${tag}.json`;
   if (structuresSchema) files.structuresSchema = `mapsoo-structures.schema-${tag}.json`;
+  if (worldGallery) {
+    files.dustwindPack = `mapsoo-dustwind-outpost-${tag}.zip`;
+    files.frostwatchPack = `mapsoo-frostwatch-vale-${tag}.zip`;
+    files.dustwindWorldSpec = `dustwind-outpost-${tag}.world.json`;
+    files.frostwatchWorldSpec = `frostwatch-vale-${tag}.world.json`;
+  }
   return files;
 }
 
@@ -67,6 +74,7 @@ const receiptVerifierVersions = Object.freeze({
   'builtin-playable-terrain-alpha4-v0.2': Object.freeze(['0.1.0-alpha.4']),
   'builtin-semantic-places-alpha5-v0.2': Object.freeze(['0.1.0-alpha.5']),
   'builtin-semantic-structures-alpha6-v0.2': Object.freeze(['0.1.0-alpha.6']),
+  'builtin-world-gallery-alpha7-v0.2': Object.freeze(['0.1.0-alpha.7']),
 });
 const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
@@ -75,6 +83,7 @@ const packVerificationPolicies = Object.freeze([
   'sunny-meadow-playable-terrain-cc0-v4',
   'sunny-meadow-semantic-places-cc0-v5',
   'sunny-meadow-semantic-structures-cc0-v6',
+  'world-gallery-semantic-structures-cc0-v7',
 ]);
 const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
@@ -83,6 +92,7 @@ const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-playable-terrain-cc0-v4',
   'sunny-meadow-semantic-places-cc0-v5',
   'sunny-meadow-semantic-structures-cc0-v6',
+  'world-gallery-semantic-structures-cc0-v7',
 ]);
 
 export function assertReceiptVerifierBinding(receiptVerifier, version) {
@@ -160,6 +170,12 @@ function validateReleaseConfig(config) {
       config.expectedExamplePackSha256 === config.publicExamplePackSha256,
       `${config.tag} expected and public example-pack hashes disagree`,
     );
+    for (const pack of config.release.additionalExamplePacks ?? []) {
+      assertConfig(
+        config.publicReleaseAssetSha256[config.release.files[pack.releaseFileKey]] === pack.expectedSha256,
+        `${config.tag} published hash disagrees for additional pack ${pack.id}`,
+      );
+    }
   } else {
     assertConfig(
       config.publicReleaseAssetSha256 === null,
@@ -181,6 +197,16 @@ function validateReleaseConfig(config) {
     config.release.examplePack.worldSpecPackPath,
     `${config.tag} pack World Spec path`,
   );
+  for (const pack of config.release.additionalExamplePacks ?? []) {
+    assertConfig(typeof pack.id === 'string' && pack.id.length > 0, `${config.tag} additional pack ID is missing`);
+    assertConfig(typeof config.release.files[pack.releaseFileKey] === 'string', `${config.tag} additional pack file is missing`);
+    assertConfig(typeof config.release.files[pack.worldSpecReleaseFileKey] === 'string', `${config.tag} additional World Spec file is missing`);
+    assertRelativeConfigPath(pack.sourceDirectory, `${config.tag} additional pack fixture`);
+    assertRelativeConfigPath(pack.archiveRoot, `${config.tag} additional pack archive root`);
+    assertRelativeConfigPath(pack.worldSpecPackPath, `${config.tag} additional pack World Spec path`);
+    assertRelativeConfigPath(pack.worldSpecInput, `${config.tag} additional pack World Spec input`);
+    assertConfig(/^[a-f0-9]{64}$/.test(pack.expectedSha256 ?? ''), `${config.tag} additional pack hash is invalid`);
+  }
   for (const key of ['exampleWorldSpec', 'license', 'changelog']) {
     assertConfig(typeof config.release.inputs[key] === 'string', `${config.tag} release.inputs.${key} is missing`);
   }
@@ -709,6 +735,75 @@ const alpha6 = deepFreeze(validateReleaseConfig({
   },
 }));
 
+const ALPHA_7_VERSION = '0.1.0-alpha.7';
+const ALPHA_7_TAG = `v${ALPHA_7_VERSION}`;
+const alpha7ReleaseFiles = releaseFiles(ALPHA_7_TAG, {
+  receiptSchema: true,
+  placesSchema: true,
+  structuresSchema: true,
+  worldGallery: true,
+});
+
+const alpha7 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_7_VERSION,
+  tag: ALPHA_7_TAG,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-world-gallery-alpha7-v0.2',
+  expectedExamplePackSha256: '6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'world-gallery-semantic-structures-cc0-v7',
+    files: alpha7ReleaseFiles,
+    notes: `docs/releases/${ALPHA_7_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_7_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_7_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    additionalExamplePacks: [
+      {
+        id: 'dustwind-outpost', releaseFileKey: 'dustwindPack', worldSpecReleaseFileKey: 'dustwindWorldSpec',
+        sourceDirectory: `examples/packs/dustwind-outpost-${ALPHA_7_TAG}`,
+        archiveRoot: `mapsoo-dustwind-outpost-${ALPHA_7_TAG}`,
+        worldSpecPackPath: 'worlds/dustwind-outpost.world.json',
+        worldSpecInput: 'examples/dustwind-outpost-v0.3.world.json',
+        expectedSha256: 'd6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502',
+      },
+      {
+        id: 'frostwatch-vale', releaseFileKey: 'frostwatchPack', worldSpecReleaseFileKey: 'frostwatchWorldSpec',
+        sourceDirectory: `examples/packs/frostwatch-vale-${ALPHA_7_TAG}`,
+        archiveRoot: `mapsoo-frostwatch-vale-${ALPHA_7_TAG}`,
+        worldSpecPackPath: 'worlds/frostwatch-vale.world.json',
+        worldSpecInput: 'examples/frostwatch-vale-v0.3.world.json',
+        expectedSha256: '35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12',
+      },
+    ],
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow-v0.3.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      { releaseFileKey: 'worldSchema', source: 'schemas/mapsoo-world-0.3.schema.json', packPath: 'schema/mapsoo-world-0.3.schema.json' },
+      { releaseFileKey: 'packSchema', source: 'schemas/mapsoo-pack-0.5.schema.json', packPath: 'schema/mapsoo-pack-0.5.schema.json' },
+      { releaseFileKey: 'placesSchema', source: 'schemas/mapsoo-places-0.3.schema.json', packPath: 'schema/mapsoo-places-0.3.schema.json' },
+      { releaseFileKey: 'structuresSchema', source: 'schemas/mapsoo-structures-0.2.schema.json', packPath: 'schema/mapsoo-structures-0.2.schema.json' },
+      { releaseFileKey: 'receiptSchema', source: 'schemas/mapsoo-generation-receipt.schema.json', packPath: 'schema/mapsoo-generation-receipt.schema.json' },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'world-gallery-semantic-structures-cc0-v7',
+    shortDescription: 'Free CC0 Godot world gallery with three deterministic, executable-free asset packs.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_7_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_7_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_7_TAG}.html`,
+    rendererFrames: [], requiredRendererFacts: [], supportingFiles: [], visuals: [],
+  },
+}));
+
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
   [alpha2.version]: alpha2,
@@ -716,6 +811,7 @@ const releaseConfigs = Object.freeze({
   [alpha4.version]: alpha4,
   [alpha5.version]: alpha5,
   [alpha6.version]: alpha6,
+  [alpha7.version]: alpha7,
 });
 
 export function getReleaseConfig(version) {
@@ -741,6 +837,18 @@ export function assertReleaseBuildAllowed(config) {
     );
   }
   if (!/^[a-f0-9]{64}$/.test(registered.expectedExamplePackSha256 ?? '')) {
+    throw new Error(
+      `Refusing to build candidate ${registered.tag}; capture and pin its canonical example-pack hash first`,
+    );
+  }
+  for (const pack of registered.release.additionalExamplePacks ?? []) {
+    if (!/^[a-f0-9]{64}$/.test(pack.expectedSha256 ?? '') || /^0+$/.test(pack.expectedSha256)) {
+      throw new Error(
+        `Refusing to build candidate ${registered.tag}; capture and pin ${pack.id} canonical pack hash first`,
+      );
+    }
+  }
+  if (/^0+$/.test(registered.expectedExamplePackSha256)) {
     throw new Error(
       `Refusing to build candidate ${registered.tag}; capture and pin its canonical example-pack hash first`,
     );

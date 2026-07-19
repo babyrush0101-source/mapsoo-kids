@@ -8,9 +8,9 @@ import {
 } from './current-public-release';
 
 describe('current public release links', () => {
-  it('points the alpha.6 workbench at the published alpha.6 release', () => {
-    expect(packageJson.version).toBe('0.1.0-alpha.6');
-    expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
+  it('keeps the published alpha.6 record separate from the alpha.7 candidate exporter', () => {
+    expect(packageJson.version).toBe('0.1.0-alpha.7');
+    expect(CURRENT_PACK_VERSION).toBe('0.1.0-alpha.7');
     expect(CURRENT_PUBLIC_RELEASE_VERSION).toBe('0.1.0-alpha.6');
     expect(CURRENT_PUBLIC_RELEASE.version).toBe(CURRENT_PUBLIC_RELEASE_VERSION);
     expect(CURRENT_PUBLIC_RELEASE.tag).toBe(`v${CURRENT_PUBLIC_RELEASE_VERSION}`);
