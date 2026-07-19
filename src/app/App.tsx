@@ -24,10 +24,17 @@ import {
 } from '../core/world-spec';
 import { validateGeneratedWorld, validateWorldSpec } from '../core/validate-world';
 import { WorldPreview } from '../features/world-preview/WorldPreview';
+import { WorldGallery } from '../features/world-gallery/WorldGallery';
 import { DEFAULT_GENERATION_PROVIDER } from '../providers/provider-registry';
 import { CURRENT_PUBLIC_RELEASE } from './current-public-release';
 import { GenerationSession, type GenerationRequest } from './generation-session';
 import { safeGenerationFailureLog, safeGenerationFailureMessage } from './generation-status';
+import {
+  WORLD_EXAMPLES,
+  cloneWorldExampleSpec,
+  findMatchingWorldExample,
+  type WorldExampleId,
+} from './world-example-registry';
 
 const BIOME_LABELS: Record<BiomeId, { name: string; note: string }> = {
   meadow: { name: 'Meadow', note: 'Lush, gentle, story-ready' },
@@ -61,6 +68,7 @@ export function App() {
   const world: GeneratedWorld | null = generationRun?.world ?? null;
   const [exportState, setExportState] = useState<'idle' | 'building' | 'failed'>('idle');
   const [generationState, setGenerationState] = useState<'idle' | 'generating'>('idle');
+  const [exampleLoadingId, setExampleLoadingId] = useState<WorldExampleId | null>(null);
   const [generationNotice, setGenerationNotice] = useState<{
     tone: 'success' | 'error';
     message: string;
@@ -69,6 +77,7 @@ export function App() {
   const [importKind, setImportKind] = useState<'world' | 'stoyo' | null>(null);
   const [importNotice, setImportNotice] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
   const draftIssues = useMemo(() => validateWorldSpec(draft), [draft]);
+  const activeExampleId = useMemo(() => findMatchingWorldExample(draft)?.id ?? '', [draft]);
   const packIssues = useMemo(() => (world ? validateGeneratedWorld(world) : []), [world]);
   const hasDraftErrors = draftIssues.some((issue) => issue.severity === 'error');
   const hasPackErrors = !world || packIssues.some((issue) => issue.severity === 'error');
@@ -76,6 +85,7 @@ export function App() {
     || world?.spec.schemaVersion === ALPHA6_WORLD_SCHEMA_VERSION;
   const hasChanges = !world || JSON.stringify(draft) !== JSON.stringify(world.spec);
   const operationBusy = generationState === 'generating'
+    || exampleLoadingId !== null
     || importState !== 'idle'
     || exportState === 'building';
   const initialGenerationFailed = !world && generationState === 'idle' && generationNotice?.tone === 'error';
@@ -123,6 +133,38 @@ export function App() {
       visual: { ...current.visual, palette: [...BIOME_PALETTES[biome]] },
       map: { ...current.map, biome },
     }));
+  }
+
+  async function loadWorldExample(id: WorldExampleId) {
+    const request = generationSession.begin();
+    const spec = cloneWorldExampleSpec(id);
+    setExampleLoadingId(id);
+    setGenerationState('idle');
+    setGenerationNotice(null);
+    setImportState('idle');
+    setImportKind(null);
+    setImportNotice(null);
+
+    try {
+      const result = await runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, spec, {
+        signal: request.signal,
+      });
+      if (!generationSession.isCurrent(request)) return;
+      setDraft(cloneWorldSpec(spec));
+      setGenerationRun(result);
+      setExportState('idle');
+      setGenerationNotice({
+        tone: 'success',
+        message: `Loaded ${spec.title} from the Alpha.7 candidate registry.`,
+      });
+    } catch (error) {
+      if (!generationSession.isCurrent(request)) return;
+      const message = safeGenerationFailureMessage(error);
+      console.error(safeGenerationFailureLog(error));
+      setGenerationNotice({ tone: 'error', message });
+    } finally {
+      if (generationSession.isCurrent(request)) setExampleLoadingId(null);
+    }
   }
 
   async function generate() {
@@ -303,6 +345,14 @@ export function App() {
             and a portable PNG + JSON asset pack with a validated Godot importer.
           </p>
         </section>
+
+        <WorldGallery
+          examples={WORLD_EXAMPLES}
+          activeWorldId={activeExampleId}
+          loadingWorldId={exampleLoadingId}
+          disabled={operationBusy}
+          onSelect={(id) => void loadWorldExample(id)}
+        />
 
         <section className="workbench" aria-label="World generator workbench">
           <aside className="panel controls-panel">
