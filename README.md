@@ -23,7 +23,9 @@ Alpha.5 adds World Spec 0.2 semantic places, a canonical `runtime/places.json` s
 
 Alpha.6 adds optional place-linked exterior structures, four deterministic archetypes, `runtime/structures.json`, a transparent structures atlas, browser structure controls, and managed Godot `Sprite2D` derivation. Its published 18-file real-browser fixture has SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`. The separate importer ZIP has SHA-256 `bbfacd2b5c8503214b7647d59e9911a34fa1b4e073f86bd1310686812c9142c0`. itch.io upload remains postponed; no STOYO production adoption, independent user report, or external adoption is claimed.
 
-The current public starter input is [`examples/sunny-meadow-v0.2.world.json`](examples/sunny-meadow-v0.2.world.json); the previous Alpha.4 input remains at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
+Alpha.7 is the current audited candidate. The Workbench gallery can generate Sunny Meadow, Dustwind Outpost, and Frostwatch Vale as three independent Pack Schema 0.5 ZIPs. Their real-browser bytes are pinned in the candidate registry and the same exact packs must pass `created → unchanged → conflict preserved` on Linux/Windows with Godot 4.3/4.7 before the public-release ledger advances. Until that publication finishes, all public download links intentionally remain on immutable Alpha.6.
+
+The current public starter input is [`examples/sunny-meadow-v0.3.world.json`](examples/sunny-meadow-v0.3.world.json); earlier Alpha.4/Alpha.5 inputs remain available for historical verification. The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
 Local World Spec and STOYO Asset Request imports share the same 128 KiB cap, strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema/runtime validation. A STOYO request is first projected to a World Spec with a canonical SHA-256 binding; initial generation, editor generation, and both import paths then run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
@@ -88,6 +90,8 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [v0.1.0-alpha.6 release notes](docs/releases/v0.1.0-alpha.6.md)
 - [v0.1.0-alpha.6 deferred release visual source](docs/release-visuals/README-v0.1.0-alpha.6.md)
 - [v0.1.0-alpha.6 first-import guide](docs/16_ALPHA6_FIRST_GODOT_IMPORT.md)
+- [Alpha.7 multi-world gallery scope and acceptance](docs/17_ALPHA7_MULTI_WORLD_GALLERY.md)
+- [v0.1.0-alpha.7 release notes](docs/releases/v0.1.0-alpha.7.md)
 - [Community evidence ledger](docs/14_COMMUNITY_EVIDENCE.md)
 
 ## Community and contributing

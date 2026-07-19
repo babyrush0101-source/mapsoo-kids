@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "id": "sunny-meadow",
+      "file": "mapsoo-sunny-meadow-v0.1.0-alpha.7.zip",
+      "sha256": "6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c",
+      "archiveRoot": "mapsoo-sunny-meadow-v0.1.0-alpha.7",
+      "schemaVersion": "0.5.0",
+      "cellCount": 384,
+      "propCount": 29,
+      "placeCount": 3,
+      "structureCount": 2
+    },
+    {
+      "id": "dustwind-outpost",
+      "file": "mapsoo-dustwind-outpost-v0.1.0-alpha.7.zip",
+      "sha256": "d6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502",
+      "archiveRoot": "mapsoo-dustwind-outpost-v0.1.0-alpha.7",
+      "schemaVersion": "0.5.0",
+      "cellCount": 384,
+      "propCount": 29,
+      "placeCount": 4,
+      "structureCount": 2
+    },
+    {
+      "id": "frostwatch-vale",
+      "file": "mapsoo-frostwatch-vale-v0.1.0-alpha.7.zip",
+      "sha256": "35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12",
+      "archiveRoot": "mapsoo-frostwatch-vale-v0.1.0-alpha.7",
+      "schemaVersion": "0.5.0",
+      "cellCount": 384,
+      "propCount": 29,
+      "placeCount": 4,
+      "structureCount": 2
+    }
+  ]
+}

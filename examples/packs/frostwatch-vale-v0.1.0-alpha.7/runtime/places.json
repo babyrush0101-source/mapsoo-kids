@@ -1,0 +1,101 @@
+{
+  "schema_version": "0.3.0",
+  "pack": {
+    "id": "frostwatch-vale",
+    "version": "0.1.0-alpha.7"
+  },
+  "world_spec": {
+    "path": "worlds/frostwatch-vale.world.json",
+    "sha256": "41547ed2c93bb72266c40a37ec0d6a85a391b97423ad78339b1144d1274216cb"
+  },
+  "coordinate_space": {
+    "origin": "top-left",
+    "unit": "cell",
+    "tile_size": 32
+  },
+  "placement_algorithm": {
+    "id": "mapsoo-semantic-place-resolver",
+    "version": "0.1.0"
+  },
+  "places": [
+    {
+      "id": "vale-spawn",
+      "order": 0,
+      "label": "Vale Camp",
+      "kind": "spawn",
+      "placement": "center",
+      "sprite_id": "place-spawn-01",
+      "tags": [
+        "start",
+        "shelter"
+      ],
+      "cell": {
+        "x": 12,
+        "y": 7
+      },
+      "pixel_center": {
+        "x": 400,
+        "y": 240
+      }
+    },
+    {
+      "id": "ice-shrine",
+      "order": 1,
+      "label": "Icewater Shrine",
+      "kind": "landmark",
+      "placement": "near-water",
+      "sprite_id": "place-landmark-01",
+      "tags": [
+        "water",
+        "memory"
+      ],
+      "cell": {
+        "x": 11,
+        "y": 8
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 272
+      }
+    },
+    {
+      "id": "frostwatch",
+      "order": 2,
+      "label": "Frostwatch Tower",
+      "kind": "landmark",
+      "placement": "on-road",
+      "sprite_id": "place-landmark-01",
+      "tags": [
+        "navigation",
+        "lookout"
+      ],
+      "cell": {
+        "x": 12,
+        "y": 8
+      },
+      "pixel_center": {
+        "x": 400,
+        "y": 272
+      }
+    },
+    {
+      "id": "north-pass",
+      "order": 3,
+      "label": "North Pass",
+      "kind": "exit",
+      "placement": "map-edge",
+      "sprite_id": "place-exit-01",
+      "tags": [
+        "travel"
+      ],
+      "cell": {
+        "x": 12,
+        "y": 0
+      },
+      "pixel_center": {
+        "x": 400,
+        "y": 16
+      }
+    }
+  ]
+}

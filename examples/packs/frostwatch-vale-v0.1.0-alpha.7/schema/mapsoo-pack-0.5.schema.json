@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-pack-0.5.0.json",
+  "title": "Mapsoo Asset Pack Manifest 0.5",
+  "description": "Strict Alpha.7 multi-world Godot asset-pack contract with place-linked exterior structures.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack",
+    "compatibility",
+    "world_spec",
+    "demo",
+    "layers",
+    "terrain_sets",
+    "physics_layers",
+    "receipt",
+    "atlases",
+    "sprites",
+    "runtime",
+    "files",
+    "license",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.5.0"
+    },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "version",
+        "generator",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmpty"
+        },
+        "version": {
+          "const": "0.1.0-alpha.7"
+        },
+        "generator": {
+          "const": {
+            "name": "Mapsoo Worldsmith",
+            "version": "0.1.0-alpha.7"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "godot_min",
+        "grid",
+        "art_style",
+        "importer"
+      ],
+      "properties": {
+        "godot_min": {
+          "const": "4.3"
+        },
+        "grid": {
+          "const": "orthogonal"
+        },
+        "art_style": {
+          "const": "pixel_art"
+        },
+        "importer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "min_version",
+            "source"
+          ],
+          "properties": {
+            "id": {
+              "const": "mapsoo_importer"
+            },
+            "min_version": {
+              "const": "0.1.0-alpha.7"
+            },
+            "source": {
+              "const": "https://github.com/babyrush0101-source/mapsoo-kids"
+            }
+          }
+        }
+      }
+    },
+    "world_spec": {
+      "$ref": "#/$defs/fileReference"
+    },
+    "demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map",
+        "preview"
+      ],
+      "properties": {
+        "map": {
+          "$ref": "#/$defs/path"
+        },
+        "preview": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object"
+      }
+    },
+    "terrain_sets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object"
+      }
+    },
+    "physics_layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object"
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "atlases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object"
+      }
+    },
+    "sprites": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/sprite"
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "places",
+        "structures"
+      ],
+      "properties": {
+        "places": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/runtimeReference"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "runtime/places.json"
+                },
+                "schema": {
+                  "properties": {
+                    "path": {
+                      "const": "schema/mapsoo-places-0.3.schema.json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "structures": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/runtimeReference"
+            },
+            {
+              "properties": {
+                "path": {
+                  "const": "runtime/structures.json"
+                },
+                "schema": {
+                  "properties": {
+                    "path": {
+                      "const": "schema/mapsoo-structures-0.2.schema.json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 17,
+      "maxItems": 17,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/fileRecord"
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assets"
+      ],
+      "properties": {
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "file"
+          ],
+          "properties": {
+            "id": {
+              "const": "CC0-1.0"
+            },
+            "file": {
+              "const": "license-assets.md"
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_generative_ai",
+        "model_provider",
+        "model",
+        "seed",
+        "human_curated"
+      ],
+      "properties": {
+        "contains_generative_ai": {
+          "type": "boolean"
+        },
+        "model_provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "seed": {
+          "$ref": "#/$defs/nonEmpty"
+        },
+        "human_curated": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "nonEmpty": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^.*\\S.*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*(?:/[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*)*$"
+    },
+    "fileReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "fileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "media_type",
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "runtimeReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "schema"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "schema": {
+          "$ref": "#/$defs/fileReference"
+        }
+      }
+    },
+    "pair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 16384
+      }
+    },
+    "quad": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 16384
+      }
+    },
+    "sprite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "atlas",
+        "region_px",
+        "pivot_px",
+        "footprint_cells",
+        "tags"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "atlas": {
+          "$ref": "#/$defs/path"
+        },
+        "region_px": {
+          "$ref": "#/$defs/quad"
+        },
+        "pivot_px": {
+          "$ref": "#/$defs/pair"
+        },
+        "footprint_cells": {
+          "$ref": "#/$defs/pair"
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        }
+      }
+    }
+  }
+}

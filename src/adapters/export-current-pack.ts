@@ -1,16 +1,11 @@
-import packageJson from '../../package.json';
-import { ALPHA6_PACK_VERSION } from '../core/pack-manifest-alpha6';
+import { ALPHA7_PACK_VERSION } from '../core/pack-manifest-alpha7';
 import {
-  buildAlpha6PortablePack,
-  downloadAlpha6PortablePack,
-} from './export-browser-pack-alpha6';
+  buildAlpha7PortablePack,
+  downloadAlpha7PortablePack,
+} from './export-browser-pack-alpha7';
 
-if (packageJson.version !== ALPHA6_PACK_VERSION) {
-  throw new Error(
-    `Current package version ${packageJson.version} does not match the alpha.6 exporter ${ALPHA6_PACK_VERSION}.`,
-  );
-}
-
-export const CURRENT_PACK_VERSION = ALPHA6_PACK_VERSION;
-export const buildCurrentPortablePack = buildAlpha6PortablePack;
-export const downloadCurrentPortablePack = downloadAlpha6PortablePack;
+// The workbench may expose the next candidate exporter while package.json and
+// CURRENT_PUBLIC_RELEASE remain pinned to the last immutable public release.
+export const CURRENT_PACK_VERSION = ALPHA7_PACK_VERSION;
+export const buildCurrentPortablePack = buildAlpha7PortablePack;
+export const downloadCurrentPortablePack = downloadAlpha7PortablePack;

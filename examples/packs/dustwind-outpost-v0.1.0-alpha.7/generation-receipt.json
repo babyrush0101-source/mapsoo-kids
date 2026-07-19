@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2.0",
+  "created_at": "2026-07-19T12:00:00.000Z",
+  "world": {
+    "id": "dustwind-outpost",
+    "input_spec": {
+      "path": "worlds/dustwind-outpost.world.json",
+      "sha256": "a2b6f9e533bc24699b23c8738a222f5e2dd1c6ef7940065f8e911e00cb3b38e4"
+    },
+    "seed": "mapsoo-dustwind-001"
+  },
+  "provider": {
+    "id": "procedural-terrain-v2",
+    "version": "0.2.0",
+    "execution": "local",
+    "output_provenance": "procedural"
+  },
+  "model": null,
+  "workflow": {
+    "id": "mapsoo-playable-terrain-pack",
+    "version": "0.2.0",
+    "definition_sha256": null
+  },
+  "transformations": [
+    {
+      "id": "seeded-map-layout",
+      "version": "0.1.0"
+    },
+    {
+      "id": "cardinal-terrain-projection",
+      "version": "0.2.0"
+    },
+    {
+      "id": "procedural-pixel-atlas",
+      "version": "0.2.0"
+    },
+    {
+      "id": "png-rgba-export",
+      "version": "0.1.0"
+    }
+  ],
+  "ai_disclosure": {
+    "contains_generative_ai": false,
+    "human_curated": false,
+    "statement": null
+  },
+  "licensing": {
+    "output": {
+      "id": "CC0-1.0",
+      "notice_path": "license-assets.md"
+    },
+    "provider_terms": null
+  },
+  "sources": []
+}

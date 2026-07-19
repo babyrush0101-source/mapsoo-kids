@@ -1,0 +1,1849 @@
+{
+  "schema_version": "0.5.0",
+  "pack": {
+    "id": "sunny-meadow",
+    "title": "Sunny Meadow",
+    "version": "0.1.0-alpha.7",
+    "generator": {
+      "name": "Mapsoo Worldsmith",
+      "version": "0.1.0-alpha.7"
+    },
+    "created_at": "2026-07-19T12:00:00.000Z"
+  },
+  "compatibility": {
+    "godot_min": "4.3",
+    "grid": "orthogonal",
+    "art_style": "pixel_art",
+    "importer": {
+      "id": "mapsoo_importer",
+      "min_version": "0.1.0-alpha.7",
+      "source": "https://github.com/babyrush0101-source/mapsoo-kids"
+    }
+  },
+  "world_spec": {
+    "path": "worlds/sunny-meadow.world.json",
+    "sha256": "81036423a66f83823eecca6c0907e3fe06d56dd0092d31b7bd6dd3b9f2204082"
+  },
+  "demo": {
+    "map": "worlds/demo-world.json",
+    "preview": "previews/map-preview.png"
+  },
+  "layers": [
+    {
+      "id": "ground",
+      "kind": "tilemap",
+      "path": "worlds/demo-world.json",
+      "json_pointer": "/layers/0/cells",
+      "encoding": "row-major",
+      "dimensions_cells": [
+        24,
+        16
+      ],
+      "atlas_id": "terrain",
+      "empty_tile_id": -1
+    },
+    {
+      "id": "water",
+      "kind": "tilemap",
+      "path": "worlds/demo-world.json",
+      "json_pointer": "/layers/1/cells",
+      "encoding": "row-major",
+      "dimensions_cells": [
+        24,
+        16
+      ],
+      "atlas_id": "terrain",
+      "empty_tile_id": -1
+    },
+    {
+      "id": "roads",
+      "kind": "tilemap",
+      "path": "worlds/demo-world.json",
+      "json_pointer": "/layers/2/cells",
+      "encoding": "row-major",
+      "dimensions_cells": [
+        24,
+        16
+      ],
+      "atlas_id": "terrain",
+      "empty_tile_id": -1
+    },
+    {
+      "id": "props",
+      "kind": "objects",
+      "path": "worlds/demo-world.json",
+      "json_pointer": "/props",
+      "encoding": "objects",
+      "sprite_atlas": "atlases/props.png"
+    }
+  ],
+  "terrain_sets": [
+    {
+      "id": "water",
+      "mode": "match-sides",
+      "terrains": [
+        {
+          "id": "water",
+          "name": "Water",
+          "color": "#4f91ad"
+        }
+      ]
+    },
+    {
+      "id": "roads",
+      "mode": "match-sides",
+      "terrains": [
+        {
+          "id": "road",
+          "name": "Road",
+          "color": "#d6c18b"
+        }
+      ]
+    }
+  ],
+  "physics_layers": [
+    {
+      "id": "world-blocking",
+      "collision_layer": 1,
+      "collision_mask": 1
+    }
+  ],
+  "receipt": {
+    "path": "generation-receipt.json"
+  },
+  "atlases": [
+    {
+      "id": "terrain",
+      "source_id": 0,
+      "file": "atlases/terrain.png",
+      "image_size_px": [
+        256,
+        192
+      ],
+      "cell_size_px": [
+        32,
+        32
+      ],
+      "margin_px": [
+        0,
+        0
+      ],
+      "separation_px": [
+        0,
+        0
+      ],
+      "texture_padding": true,
+      "tiles": [
+        {
+          "tile_id": 0,
+          "id": "ground-base-a",
+          "atlas_coords": [
+            0,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "ground",
+            "ground-base-a"
+          ]
+        },
+        {
+          "tile_id": 1,
+          "id": "ground-base-b",
+          "atlas_coords": [
+            1,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "ground",
+            "ground-base-b"
+          ]
+        },
+        {
+          "tile_id": 2,
+          "id": "ground-detail",
+          "atlas_coords": [
+            2,
+            0
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": null,
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "ground",
+            "ground-detail"
+          ]
+        },
+        {
+          "tile_id": 16,
+          "id": "water-0",
+          "atlas_coords": [
+            0,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-0"
+          ]
+        },
+        {
+          "tile_id": 17,
+          "id": "water-1",
+          "atlas_coords": [
+            1,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": null,
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-1"
+          ]
+        },
+        {
+          "tile_id": 18,
+          "id": "water-2",
+          "atlas_coords": [
+            2,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": "water",
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-2"
+          ]
+        },
+        {
+          "tile_id": 19,
+          "id": "water-3",
+          "atlas_coords": [
+            3,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": "water",
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-3"
+          ]
+        },
+        {
+          "tile_id": 20,
+          "id": "water-4",
+          "atlas_coords": [
+            4,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": "water",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-4"
+          ]
+        },
+        {
+          "tile_id": 21,
+          "id": "water-5",
+          "atlas_coords": [
+            5,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": null,
+              "south": "water",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-5"
+          ]
+        },
+        {
+          "tile_id": 22,
+          "id": "water-6",
+          "atlas_coords": [
+            6,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": "water",
+              "south": "water",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-6"
+          ]
+        },
+        {
+          "tile_id": 23,
+          "id": "water-7",
+          "atlas_coords": [
+            7,
+            2
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": "water",
+              "south": "water",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-7"
+          ]
+        },
+        {
+          "tile_id": 24,
+          "id": "water-8",
+          "atlas_coords": [
+            0,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": null,
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-8"
+          ]
+        },
+        {
+          "tile_id": 25,
+          "id": "water-9",
+          "atlas_coords": [
+            1,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": null,
+              "south": null,
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-9"
+          ]
+        },
+        {
+          "tile_id": 26,
+          "id": "water-a",
+          "atlas_coords": [
+            2,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": "water",
+              "south": null,
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-10"
+          ]
+        },
+        {
+          "tile_id": 27,
+          "id": "water-b",
+          "atlas_coords": [
+            3,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": "water",
+              "south": null,
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-11"
+          ]
+        },
+        {
+          "tile_id": 28,
+          "id": "water-c",
+          "atlas_coords": [
+            4,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": "water",
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-12"
+          ]
+        },
+        {
+          "tile_id": 29,
+          "id": "water-d",
+          "atlas_coords": [
+            5,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": null,
+              "south": "water",
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-13"
+          ]
+        },
+        {
+          "tile_id": 30,
+          "id": "water-e",
+          "atlas_coords": [
+            6,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": null,
+              "east": "water",
+              "south": "water",
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-14"
+          ]
+        },
+        {
+          "tile_id": 31,
+          "id": "water-f",
+          "atlas_coords": [
+            7,
+            3
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "full-cell",
+            "physics_layer": "world-blocking"
+          },
+          "terrain": {
+            "set_id": "water",
+            "terrain_id": "water",
+            "peering": {
+              "north": "water",
+              "east": "water",
+              "south": "water",
+              "west": "water"
+            }
+          },
+          "custom_data": {
+            "walkable": false,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "water",
+            "mask-15"
+          ]
+        },
+        {
+          "tile_id": 32,
+          "id": "road-0",
+          "atlas_coords": [
+            0,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-0"
+          ]
+        },
+        {
+          "tile_id": 33,
+          "id": "road-1",
+          "atlas_coords": [
+            1,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": null,
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-1"
+          ]
+        },
+        {
+          "tile_id": 34,
+          "id": "road-2",
+          "atlas_coords": [
+            2,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": "road",
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-2"
+          ]
+        },
+        {
+          "tile_id": 35,
+          "id": "road-3",
+          "atlas_coords": [
+            3,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": "road",
+              "south": null,
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-3"
+          ]
+        },
+        {
+          "tile_id": 36,
+          "id": "road-4",
+          "atlas_coords": [
+            4,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": "road",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-4"
+          ]
+        },
+        {
+          "tile_id": 37,
+          "id": "road-5",
+          "atlas_coords": [
+            5,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": null,
+              "south": "road",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-5"
+          ]
+        },
+        {
+          "tile_id": 38,
+          "id": "road-6",
+          "atlas_coords": [
+            6,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": "road",
+              "south": "road",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-6"
+          ]
+        },
+        {
+          "tile_id": 39,
+          "id": "road-7",
+          "atlas_coords": [
+            7,
+            4
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": "road",
+              "south": "road",
+              "west": null
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-7"
+          ]
+        },
+        {
+          "tile_id": 40,
+          "id": "road-8",
+          "atlas_coords": [
+            0,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": null,
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-8"
+          ]
+        },
+        {
+          "tile_id": 41,
+          "id": "road-9",
+          "atlas_coords": [
+            1,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": null,
+              "south": null,
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-9"
+          ]
+        },
+        {
+          "tile_id": 42,
+          "id": "road-a",
+          "atlas_coords": [
+            2,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": "road",
+              "south": null,
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-10"
+          ]
+        },
+        {
+          "tile_id": 43,
+          "id": "road-b",
+          "atlas_coords": [
+            3,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": "road",
+              "south": null,
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-11"
+          ]
+        },
+        {
+          "tile_id": 44,
+          "id": "road-c",
+          "atlas_coords": [
+            4,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": null,
+              "south": "road",
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-12"
+          ]
+        },
+        {
+          "tile_id": 45,
+          "id": "road-d",
+          "atlas_coords": [
+            5,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": null,
+              "south": "road",
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-13"
+          ]
+        },
+        {
+          "tile_id": 46,
+          "id": "road-e",
+          "atlas_coords": [
+            6,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": null,
+              "east": "road",
+              "south": "road",
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-14"
+          ]
+        },
+        {
+          "tile_id": 47,
+          "id": "road-f",
+          "atlas_coords": [
+            7,
+            5
+          ],
+          "size_cells": [
+            1,
+            1
+          ],
+          "alternative_id": 0,
+          "collision": {
+            "type": "none"
+          },
+          "terrain": {
+            "set_id": "roads",
+            "terrain_id": "road",
+            "peering": {
+              "north": "road",
+              "east": "road",
+              "south": "road",
+              "west": "road"
+            }
+          },
+          "custom_data": {
+            "walkable": true,
+            "biome": "meadow"
+          },
+          "tags": [
+            "terrain",
+            "roads",
+            "mask-15"
+          ]
+        }
+      ]
+    }
+  ],
+  "sprites": [
+    {
+      "id": "tree-01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "tree",
+        "meadow"
+      ]
+    },
+    {
+      "id": "rock-01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "rock",
+        "meadow"
+      ]
+    },
+    {
+      "id": "flower-01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "flower",
+        "meadow"
+      ]
+    },
+    {
+      "id": "shrub-01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        96,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "shrub",
+        "meadow"
+      ]
+    },
+    {
+      "id": "log-01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        128,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "log",
+        "meadow"
+      ]
+    },
+    {
+      "id": "marker-01",
+      "atlas": "atlases/props.png",
+      "region_px": [
+        160,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "prop",
+        "marker",
+        "meadow"
+      ]
+    },
+    {
+      "id": "place-spawn-01",
+      "atlas": "atlases/places.png",
+      "region_px": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "place",
+        "spawn"
+      ]
+    },
+    {
+      "id": "place-settlement-01",
+      "atlas": "atlases/places.png",
+      "region_px": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "place",
+        "settlement"
+      ]
+    },
+    {
+      "id": "place-landmark-01",
+      "atlas": "atlases/places.png",
+      "region_px": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "place",
+        "landmark"
+      ]
+    },
+    {
+      "id": "place-resource-01",
+      "atlas": "atlases/places.png",
+      "region_px": [
+        96,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "place",
+        "resource"
+      ]
+    },
+    {
+      "id": "place-encounter-01",
+      "atlas": "atlases/places.png",
+      "region_px": [
+        128,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "place",
+        "encounter"
+      ]
+    },
+    {
+      "id": "place-exit-01",
+      "atlas": "atlases/places.png",
+      "region_px": [
+        160,
+        0,
+        32,
+        32
+      ],
+      "pivot_px": [
+        16,
+        32
+      ],
+      "footprint_cells": [
+        1,
+        1
+      ],
+      "tags": [
+        "place",
+        "exit"
+      ]
+    },
+    {
+      "id": "structure-cottage-01",
+      "atlas": "atlases/structures.png",
+      "region_px": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ],
+      "footprint_cells": [
+        2,
+        2
+      ],
+      "tags": [
+        "structure",
+        "cottage"
+      ]
+    },
+    {
+      "id": "structure-workshop-01",
+      "atlas": "atlases/structures.png",
+      "region_px": [
+        64,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ],
+      "footprint_cells": [
+        2,
+        2
+      ],
+      "tags": [
+        "structure",
+        "workshop"
+      ]
+    },
+    {
+      "id": "structure-tower-01",
+      "atlas": "atlases/structures.png",
+      "region_px": [
+        128,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ],
+      "footprint_cells": [
+        2,
+        2
+      ],
+      "tags": [
+        "structure",
+        "tower"
+      ]
+    },
+    {
+      "id": "structure-shrine-01",
+      "atlas": "atlases/structures.png",
+      "region_px": [
+        192,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ],
+      "footprint_cells": [
+        2,
+        2
+      ],
+      "tags": [
+        "structure",
+        "shrine"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "worlds/sunny-meadow.world.json",
+      "media_type": "application/json",
+      "bytes": 1299,
+      "sha256": "81036423a66f83823eecca6c0907e3fe06d56dd0092d31b7bd6dd3b9f2204082"
+    },
+    {
+      "path": "runtime/places.json",
+      "media_type": "application/json",
+      "bytes": 1531,
+      "sha256": "d4edf893402db72344532f98f6c8941ec74c94df9b1dbb8a510856d4ce552702"
+    },
+    {
+      "path": "runtime/structures.json",
+      "media_type": "application/json",
+      "bytes": 1587,
+      "sha256": "7b872aa63ce0be3255c81fb79738dbae6ebb85bcab5f7b259c76ba538584696f"
+    },
+    {
+      "path": "readme.md",
+      "media_type": "text/markdown",
+      "bytes": 967,
+      "sha256": "53f4ff0fbdbdef096655bd13d50b7bca751a9b5aa2391469d0c458167136c617"
+    },
+    {
+      "path": "license-assets.md",
+      "media_type": "text/markdown",
+      "bytes": 489,
+      "sha256": "ac32d58bcffcceb2bdf2613957d6062c0ce5eaf14ba5651bef6d1624c66ab211"
+    },
+    {
+      "path": "worlds/demo-world.json",
+      "media_type": "application/json",
+      "bytes": 16398,
+      "sha256": "07fdb8031d78fa62e8c233896a81d985fedeae820d02a82e63f6e9593b629631"
+    },
+    {
+      "path": "atlases/terrain.png",
+      "media_type": "image/png",
+      "bytes": 1273,
+      "sha256": "7a6eb45e4b8e0e500974d8cbb2065716c131abd27ececbedf5c1c79e0f0c9f12"
+    },
+    {
+      "path": "atlases/props.png",
+      "media_type": "image/png",
+      "bytes": 301,
+      "sha256": "a8c4ed36b2a45eff4783aa3fde83a48f07f5b3822f5616d632012a38776c5680"
+    },
+    {
+      "path": "atlases/places.png",
+      "media_type": "image/png",
+      "bytes": 307,
+      "sha256": "455b391b7681a1bc520eacf288971a00e9d145e6800abf7f44fb93c1aaeca0b0"
+    },
+    {
+      "path": "atlases/structures.png",
+      "media_type": "image/png",
+      "bytes": 594,
+      "sha256": "2202126bb263930d181536e55aece1630a5e6274cc788bb131af8adc563a122f"
+    },
+    {
+      "path": "previews/map-preview.png",
+      "media_type": "image/png",
+      "bytes": 8076,
+      "sha256": "c7b34fb87c4ffe70a5dd72fbe9b1932036f82bfc1bb2caea41f570311c933731"
+    },
+    {
+      "path": "schema/mapsoo-pack-0.5.schema.json",
+      "media_type": "application/json",
+      "bytes": 9238,
+      "sha256": "014dec0e50cc5c498d0a1a1e6394980bdb1a5830b79b60698bdc6291465a1dd1"
+    },
+    {
+      "path": "schema/mapsoo-world-0.3.schema.json",
+      "media_type": "application/json",
+      "bytes": 5295,
+      "sha256": "8279f4758860ddf478b5ac20970e51d95026739cb4789e25741dd5ffa68cfec8"
+    },
+    {
+      "path": "schema/mapsoo-places-0.3.schema.json",
+      "media_type": "application/json",
+      "bytes": 3840,
+      "sha256": "5709d181b3a586035491c18b9a729964371840be04a1d1faa62d3ae76a7a31b5"
+    },
+    {
+      "path": "schema/mapsoo-structures-0.2.schema.json",
+      "media_type": "application/json",
+      "bytes": 4637,
+      "sha256": "049249604b03f5cb2013820292d7bfcf510de423dd36937dc24babcb11eb77a1"
+    },
+    {
+      "path": "schema/mapsoo-generation-receipt.schema.json",
+      "media_type": "application/json",
+      "bytes": 12863,
+      "sha256": "264eabca313b083185968cfe362cb70e7ddd4508fb3b64bfc97e2571de6c2a76"
+    },
+    {
+      "path": "generation-receipt.json",
+      "media_type": "application/json",
+      "bytes": 1176,
+      "sha256": "dc71f49ab193475301f6c9aa86d5956188fae58bf8e07ac9a4a6b9e1595593c9"
+    }
+  ],
+  "license": {
+    "assets": {
+      "id": "CC0-1.0",
+      "file": "license-assets.md"
+    }
+  },
+  "provenance": {
+    "contains_generative_ai": false,
+    "model_provider": null,
+    "model": null,
+    "seed": "mapsoo-demo-001",
+    "human_curated": false
+  },
+  "runtime": {
+    "places": {
+      "path": "runtime/places.json",
+      "sha256": "d4edf893402db72344532f98f6c8941ec74c94df9b1dbb8a510856d4ce552702",
+      "schema": {
+        "path": "schema/mapsoo-places-0.3.schema.json",
+        "sha256": "5709d181b3a586035491c18b9a729964371840be04a1d1faa62d3ae76a7a31b5"
+      }
+    },
+    "structures": {
+      "path": "runtime/structures.json",
+      "sha256": "7b872aa63ce0be3255c81fb79738dbae6ebb85bcab5f7b259c76ba538584696f",
+      "schema": {
+        "path": "schema/mapsoo-structures-0.2.schema.json",
+        "sha256": "049249604b03f5cb2013820292d7bfcf510de423dd36937dc24babcb11eb77a1"
+      }
+    }
+  }
+}

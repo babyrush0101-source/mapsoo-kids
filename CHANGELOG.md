@@ -4,6 +4,20 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+## [0.1.0-alpha.7] - 2026-07-19
+
+### Added
+
+- Three deterministic, independently downloadable world packs: Sunny Meadow, Dustwind Outpost, and Frostwatch Vale.
+- Pack Schema 0.5, resolved places 0.3, resolved structures 0.2, and a three-pack receipt/release trust policy.
+- A real-browser three-ZIP gate and a Godot exact-pack runner covering all three packs on Linux/Windows with Godot 4.3/4.7.
+
+### Changed
+
+- Generalized candidate release construction and manifests from one example pack to three without changing Alpha.1–Alpha.6 history.
+- Advanced the Workbench exporter and Godot importer to Alpha.7 while keeping public download links pinned to Alpha.6 until publication completes.
+- Kept itch.io publication postponed and made no external-adoption or STOYO-production claim.
+
 ## [0.1.0-alpha.6] - 2026-07-19
 
 ### Added

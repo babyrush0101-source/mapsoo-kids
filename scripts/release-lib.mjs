@@ -59,6 +59,19 @@ export function hashedReleaseFileNames(config = CURRENT_RELEASE_CONFIG) {
   );
 }
 
+export function examplePacksForConfig(config = CURRENT_RELEASE_CONFIG) {
+  return Object.freeze([
+    Object.freeze({
+      ...config.release.examplePack,
+      releaseFileKey: 'examplePack',
+      worldSpecReleaseFileKey: 'exampleWorldSpec',
+      worldSpecInput: config.release.inputs.exampleWorldSpec,
+      expectedSha256: config.expectedExamplePackSha256,
+    }),
+    ...(config.release.additionalExamplePacks ?? []),
+  ]);
+}
+
 export const HASHED_RELEASE_FILE_NAMES = Object.freeze(
   Object.values(CURRENT_RELEASE_CONFIG.release.files)
     .filter((name) => name !== CURRENT_RELEASE_CONFIG.release.files.checksums)
@@ -288,13 +301,17 @@ function stableJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-export async function buildExamplePackArchive(version = VERSION) {
+export async function buildExamplePackArchive(version = VERSION, packId = undefined) {
   const config = getReleaseConfig(version);
-  const examplePackRoot = join(REPOSITORY_ROOT, config.release.examplePack.sourceDirectory);
+  const pack = packId
+    ? examplePacksForConfig(config).find((candidate) => candidate.id === packId)
+    : examplePacksForConfig(config)[0];
+  if (!pack) throw new Error(`Unknown example pack for ${config.tag}: ${String(packId)}`);
+  const examplePackRoot = join(REPOSITORY_ROOT, pack.sourceDirectory);
   const examplePackFiles = await listFiles(examplePackRoot);
   const examplePackZipEntries = examplePackFiles.map((entry) => ({
     ...entry,
-    archivePath: `${config.release.examplePack.archiveRoot}/${entry.archivePath}`,
+    archivePath: `${pack.archiveRoot}/${entry.archivePath}`,
   }));
   return createDeterministicZip(examplePackZipEntries);
 }
@@ -347,13 +364,20 @@ export async function buildRelease(outputRoot, version = VERSION, options = {}) 
     await createDeterministicZip(importerZipEntries),
   );
 
-  await writeFile(
-    join(resolvedOutputRoot, releaseFiles.examplePack),
-    await buildExamplePackArchive(version),
-  );
+  const examplePacks = examplePacksForConfig(config);
+  for (const pack of examplePacks) {
+    await writeFile(
+      join(resolvedOutputRoot, releaseFiles[pack.releaseFileKey]),
+      await buildExamplePackArchive(version, pack.id),
+    );
+  }
 
   const copiedFiles = [
     [join(REPOSITORY_ROOT, config.release.inputs.exampleWorldSpec), releaseFiles.exampleWorldSpec],
+    ...examplePacks.slice(1).map((pack) => [
+      join(REPOSITORY_ROOT, pack.worldSpecInput),
+      releaseFiles[pack.worldSpecReleaseFileKey],
+    ]),
     ...config.release.schemas.map(({ releaseFileKey, source }) => [
       join(REPOSITORY_ROOT, source),
       releaseFiles[releaseFileKey],
@@ -390,20 +414,22 @@ export async function buildRelease(outputRoot, version = VERSION, options = {}) 
         file: releaseFiles.godotImporter,
         purpose: 'Godot 4.3+ editor plugin; extract into a Godot project root',
       },
-      examplePack: {
-        file: releaseFiles.examplePack,
-        purpose: 'Executable-free Sunny Meadow PNG + JSON pack CI-gated on Godot 4.3 and 4.7',
-      },
+      examplePacks: examplePacks.map((pack) => ({
+        id: pack.id,
+        file: releaseFiles[pack.releaseFileKey],
+        purpose: `Executable-free ${pack.id} PNG + JSON pack CI-gated on Godot 4.3 and 4.7`,
+      })),
       ...(releaseFiles.evidenceVideo ? {
         evidenceVideo: {
           file: releaseFiles.evidenceVideo,
           purpose: 'Silent bilingual 75-second H.264 evidence cut for the verified release candidate',
         },
       } : {}),
-      exampleWorldSpec: {
-        file: releaseFiles.exampleWorldSpec,
-        purpose: 'Versioned Sunny Meadow input example',
-      },
+      exampleWorldSpecs: examplePacks.map((pack) => ({
+        id: pack.id,
+        file: releaseFiles[pack.worldSpecReleaseFileKey],
+        purpose: `Versioned ${pack.id} input example`,
+      })),
       schemas: config.release.schemas.map(({ releaseFileKey }) => releaseFiles[releaseFileKey]),
       license: releaseFiles.license,
       changelog: releaseFiles.changelog,

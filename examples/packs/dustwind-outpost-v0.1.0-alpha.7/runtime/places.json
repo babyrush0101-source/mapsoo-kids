@@ -1,0 +1,101 @@
+{
+  "schema_version": "0.3.0",
+  "pack": {
+    "id": "dustwind-outpost",
+    "version": "0.1.0-alpha.7"
+  },
+  "world_spec": {
+    "path": "worlds/dustwind-outpost.world.json",
+    "sha256": "a2b6f9e533bc24699b23c8738a222f5e2dd1c6ef7940065f8e911e00cb3b38e4"
+  },
+  "coordinate_space": {
+    "origin": "top-left",
+    "unit": "cell",
+    "tile_size": 32
+  },
+  "placement_algorithm": {
+    "id": "mapsoo-semantic-place-resolver",
+    "version": "0.1.0"
+  },
+  "places": [
+    {
+      "id": "outpost-spawn",
+      "order": 0,
+      "label": "Outpost Courtyard",
+      "kind": "spawn",
+      "placement": "center",
+      "sprite_id": "place-spawn-01",
+      "tags": [
+        "start",
+        "safe"
+      ],
+      "cell": {
+        "x": 11,
+        "y": 7
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 240
+      }
+    },
+    {
+      "id": "oasis-workyard",
+      "order": 1,
+      "label": "Oasis Workyard",
+      "kind": "resource",
+      "placement": "near-water",
+      "sprite_id": "place-resource-01",
+      "tags": [
+        "water",
+        "craft"
+      ],
+      "cell": {
+        "x": 6,
+        "y": 8
+      },
+      "pixel_center": {
+        "x": 208,
+        "y": 272
+      }
+    },
+    {
+      "id": "dustwatch",
+      "order": 2,
+      "label": "Dustwatch Tower",
+      "kind": "landmark",
+      "placement": "on-road",
+      "sprite_id": "place-landmark-01",
+      "tags": [
+        "navigation",
+        "lookout"
+      ],
+      "cell": {
+        "x": 11,
+        "y": 6
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 208
+      }
+    },
+    {
+      "id": "caravan-gate",
+      "order": 3,
+      "label": "Caravan Gate",
+      "kind": "exit",
+      "placement": "map-edge",
+      "sprite_id": "place-exit-01",
+      "tags": [
+        "travel"
+      ],
+      "cell": {
+        "x": 11,
+        "y": 0
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 16
+      }
+    }
+  ]
+}

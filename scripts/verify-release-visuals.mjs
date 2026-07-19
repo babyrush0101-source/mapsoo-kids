@@ -51,6 +51,10 @@ async function verifyPng(fileName, { width: expectedWidth, height: expectedHeigh
 }
 
 async function verify() {
+  if (expectedVisuals.size === 0 && CURRENT_RELEASE_CONFIG.itch.rendererFrames.length === 0) {
+    console.log('MAPSOO_RELEASE_VISUALS_OK files=0 deferred=true');
+    return;
+  }
   if (expectedVisuals.size > 0) {
     const visualDirectoryStat = await lstat(visualRoot);
     assert(visualDirectoryStat.isDirectory() && !visualDirectoryStat.isSymbolicLink(), 'Release visual root must be a real directory');

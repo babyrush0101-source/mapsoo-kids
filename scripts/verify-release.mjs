@@ -20,6 +20,7 @@ import {
   comparePortablePaths,
   isTextPath,
   listFiles,
+  examplePacksForConfig,
   normalizeText,
   readPortableFile,
   sha256,
@@ -37,10 +38,10 @@ function exactJson(left, right) {
 
 function verifyAlpha4PlayableTerrainManifest(
   manifest,
-  { semanticPlaces = false, semanticStructures = false } = {},
+  { semanticPlaces = false, semanticStructures = false, worldGallery = false } = {},
 ) {
   const hasSemanticPlaces = semanticPlaces || semanticStructures;
-  const expectedSchemaVersion = semanticStructures ? '0.4.0' : hasSemanticPlaces ? '0.3.0' : '0.2.0';
+  const expectedSchemaVersion = worldGallery ? '0.5.0' : semanticStructures ? '0.4.0' : hasSemanticPlaces ? '0.3.0' : '0.2.0';
   assert(manifest.schema_version === expectedSchemaVersion, 'Playable terrain manifest schema version mismatch');
   assert(
     exactJson(manifest.pack?.generator, { name: 'Mapsoo Worldsmith', version: VERSION }),
@@ -53,7 +54,9 @@ function verifyAlpha4PlayableTerrainManifest(
       art_style: 'pixel_art',
       importer: {
         id: 'mapsoo_importer',
-        min_version: semanticStructures
+        min_version: worldGallery
+          ? '0.1.0-alpha.7'
+          : semanticStructures
           ? '0.1.0-alpha.6'
           : hasSemanticPlaces
             ? '0.1.0-alpha.5'
@@ -209,7 +212,9 @@ function verifyAlpha4PlayableTerrainManifest(
     }
     assert(
       manifest.runtime?.places?.path === 'runtime/places.json'
-        && manifest.runtime.places.schema?.path === (semanticStructures
+        && manifest.runtime.places.schema?.path === (worldGallery
+          ? 'schema/mapsoo-places-0.3.schema.json'
+          : semanticStructures
           ? 'schema/mapsoo-places-0.2.schema.json'
           : 'schema/mapsoo-places-0.1.schema.json')
         && /^[a-f0-9]{64}$/.test(manifest.runtime.places.sha256)
@@ -233,7 +238,9 @@ function verifyAlpha4PlayableTerrainManifest(
     }
     assert(
       manifest.runtime?.structures?.path === 'runtime/structures.json'
-        && manifest.runtime.structures.schema?.path === 'schema/mapsoo-structures-0.1.schema.json'
+        && manifest.runtime.structures.schema?.path === (worldGallery
+          ? 'schema/mapsoo-structures-0.2.schema.json'
+          : 'schema/mapsoo-structures-0.1.schema.json')
         && /^[a-f0-9]{64}$/.test(manifest.runtime.structures.sha256)
         && /^[a-f0-9]{64}$/.test(manifest.runtime.structures.schema.sha256),
       'Semantic structures runtime binding mismatch',
@@ -241,9 +248,9 @@ function verifyAlpha4PlayableTerrainManifest(
   }
 }
 
-function verifyConfiguredExampleManifest(manifest) {
+function verifyConfiguredExampleManifest(manifest, expectedPackId = CURRENT_RELEASE_CONFIG.release.examplePack.id) {
   assert(
-    manifest.pack?.id === CURRENT_RELEASE_CONFIG.release.examplePack.id,
+    manifest.pack?.id === expectedPackId,
     'Example manifest pack ID mismatch',
   );
   assert(manifest.pack?.version === VERSION, 'Example manifest version mismatch');
@@ -299,6 +306,11 @@ function verifyConfiguredExampleManifest(manifest) {
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'Semantic structures asset license mismatch');
       verifyAlpha4PlayableTerrainManifest(manifest, { semanticStructures: true });
       return;
+    case 'world-gallery-semantic-structures-cc0-v7':
+      assert(manifest.provenance?.contains_generative_ai === false, 'World gallery pack must disclose contains_generative_ai=false');
+      assert(manifest.license?.assets?.id === 'CC0-1.0', 'World gallery asset license mismatch');
+      verifyAlpha4PlayableTerrainManifest(manifest, { semanticStructures: true, worldGallery: true });
+      return;
     default:
       throw new Error(
         `Unsupported pack verification policy: ${CURRENT_RELEASE_CONFIG.release.verificationPolicy}`,
@@ -322,7 +334,8 @@ function verifyConfiguredWorldSpec(worldSpec) {
       assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
       assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
       return;
-    case 'sunny-meadow-semantic-structures-cc0-v6': {
+    case 'sunny-meadow-semantic-structures-cc0-v6':
+    case 'world-gallery-semantic-structures-cc0-v7': {
       assert(worldSpec.schemaVersion === '0.3.0', 'Example World Spec must use schema 0.3.0');
       assert(Array.isArray(worldSpec.places) && worldSpec.places.length >= 1 && worldSpec.places.length <= 8, 'Example World Spec must declare semantic places');
       assert(Array.isArray(worldSpec.structures) && worldSpec.structures.length <= 8, 'Example World Spec structures are invalid');
@@ -408,11 +421,11 @@ async function expectedImporterEntries() {
   return result;
 }
 
-async function expectedExamplePackEntries() {
-  const rootName = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
+async function expectedExamplePackEntries(pack = examplePacksForConfig()[0]) {
+  const rootName = pack.archiveRoot;
   const packRoot = join(
     REPOSITORY_ROOT,
-    CURRENT_RELEASE_CONFIG.release.examplePack.sourceDirectory,
+    pack.sourceDirectory,
   );
   const result = new Map();
   for (const entry of await listFiles(packRoot)) {
@@ -455,6 +468,44 @@ async function verifyCopiedFile(releaseName, sourcePath) {
   }
 }
 
+async function verifyConfiguredPack(pack) {
+  const fileName = RELEASE_FILES[pack.releaseFileKey];
+  const entries = await loadZip(fileName);
+  assert(entries.every((entry) => entry.name.startsWith(`${pack.archiveRoot}/`)), `${pack.id} ZIP must contain exactly one versioned root folder`);
+  assert(entries.every((entry) => !/(^|\/)addons\//.test(entry.name) && !/(^|\/)\.godot\//.test(entry.name) && /\.(?:json|md|png)$/i.test(entry.name)), `${pack.id} ZIP may contain only PNG, JSON, and Markdown data files`);
+  const manifestEntry = entries.find((entry) => entry.name === `${pack.archiveRoot}/mapsoo.manifest.json`);
+  assert(manifestEntry, `${pack.id} ZIP does not contain mapsoo.manifest.json`);
+  const packManifest = JSON.parse(await manifestEntry.async('text'));
+  verifyConfiguredExampleManifest(packManifest, pack.id);
+  const files = new Map(entries.map((entry) => [entry.name.slice(pack.archiveRoot.length + 1), entry]));
+  const records = packManifest.files ?? [];
+  assert(Array.isArray(records) && entries.length === records.length + 1, `${pack.id} ZIP entry count/manifest coverage mismatch`);
+  assert(new Set(records.map(({ path }) => path)).size === records.length, `${pack.id} manifest contains duplicate paths`);
+  for (const [path] of files) if (path !== 'mapsoo.manifest.json') assert(records.some((record) => record.path === path), `${pack.id} unrecorded ZIP file: ${path}`);
+  for (const record of records) {
+    const entry = files.get(record.path);
+    assert(entry, `${pack.id} manifest references missing file: ${record.path}`);
+    const bytes = await entry.async('nodebuffer');
+    assert(bytes.length === record.bytes && sha256(bytes) === record.sha256, `${pack.id} payload digest mismatch: ${record.path}`);
+  }
+  await verifyReceiptForRelease({
+    version: VERSION,
+    manifest: packManifest,
+    context: `${pack.id} release pack`,
+    readPackFile: async (path) => files.get(path)?.async('nodebuffer'),
+  });
+  const sourceChecks = [
+    [pack.worldSpecPackPath, join(REPOSITORY_ROOT, pack.worldSpecInput)],
+    ...CURRENT_RELEASE_CONFIG.release.schemas.map(({ packPath, source }) => [packPath, join(REPOSITORY_ROOT, source)]),
+  ];
+  for (const [packedPath, sourcePath] of sourceChecks) {
+    const entry = files.get(packedPath);
+    assert(entry, `${pack.id} ZIP is missing source file: ${packedPath}`);
+    assert(JSON.stringify(JSON.parse(await entry.async('text'))) === JSON.stringify(JSON.parse(await readFile(sourcePath, 'utf8'))), `${pack.id} pack differs from source: ${packedPath}`);
+  }
+  return entries.length;
+}
+
 async function verify() {
   const expectedReleaseNames = [...HASHED_RELEASE_FILE_NAMES, RELEASE_FILES.checksums].sort(
     comparePortablePaths,
@@ -488,15 +539,19 @@ async function verify() {
   }
 
   await verifyChecksums();
-  const pinnedExamplePackHash = CURRENT_RELEASE_CONFIG.expectedExamplePackSha256;
-  assert(pinnedExamplePackHash, `No example-pack hash is configured for ${RELEASE_TAG}`);
-  assert(
-    sha256(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.examplePack))) === pinnedExamplePackHash,
-    `Sunny Meadow ZIP differs from the configured immutable hash for ${RELEASE_TAG}`,
-  );
+  const configuredPacks = examplePacksForConfig();
+  for (const pack of configuredPacks) {
+    assert(pack.expectedSha256, `No example-pack hash is configured for ${pack.id}`);
+    assert(
+      sha256(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[pack.releaseFileKey]))) === pack.expectedSha256,
+      `${pack.id} ZIP differs from the configured immutable hash for ${RELEASE_TAG}`,
+    );
+  }
   await assertZipMatches(RELEASE_FILES.web, await expectedWebEntries());
   await assertZipMatches(RELEASE_FILES.godotImporter, await expectedImporterEntries());
-  await assertZipMatches(RELEASE_FILES.examplePack, await expectedExamplePackEntries());
+  for (const pack of configuredPacks) {
+    await assertZipMatches(RELEASE_FILES[pack.releaseFileKey], await expectedExamplePackEntries(pack));
+  }
 
   const importerEntries = await loadZip(RELEASE_FILES.godotImporter);
   const pluginEntry = importerEntries.find((entry) => entry.name === 'addons/mapsoo_importer/plugin.cfg');
@@ -555,98 +610,16 @@ async function verify() {
     );
   }
 
-  const examplePackEntries = await loadZip(RELEASE_FILES.examplePack);
-  const examplePackRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
-  assert(
-    examplePackEntries.every((entry) => entry.name.startsWith(`${examplePackRoot}/`)),
-    'Sunny Meadow ZIP must contain exactly one versioned root folder',
-  );
-  assert(
-    examplePackEntries.every(
-      (entry) =>
-        !/(^|\/)addons\//.test(entry.name) &&
-        !/(^|\/)\.godot\//.test(entry.name) &&
-        /\.(?:json|md|png)$/i.test(entry.name),
-    ),
-    'Sunny Meadow ZIP may contain only PNG, JSON, and Markdown data files',
-  );
-
-  const exampleManifestEntry = examplePackEntries.find(
-    (entry) => entry.name === `${examplePackRoot}/mapsoo.manifest.json`,
-  );
-  assert(exampleManifestEntry, 'Sunny Meadow ZIP does not contain mapsoo.manifest.json');
-  const exampleManifest = JSON.parse(await exampleManifestEntry.async('text'));
-  verifyConfiguredExampleManifest(exampleManifest);
-
-  const exampleFiles = new Map(
-    examplePackEntries.map((entry) => [entry.name.slice(examplePackRoot.length + 1), entry]),
-  );
-  const exampleFileRecords = exampleManifest.files ?? [];
-  assert(Array.isArray(exampleFileRecords), 'Sunny Meadow manifest files must be an array');
-  assert(
-    examplePackEntries.length === exampleFileRecords.length + 1,
-    'Sunny Meadow ZIP entry count must equal its manifest payload count plus mapsoo.manifest.json',
-  );
-  const exampleFileRecordPaths = new Set(exampleFileRecords.map((record) => record.path));
-  assert(
-    exampleFileRecordPaths.size === exampleFileRecords.length,
-    'Sunny Meadow manifest must not contain duplicate file paths',
-  );
-  assert(
-    exampleFiles.size === exampleFileRecords.length + 1,
-    'Sunny Meadow ZIP contains files that are not covered by its manifest',
-  );
-  for (const packedPath of exampleFiles.keys()) {
-    if (packedPath !== 'mapsoo.manifest.json') {
-      assert(
-        exampleFileRecordPaths.has(packedPath),
-        `Sunny Meadow ZIP file is not covered by its manifest: ${packedPath}`,
-      );
-    }
-  }
-  for (const fileRecord of exampleFileRecords) {
-    const entry = exampleFiles.get(fileRecord.path);
-    assert(entry, `Sunny Meadow manifest references a missing file: ${fileRecord.path}`);
-    const bytes = await entry.async('nodebuffer');
-    assert(bytes.length === fileRecord.bytes, `Sunny Meadow byte count mismatch: ${fileRecord.path}`);
-    assert(sha256(bytes) === fileRecord.sha256, `Sunny Meadow SHA-256 mismatch: ${fileRecord.path}`);
-  }
-
-  await verifyReceiptForRelease({
-    version: VERSION,
-    manifest: exampleManifest,
-    context: 'Sunny Meadow release pack',
-    readPackFile: async (path) => {
-      const entry = exampleFiles.get(path);
-      return entry ? entry.async('nodebuffer') : undefined;
-    },
-  });
-
-  const sourceJsonChecks = [
-    [
-      CURRENT_RELEASE_CONFIG.release.examplePack.worldSpecPackPath,
-      join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.exampleWorldSpec),
-    ],
-    ...CURRENT_RELEASE_CONFIG.release.schemas.map(({ packPath, source }) => [
-      packPath,
-      join(REPOSITORY_ROOT, source),
-    ]),
-  ];
-  for (const [packedPath, sourcePath] of sourceJsonChecks) {
-    const entry = exampleFiles.get(packedPath);
-    assert(entry, `Sunny Meadow ZIP is missing its versioned source file: ${packedPath}`);
-    const packedJson = JSON.parse(await entry.async('text'));
-    const sourceJson = JSON.parse(await readFile(sourcePath, 'utf8'));
-    assert(
-      JSON.stringify(packedJson) === JSON.stringify(sourceJson),
-      `Sunny Meadow pack differs structurally from its source: ${packedPath}`,
-    );
-  }
+  const examplePackEntryCounts = [];
+  for (const pack of configuredPacks) examplePackEntryCounts.push(await verifyConfiguredPack(pack));
 
   await verifyCopiedFile(
     RELEASE_FILES.exampleWorldSpec,
     join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.exampleWorldSpec),
   );
+  for (const pack of configuredPacks.slice(1)) {
+    await verifyCopiedFile(RELEASE_FILES[pack.worldSpecReleaseFileKey], join(REPOSITORY_ROOT, pack.worldSpecInput));
+  }
   for (const { releaseFileKey, source } of CURRENT_RELEASE_CONFIG.release.schemas) {
     await verifyCopiedFile(RELEASE_FILES[releaseFileKey], join(REPOSITORY_ROOT, source));
   }
@@ -665,10 +638,11 @@ async function verify() {
     );
   }
 
-  const worldSpec = JSON.parse(
-    await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.exampleWorldSpec), 'utf8'),
-  );
-  verifyConfiguredWorldSpec(worldSpec);
+  for (const pack of configuredPacks) {
+    const worldSpec = JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[pack.worldSpecReleaseFileKey]), 'utf8'));
+    assert(worldSpec.id === pack.id, `${pack.id} release World Spec ID mismatch`);
+    verifyConfiguredWorldSpec(worldSpec);
+  }
 
   for (const { releaseFileKey } of CURRENT_RELEASE_CONFIG.release.schemas) {
     JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[releaseFileKey]), 'utf8'));
@@ -680,8 +654,8 @@ async function verify() {
   const expectedArtifactKeys = [
     'changelog',
     'checksums',
-    'examplePack',
-    'exampleWorldSpec',
+    'examplePacks',
+    'exampleWorldSpecs',
     'godotImporter',
     'license',
     'schemas',
@@ -701,8 +675,14 @@ async function verify() {
     'Release manifest Godot importer artifact mismatch',
   );
   assert(
-    manifest.artifacts?.examplePack?.file === RELEASE_FILES.examplePack,
-    'Release manifest Sunny Meadow artifact mismatch',
+    JSON.stringify(manifest.artifacts?.examplePacks?.map(({ id, file }) => ({ id, file })))
+      === JSON.stringify(configuredPacks.map((pack) => ({ id: pack.id, file: RELEASE_FILES[pack.releaseFileKey] }))),
+    'Release manifest example-pack artifacts mismatch',
+  );
+  assert(
+    JSON.stringify(manifest.artifacts?.exampleWorldSpecs?.map(({ id, file }) => ({ id, file })))
+      === JSON.stringify(configuredPacks.map((pack) => ({ id: pack.id, file: RELEASE_FILES[pack.worldSpecReleaseFileKey] }))),
+    'Release manifest example-World-Spec artifacts mismatch',
   );
   assert(
     JSON.stringify(manifest.artifacts?.schemas) === JSON.stringify(
@@ -726,7 +706,7 @@ async function verify() {
   assertNoLocalAbsolutePath(JSON.stringify(manifest), RELEASE_FILES.manifest);
 
   console.log(
-    `MAPSOO_RELEASE_VERIFIED tag=${RELEASE_TAG} files=${actualReleaseNames.length} web_entries=${webEntries.length} importer_entries=${importerEntries.length} example_pack_entries=${examplePackEntries.length}`,
+    `MAPSOO_RELEASE_VERIFIED tag=${RELEASE_TAG} files=${actualReleaseNames.length} web_entries=${webEntries.length} importer_entries=${importerEntries.length} example_packs=${configuredPacks.length} example_pack_entries=${examplePackEntryCounts.join(',')}`,
   );
 }
 

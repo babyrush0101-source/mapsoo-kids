@@ -979,6 +979,84 @@ export async function verifyAlpha6SemanticStructuresReceipt({
   });
 }
 
+/** Verifies Alpha.7's three-world gallery packs without delegating identity to pack content. */
+export async function verifyAlpha7WorldGalleryReceipt({
+  manifest,
+  readPackFile,
+  context = 'alpha7 pack',
+  expectedPackIds = ['sunny-meadow', 'dustwind-outpost', 'frostwatch-vale'],
+}) {
+  assertPlainObject(manifest, `${context} manifest`);
+  assert(typeof readPackFile === 'function', `${context} readPackFile must be a function`);
+  assert(manifest.schema_version === '0.5.0', `${context} manifest schema must be 0.5.0`);
+  assert(expectedPackIds.includes(manifest.pack?.id), `${context} pack ID is not authorized by the release registry`);
+  assert(manifest.pack?.version === '0.1.0-alpha.7', `${context} pack version mismatch`);
+  assert(
+    JSON.stringify(manifest.pack?.generator) === JSON.stringify({ name: 'Mapsoo Worldsmith', version: '0.1.0-alpha.7' }),
+    `${context} pack generator mismatch`,
+  );
+  assertCanonicalTimestamp(manifest.pack.created_at, `${context} manifest pack.created_at`);
+  assert(manifest.compatibility?.importer?.min_version === '0.1.0-alpha.7', `${context} importer minimum mismatch`);
+
+  const worldPath = `worlds/${manifest.pack.id}.world.json`;
+  const packSchemaPath = 'schema/mapsoo-pack-0.5.schema.json';
+  const expectedPaths = [
+    'atlases/places.png', 'atlases/props.png', 'atlases/structures.png', 'atlases/terrain.png',
+    'generation-receipt.json', 'license-assets.md', 'previews/map-preview.png', 'readme.md',
+    'runtime/places.json', 'runtime/structures.json', 'schema/mapsoo-generation-receipt.schema.json',
+    packSchemaPath, 'schema/mapsoo-places-0.3.schema.json', 'schema/mapsoo-structures-0.2.schema.json',
+    'schema/mapsoo-world-0.3.schema.json', 'worlds/demo-world.json', worldPath,
+  ].sort();
+  const records = indexManifestFiles(manifest, context);
+  assert(records.size === expectedPaths.length, `${context} manifest must contain the exact 17-file payload`);
+  assert(JSON.stringify([...records.keys()].sort()) === JSON.stringify(expectedPaths), `${context} payload path set mismatch`);
+  for (const path of expectedPaths) await requireVerifiedFile(path, records, readPackFile, `${context} payload ${path}`);
+
+  assert(JSON.stringify(manifest.world_spec) === JSON.stringify({ path: worldPath, sha256: records.get(worldPath).sha256 }), `${context} World Spec binding mismatch`);
+  const world = decodeCanonicalJson(await readPackFile(worldPath), `${context} World Spec`);
+  assert(world.schemaVersion === '0.3.0' && world.id === manifest.pack.id, `${context} World Spec identity mismatch`);
+
+  const receiptBytes = await readPackFile('generation-receipt.json');
+  assert(receiptBytes.length <= MAX_RECEIPT_BYTES, `${context} receipt exceeds size limit`);
+  const receipt = decodeCanonicalJson(receiptBytes, `${context} receipt`);
+  assertExactKeys(receipt, [
+    'ai_disclosure', 'created_at', 'licensing', 'model', 'provider', 'schema_version',
+    'sources', 'transformations', 'workflow', 'world',
+  ], `${context} receipt`);
+  assert(receipt.schema_version === '0.2.0' && receipt.created_at === manifest.pack.created_at, `${context} receipt version/time mismatch`);
+  assert(JSON.stringify(receipt.provider) === JSON.stringify(ALPHA4_PROVIDER), `${context} provider evidence mismatch`);
+  assert(JSON.stringify(receipt.workflow) === JSON.stringify(ALPHA4_WORKFLOW), `${context} workflow evidence mismatch`);
+  assert(JSON.stringify(receipt.transformations) === JSON.stringify(ALPHA4_TRANSFORMATIONS), `${context} transformations mismatch`);
+  assert(receipt.model === null && Array.isArray(receipt.sources) && receipt.sources.length === 0, `${context} procedural provenance mismatch`);
+  assert(JSON.stringify(receipt.world) === JSON.stringify({ id: world.id, input_spec: manifest.world_spec, seed: world.seed }), `${context} receipt World Spec binding mismatch`);
+  assert(JSON.stringify(receipt.ai_disclosure) === JSON.stringify({ contains_generative_ai: false, human_curated: false, statement: null }), `${context} AI disclosure mismatch`);
+  assert(JSON.stringify(receipt.licensing) === JSON.stringify({ output: { id: 'CC0-1.0', notice_path: 'license-assets.md' }, provider_terms: null }), `${context} license evidence mismatch`);
+  assert(manifest.provenance?.seed === world.seed && manifest.provenance?.contains_generative_ai === false, `${context} manifest provenance mismatch`);
+
+  const places = decodeCanonicalJson(await readPackFile('runtime/places.json'), `${context} places`);
+  assert(places.schema_version === '0.3.0', `${context} places schema mismatch`);
+  assert(JSON.stringify(places.pack) === JSON.stringify({ id: world.id, version: '0.1.0-alpha.7' }), `${context} places pack binding mismatch`);
+  assert(JSON.stringify(places.world_spec) === JSON.stringify(manifest.world_spec), `${context} places World Spec binding mismatch`);
+  assert(Array.isArray(places.places) && places.places.length === (world.places ?? []).length, `${context} place projection count mismatch`);
+
+  const structures = decodeCanonicalJson(await readPackFile('runtime/structures.json'), `${context} structures`);
+  assert(structures.schema_version === '0.2.0', `${context} structures schema mismatch`);
+  assert(JSON.stringify(structures.pack) === JSON.stringify({ id: world.id, version: '0.1.0-alpha.7' }), `${context} structures pack binding mismatch`);
+  assert(JSON.stringify(structures.world_spec) === JSON.stringify(manifest.world_spec), `${context} structures World Spec binding mismatch`);
+  assert(Array.isArray(structures.structures) && structures.structures.length === (world.structures ?? []).length, `${context} structure projection count mismatch`);
+  const authoredPlaces = new Set((world.places ?? []).map(({ id }) => id));
+  for (const [index, structure] of structures.structures.entries()) {
+    const authored = world.structures[index];
+    assert(authored?.id === structure.id && authored?.placeId === structure.place_id && authored?.archetype === structure.archetype, `${context} structure projection mismatch`);
+    assert(authoredPlaces.has(structure.place_id), `${context} structure references an unknown place`);
+  }
+
+  const packSchema = decodeCanonicalJson(await readPackFile(packSchemaPath), `${context} pack schema`);
+  assert(packSchema.properties?.schema_version?.const === '0.5.0', `${context} pack schema const mismatch`);
+  assert(packSchema.properties?.pack?.properties?.version?.const === '0.1.0-alpha.7', `${context} pack schema version binding mismatch`);
+  return { receipt, receiptSha256: sha256(receiptBytes) };
+}
+
 /**
  * Selects a receipt policy from the trusted release registry. The manifest and
  * receipt never choose their own verifier; unknown versions and policies fail closed.
@@ -1035,6 +1113,13 @@ export async function verifyReceiptForRelease({
       );
       verifier = verifyAlpha6SemanticStructuresReceipt;
       break;
+    case 'builtin-world-gallery-alpha7-v0.2':
+      assert(
+        config.version === '0.1.0-alpha.7',
+        'The builtin-world-gallery-alpha7-v0.2 receipt policy only authorizes release 0.1.0-alpha.7',
+      );
+      verifier = verifyAlpha7WorldGalleryReceipt;
+      break;
     default:
       throw new Error(
         `Unsupported receipt verifier policy for ${config.version}: ${String(config.receiptVerifier)}`,
@@ -1042,13 +1127,14 @@ export async function verifyReceiptForRelease({
   }
 
   assertPlainObject(manifest, `${context} manifest`);
+  const trustedPackIds = [config.release.examplePack, ...(config.release.additionalExamplePacks ?? [])].map(({ id }) => id);
   assert(
-    manifest.pack?.id === config.release.examplePack.id,
+    trustedPackIds.includes(manifest.pack?.id),
     `${context} pack ID must match trusted release config`,
   );
   assert(
     manifest.pack?.version === config.version,
     `${context} pack version must match trusted release config`,
   );
-  return verifier({ manifest, readPackFile, context });
+  return verifier({ manifest, readPackFile, context, expectedPackIds: trustedPackIds });
 }
