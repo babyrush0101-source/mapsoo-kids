@@ -1,16 +1,16 @@
 import packageJson from '../../package.json';
-import { ALPHA3_PACK_VERSION } from '../core/pack-manifest-alpha3';
+import { ALPHA4_PACK_VERSION } from '../core/pack-manifest-alpha4';
 import {
-  buildAlpha3PortablePack,
-  downloadAlpha3PortablePack,
-} from './export-browser-pack-alpha3';
+  buildAlpha4PortablePack,
+  downloadAlpha4PortablePack,
+} from './export-browser-pack-alpha4';
 
-if (packageJson.version !== ALPHA3_PACK_VERSION) {
+if (packageJson.version !== ALPHA4_PACK_VERSION) {
   throw new Error(
-    `Current package version ${packageJson.version} does not match the alpha.3 exporter ${ALPHA3_PACK_VERSION}.`,
+    `Current package version ${packageJson.version} does not match the alpha.4 exporter ${ALPHA4_PACK_VERSION}.`,
   );
 }
 
-export const CURRENT_PACK_VERSION = ALPHA3_PACK_VERSION;
-export const buildCurrentPortablePack = buildAlpha3PortablePack;
-export const downloadCurrentPortablePack = downloadAlpha3PortablePack;
+export const CURRENT_PACK_VERSION = ALPHA4_PACK_VERSION;
+export const buildCurrentPortablePack = buildAlpha4PortablePack;
+export const downloadCurrentPortablePack = downloadAlpha4PortablePack;

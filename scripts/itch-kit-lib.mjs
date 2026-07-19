@@ -221,6 +221,7 @@ function verifyMetadata(metadata) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
+    case 'sunny-meadow-playable-terrain-cc0-v4':
       return verifyProceduralMetadata(metadata);
     default:
       throw new Error(
@@ -235,6 +236,7 @@ function verifyPageMarkdown(page) {
       return verifyProceduralPageMarkdown(page);
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
+    case 'sunny-meadow-playable-terrain-cc0-v4':
       verifyProceduralPageMarkdown(page);
       for (const requiredText of [
         'generation-receipt.json',
@@ -245,6 +247,20 @@ function verifyPageMarkdown(page) {
         'Executable-free asset ZIP',
       ]) {
         assert(page.includes(requiredText), `receipt-era itch page is missing required fact: ${requiredText}`);
+      }
+      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v4')) {
+        for (const requiredText of [
+          'pack schema `0.2.0`',
+          'Ground / Water / Roads / Props',
+          '35 terrain tiles',
+          '6 prop sprites',
+          'MATCH_SIDES',
+          'world-blocking',
+          'does not provide navigation or pathfinding',
+          'not a complete game',
+        ]) {
+          assert(page.includes(requiredText), `playable-terrain itch page is missing required fact: ${requiredText}`);
+        }
       }
       return;
     default:
@@ -259,6 +275,7 @@ function verifyConfiguredItchPackManifest(manifest) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
+    case 'sunny-meadow-playable-terrain-cc0-v4':
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
       assert(
         manifest.provenance?.contains_generative_ai === false,
@@ -273,6 +290,30 @@ function verifyConfiguredItchPackManifest(manifest) {
           receiptPaths.has('schema/mapsoo-generation-receipt.schema.json'),
           'receipt-era itch manifest is missing its receipt schema',
         );
+      }
+      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v4')) {
+        assert(manifest.schema_version === '0.2.0', 'playable-terrain itch manifest schema must be 0.2.0');
+        assert(manifest.pack?.generator?.version === VERSION, 'playable-terrain itch generator version mismatch');
+        assert(
+          JSON.stringify(manifest.layers?.map(({ id }) => id))
+            === JSON.stringify(['ground', 'water', 'roads', 'props']),
+          'playable-terrain itch layer order mismatch',
+        );
+        assert(
+          JSON.stringify(manifest.terrain_sets?.map(({ id, mode }) => [id, mode]))
+            === JSON.stringify([['water', 'match-sides'], ['roads', 'match-sides']]),
+          'playable-terrain itch Terrain Set contract mismatch',
+        );
+        assert(
+          JSON.stringify(manifest.physics_layers)
+            === JSON.stringify([{ id: 'world-blocking', collision_layer: 1, collision_mask: 1 }]),
+          'playable-terrain itch physics contract mismatch',
+        );
+        assert(
+          manifest.atlases?.length === 1 && manifest.atlases[0]?.tiles?.length === 35,
+          'playable-terrain itch atlas must declare exactly 35 tiles',
+        );
+        assert(manifest.sprites?.length === 6, 'playable-terrain itch manifest must declare exactly six sprites');
       }
       return;
     default:

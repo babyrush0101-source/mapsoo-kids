@@ -21,6 +21,11 @@ import {
 } from './generation-evidence';
 import { validateWorldSpec } from './validate-world';
 import { PROCEDURAL_PIXEL_PROVIDER } from '../providers/procedural-pixel-provider';
+import { PROCEDURAL_TERRAIN_PROVIDER } from '../providers/procedural-terrain-provider';
+import {
+  PROCEDURAL_TERRAIN_GENERATOR_ID,
+  PROCEDURAL_TERRAIN_GENERATOR_VERSION,
+} from './generator-identity';
 
 const BIOMES = new Set<BiomeId>(['meadow', 'desert', 'snow']);
 const TILE_SIZES = new Set<TileSize>([16, 32, 64]);
@@ -37,7 +42,10 @@ const CAPABILITY_KEYS = [
   'supportsPartialRegeneration',
 ] as const;
 const MAX_MAP_SIZE_KEYS = ['width', 'height'] as const;
-const reservedBuiltinProviderInstances = new WeakSet<object>([PROCEDURAL_PIXEL_PROVIDER]);
+const reservedBuiltinProviderInstances = new WeakSet<object>([
+  PROCEDURAL_PIXEL_PROVIDER,
+  PROCEDURAL_TERRAIN_PROVIDER,
+]);
 const trustedRuns = new WeakSet<object>();
 
 export interface GeneratorCapabilities {
@@ -240,8 +248,13 @@ function materializeProviderMetadata(provider: GeneratorProvider): MaterializedP
     invalidMetadata('Provider maxMapSize must contain positive integer dimensions.');
   }
 
-  const claimsBuiltinIdentity = id === PROCEDURAL_PIXEL_GENERATOR_ID
-    && version === PROCEDURAL_PIXEL_GENERATOR_VERSION;
+  const claimsBuiltinIdentity = (
+    id === PROCEDURAL_PIXEL_GENERATOR_ID
+    && version === PROCEDURAL_PIXEL_GENERATOR_VERSION
+  ) || (
+    id === PROCEDURAL_TERRAIN_GENERATOR_ID
+    && version === PROCEDURAL_TERRAIN_GENERATOR_VERSION
+  );
   if (claimsBuiltinIdentity && capabilityRecord.outputProvenance !== 'procedural') {
     invalidMetadata('The built-in procedural provider identity cannot declare generative-AI provenance.');
   }
@@ -286,7 +299,10 @@ export function snapshotGeneratorProvider(provider: GeneratorProvider): Generato
     capabilities: metadata.capabilities,
     generate: (spec: WorldSpec, options?: GenerationOptions) => generate(spec, options),
   });
-  if (metadata.id === PROCEDURAL_PIXEL_GENERATOR_ID && metadata.version === PROCEDURAL_PIXEL_GENERATOR_VERSION) {
+  if (
+    (metadata.id === PROCEDURAL_PIXEL_GENERATOR_ID && metadata.version === PROCEDURAL_PIXEL_GENERATOR_VERSION)
+    || (metadata.id === PROCEDURAL_TERRAIN_GENERATOR_ID && metadata.version === PROCEDURAL_TERRAIN_GENERATOR_VERSION)
+  ) {
     reservedBuiltinProviderInstances.add(snapshot);
   }
   return snapshot;

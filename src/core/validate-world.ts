@@ -21,7 +21,7 @@ const GENERATED_ITEM_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const BIOMES = new Set(['meadow', 'desert', 'snow']);
 const TILE_SIZES = new Set([16, 32, 64]);
 const TILE_NAMES = new Set(['ground', 'water', 'path', 'detail']);
-const PROP_KINDS = new Set(['tree', 'rock', 'flower']);
+const PROP_KINDS = new Set(['tree', 'rock', 'flower', 'shrub', 'log', 'marker']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

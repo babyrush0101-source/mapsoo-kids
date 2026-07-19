@@ -4,6 +4,24 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2026-07-19
+
+### Added
+
+- Pack schema 0.2 with ordered Ground, Water, Roads, and Props layers.
+- A deterministic 8 × 6 terrain atlas containing 3 ground variants, 16 water masks, and 16 road masks.
+- Six biome-aware prop sprites: tree, rock, flower, shrub, log, and marker.
+- A versioned `procedural-terrain-v2@0.2.0` provider, workflow, receipt policy, and fail-closed publication boundary.
+- Godot `MATCH_SIDES` TerrainSets for Water and Roads plus full-cell Water collision on the `world-blocking` physics layer.
+- Schema 0.2 importer and exact-pack coverage on Godot 4.3 and 4.7 while retaining the schema 0.1 path.
+- A real-browser Sunny Meadow fixture pinned to SHA-256 `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`.
+
+### Changed
+
+- Advanced the candidate Workbench generator, preview, inspector, and portable exporter to Alpha.4.
+- Made the browser preview and exported map preview draw back from the same versioned terrain and prop atlases.
+- Kept public download links on the immutable Alpha.3 release until the Alpha.4 prerelease is published and audited.
+
 ## [0.1.0-alpha.3] - 2026-07-19
 
 ### Added

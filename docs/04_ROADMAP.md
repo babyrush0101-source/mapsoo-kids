@@ -77,6 +77,19 @@
 - [x] 版本绑定的公开 10 分钟首次导入指南、Pages 下载入口与结构化反馈表单；
 - [ ] Godot Asset Library 发布准备。
 
+### alpha.4 — Playable Terrain Pack（本地候选门禁通过）
+
+- [x] pack schema 0.2 的 Ground / Water / Roads / Props 分层合同；
+- [x] Water 与 Roads 各 16 个 N/E/S/W mask，并在预览与 atlas 间共享像素来源；
+- [x] 3 个 Ground 视觉变体与至少 6 个 biome 合理 prop；
+- [x] Godot `MATCH_SIDES` Terrain Set 与 Water 全格 collision；
+- [x] alpha.1–alpha.3 兼容、本地 Godot 4.3/4.7 synthetic 与 exact-pack 门禁；
+- [x] 固定 alpha.4 浏览器 fixture 与候选 release bundle；
+- [ ] 公开 PR 的 Linux/Windows Godot 4.3/4.7 绿灯、GitHub prerelease 与发布后 digest ledger；
+- [x] 离线 itch.io operator kit（只生成并验证，不上传）。
+
+详细合同与停止条件见 [`12_ALPHA4_PLAYABLE_TERRAIN.md`](12_ALPHA4_PLAYABLE_TERRAIN.md)。
+
 ## v0.4 — World System
 
 - [ ] 多 biome 与 transition；

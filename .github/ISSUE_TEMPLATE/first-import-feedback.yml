@@ -1,13 +1,13 @@
 name: First Godot import feedback
-description: Share a successful or failed alpha.2 pack import with reproducible environment details.
+description: Share a successful or failed published pack import with reproducible environment details.
 title: "[First import]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for testing Mapsoo Worldsmith v0.1.0-alpha.2.
+        Thanks for testing a published Mapsoo Worldsmith pack.
 
-        Use the [10-minute guide](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/docs/10_FIRST_GODOT_IMPORT.md) and the [audited release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2). Do not include private paths, credentials, children's data, private STOYO content, or unlicensed assets.
+        Use the [10-minute guide](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/docs/10_FIRST_GODOT_IMPORT.md) and download only from the [audited releases](https://github.com/babyrush0101-source/mapsoo-kids/releases). Do not include private paths, credentials, children's data, private STOYO content, or unlicensed assets.
   - type: dropdown
     id: outcome
     attributes:
@@ -35,18 +35,26 @@ body:
     validations:
       required: true
   - type: input
+    id: release
+    attributes:
+      label: Release tag
+      description: Copy the exact tag shown on the GitHub Release page.
+      placeholder: v0.1.0-alpha.3
+    validations:
+      required: true
+  - type: input
     id: pack
     attributes:
       label: Pack filename and SHA-256
-      value: mapsoo-sunny-meadow-v0.1.0-alpha.2.zip — 8c7720a8578cdc276ff69677ed0d64d8a1524d32fd00da0ffb8035b5a52bfcb6
+      placeholder: mapsoo-sunny-meadow-v0.1.0-alpha.3.zip — af95a4e…08589696
     validations:
       required: true
   - type: textarea
     id: result
     attributes:
       label: Result and exact error text
-      description: For success, confirm the generated scene path. For failure, paste the complete importer error and the last successful step.
-      placeholder: res://mapsoo_imports/sunny-meadow/sunny-meadow.world.tscn opened successfully.
+      description: For success, confirm the generated scene path and importer status. For failure, paste the complete importer error and the last successful step.
+      placeholder: Import returned created; res://mapsoo_imports/sunny-meadow/sunny-meadow.world.tscn opened successfully.
     validations:
       required: true
   - type: textarea

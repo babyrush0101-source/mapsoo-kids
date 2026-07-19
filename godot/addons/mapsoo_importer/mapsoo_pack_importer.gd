@@ -1,9 +1,11 @@
 @tool
 extends RefCounted
 
-const SUPPORTED_SCHEMA_VERSION := "0.1.0"
+const LEGACY_SCHEMA_VERSION := "0.1.0"
+const PLAYABLE_TERRAIN_SCHEMA_VERSION := "0.2.0"
+const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION]
 const OUTPUT_ROOT := "res://mapsoo_imports"
-const IMPORTER_VERSION := "0.1.0-alpha.3"
+const IMPORTER_VERSION := "0.1.0-alpha.4"
 const IMPORT_STATE_SCHEMA_VERSION := "1.0.0"
 const IMPORT_STATE_FILENAME := "mapsoo.import-state.json"
 const BUFFER_SIZE := 1024 * 1024
@@ -164,7 +166,7 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 	var staged_validation := _validate_staged_resources(
 		staged_tileset_path,
 		staged_scene_path,
-		validation.cell_count,
+		validation.layer_cell_counts,
 		validation.props.size()
 	)
 	if not staged_validation.ok:
@@ -399,7 +401,7 @@ static func _canonical_import_state_core(state: Dictionary) -> Dictionary:
 static func _validate_staged_resources(
 	tileset_path: String,
 	scene_path: String,
-	expected_cells: int,
+	expected_layer_cells: Dictionary,
 	expected_props: int
 ) -> Dictionary:
 	var tile_set := ResourceLoader.load(tileset_path, "TileSet", ResourceLoader.CACHE_MODE_IGNORE_DEEP) as TileSet
@@ -409,11 +411,17 @@ static func _validate_staged_resources(
 	if packed == null:
 		return {"ok": false, "error": "Staged scene could not be loaded before commit: %s" % scene_path}
 	var world := packed.instantiate()
-	var ground := world.get_node_or_null("Ground") as TileMapLayer
 	var props := world.get_node_or_null("Props")
-	var valid := ground != null and props != null
+	var valid := props != null
 	if valid:
-		valid = ground.get_used_cells().size() == expected_cells and props.get_child_count() == expected_props
+		for layer_id: Variant in expected_layer_cells:
+			var layer_name := _scene_layer_name(str(layer_id))
+			var tile_layer := world.get_node_or_null(layer_name) as TileMapLayer
+			if tile_layer == null or tile_layer.get_used_cells().size() != int(expected_layer_cells[layer_id]):
+				valid = false
+				break
+	if valid:
+		valid = props.get_child_count() == expected_props
 	world.free()
 	if not valid:
 		return {"ok": false, "error": "Staged scene contents differ from the validated pack."}
@@ -607,16 +615,23 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		"textures": {},
 		"sprites": {},
 		"cells": [],
+		"layer_cells": {},
+		"layer_cell_counts": {},
+		"tile_layer_ids": [],
 		"props": [],
 		"width": 0,
 		"height": 0,
 		"tile_size": Vector2i.ZERO,
 		"cell_count": 0,
+		"schema_version": "",
 	}
 
-	if manifest.get("schema_version") != SUPPORTED_SCHEMA_VERSION:
-		errors.append("Unsupported schema_version. Expected %s." % SUPPORTED_SCHEMA_VERSION)
+	var schema_version_value: Variant = manifest.get("schema_version")
+	if typeof(schema_version_value) != TYPE_STRING or schema_version_value not in SUPPORTED_SCHEMA_VERSIONS:
+		errors.append("Unsupported schema_version. Expected one of: %s." % ", ".join(SUPPORTED_SCHEMA_VERSIONS))
 		return prepared
+	var schema_version: String = schema_version_value
+	prepared.schema_version = schema_version
 	var pack := _dictionary_at(manifest, "pack", errors)
 	var compatibility := _dictionary_at(manifest, "compatibility", errors)
 	var license := _dictionary_at(manifest, "license", errors)
@@ -628,19 +643,20 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	else:
 		prepared.pack_id = pack_id_value
 	if compatibility.get("godot_min") != "4.3":
-		errors.append("compatibility.godot_min must be 4.3 for schema 0.1.0.")
+		errors.append("compatibility.godot_min must be 4.3 for schema %s." % schema_version)
 	if compatibility.get("grid") != "orthogonal":
 		errors.append("Only orthogonal Mapsoo packs are supported.")
 	if compatibility.get("art_style") != "pixel_art":
 		errors.append("Only pixel_art packs are supported by this importer version.")
 	var importer_requirement := _dictionary_at(compatibility, "importer", errors)
-	if importer_requirement.get("id") != "mapsoo_importer" or importer_requirement.get("min_version") != "0.1.0-alpha.1":
+	var expected_importer_version := "0.1.0-alpha.4" if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION else "0.1.0-alpha.1"
+	if importer_requirement.get("id") != "mapsoo_importer" or importer_requirement.get("min_version") != expected_importer_version:
 		errors.append("Pack requires an unsupported importer ID or minimum version.")
 	if importer_requirement.get("source") != "https://github.com/babyrush0101-source/mapsoo-kids":
 		errors.append("Pack importer source must reference the official Mapsoo repository.")
 	var asset_license := _dictionary_at(license, "assets", errors)
 	if asset_license.get("id") != "CC0-1.0":
-		errors.append("Schema 0.1.0 generated assets must declare CC0-1.0.")
+		errors.append("Schema %s generated assets must declare CC0-1.0." % schema_version)
 	if not errors.is_empty():
 		return prepared
 
@@ -672,8 +688,8 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		errors.append(world_read.error)
 		return prepared
 	var world_spec: Dictionary = world_read.value
-	if world_spec.get("schemaVersion") != SUPPORTED_SCHEMA_VERSION:
-		errors.append("World Spec schemaVersion must be %s." % SUPPORTED_SCHEMA_VERSION)
+	if world_spec.get("schemaVersion") != LEGACY_SCHEMA_VERSION:
+		errors.append("World Spec schemaVersion must be %s." % LEGACY_SCHEMA_VERSION)
 	if world_spec.get("id") != prepared.pack_id:
 		errors.append("World Spec id must match pack.id.")
 	var world_visual := _dictionary_at(world_spec, "visual", errors)
@@ -687,7 +703,7 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	if not _is_json_integer(world_width_value) or not _is_json_integer(world_height_value) or world_width_value < 8 or world_width_value > 48 or world_height_value < 8 or world_height_value > 32:
 		errors.append("World Spec map dimensions must be integers from 8x8 to 48x32.")
 	if world_map.get("biome") not in ["meadow", "desert", "snow"]:
-		errors.append("World Spec biome is not supported by schema 0.1.0.")
+		errors.append("World Spec biome is not supported by this importer.")
 	if world_output.get("assetLicense") != "CC0-1.0" or world_output.get("targets") != ["common", "godot", "itch"]:
 		errors.append("World Spec output contract must target common, godot, itch with CC0-1.0 assets.")
 
@@ -701,10 +717,17 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		errors.append(map_read.error)
 		return prepared
 	var map_data: Dictionary = map_read.value
-	if map_data.get("schema_version") != SUPPORTED_SCHEMA_VERSION:
-		errors.append("Demo map schema_version must be %s." % SUPPORTED_SCHEMA_VERSION)
+	if map_data.get("schema_version") != schema_version:
+		errors.append("Demo map schema_version must be %s." % schema_version)
 
-	var atlas_build := _build_tile_set(manifest.get("atlases"), pack_root, errors)
+	var atlas_build := _build_tile_set(
+		manifest.get("atlases"),
+		pack_root,
+		errors,
+		schema_version,
+		manifest.get("terrain_sets", []),
+		manifest.get("physics_layers", [])
+	)
 	if not errors.is_empty():
 		return prepared
 	prepared.tile_set = atlas_build.tile_set
@@ -719,74 +742,93 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	if typeof(layers_value) != TYPE_ARRAY:
 		errors.append("manifest.layers must be an array.")
 		return prepared
-	var ground_layer: Dictionary = {}
-	var props_layer: Dictionary = {}
-	for layer_value: Variant in layers_value:
+	var expected_tile_layer_ids: Array[String] = ["ground"]
+	if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+		expected_tile_layer_ids.append_array(["water", "roads"])
+	var expected_layer_count := expected_tile_layer_ids.size() + 1
+	if layers_value.size() != expected_layer_count:
+		errors.append("Schema %s requires exactly %d ordered layers." % [schema_version, expected_layer_count])
+		return prepared
+	var tile_layers := {}
+	for layer_index: int in expected_tile_layer_ids.size():
+		var layer_value: Variant = layers_value[layer_index]
 		if typeof(layer_value) != TYPE_DICTIONARY:
-			errors.append("Each layer manifest entry must be an object.")
+			errors.append("Layer %d must be a tilemap object." % layer_index)
 			continue
 		var layer: Dictionary = layer_value
-		if layer.get("id") == "ground" and layer.get("kind") == "tilemap":
-			if not ground_layer.is_empty():
-				errors.append("Only one ground tilemap layer is allowed in schema 0.1.0.")
-			else:
-				ground_layer = layer
-		elif layer.get("id") == "props" and layer.get("kind") == "objects":
-			if not props_layer.is_empty():
-				errors.append("Only one props object layer is allowed in schema 0.1.0.")
-			else:
-				props_layer = layer
-	if ground_layer.is_empty():
-		errors.append("A ground tilemap layer is required.")
-	if props_layer.is_empty():
-		errors.append("A props object layer is required.")
+		var expected_id := expected_tile_layer_ids[layer_index]
+		if layer.get("id") != expected_id or layer.get("kind") != "tilemap":
+			errors.append("Layer %d must be the %s tilemap layer." % [layer_index, expected_id])
+			continue
+		tile_layers[expected_id] = layer
+	var props_value: Variant = layers_value[expected_layer_count - 1]
+	var props_layer: Dictionary = props_value if typeof(props_value) == TYPE_DICTIONARY else {}
+	if props_layer.get("id") != "props" or props_layer.get("kind") != "objects":
+		errors.append("The final layer must be the props object layer.")
 	if not errors.is_empty():
 		return prepared
-	if ground_layer.get("encoding") != "row-major":
-		errors.append("The ground layer must use row-major encoding.")
-	if ground_layer.get("empty_tile_id") != -1:
-		errors.append("The ground layer empty_tile_id must be -1 in schema 0.1.0.")
 	if props_layer.get("encoding") != "objects":
 		errors.append("The props layer must use objects encoding.")
-	var ground_atlas_id: Variant = ground_layer.get("atlas_id")
-	if typeof(ground_atlas_id) != TYPE_STRING or not prepared.atlas_ids.has(ground_atlas_id):
-		errors.append("The ground layer references an undeclared atlas_id.")
-	if ground_layer.get("path") != map_path_value or props_layer.get("path") != map_path_value:
-		errors.append("The ground and props layer paths must match demo.map in schema 0.1.0.")
+	if props_layer.get("path") != map_path_value:
+		errors.append("The props layer path must match demo.map.")
 
-	var dimensions := _positive_int_pair(ground_layer.get("dimensions_cells"), "ground dimensions_cells", errors)
-	if dimensions != Vector2i.ZERO:
-		prepared.width = dimensions.x
-		prepared.height = dimensions.y
+	for layer_id: String in expected_tile_layer_ids:
+		var tile_layer: Dictionary = tile_layers[layer_id]
+		if tile_layer.get("encoding") != "row-major":
+			errors.append("The %s layer must use row-major encoding." % layer_id)
+		if tile_layer.get("empty_tile_id") != -1:
+			errors.append("The %s layer empty_tile_id must be -1." % layer_id)
+		var atlas_id: Variant = tile_layer.get("atlas_id")
+		if typeof(atlas_id) != TYPE_STRING or not prepared.atlas_ids.has(atlas_id):
+			errors.append("The %s layer references an undeclared atlas_id." % layer_id)
+		if tile_layer.get("path") != map_path_value:
+			errors.append("The %s layer path must match demo.map." % layer_id)
+		var dimensions := _positive_int_pair(tile_layer.get("dimensions_cells"), "%s dimensions_cells" % layer_id, errors)
+		if layer_id == "ground" and dimensions != Vector2i.ZERO:
+			prepared.width = dimensions.x
+			prepared.height = dimensions.y
+		elif dimensions != Vector2i(prepared.width, prepared.height):
+			errors.append("All tile layers must use the ground dimensions.")
+		var cell_pointer := _resolve_json_pointer(map_data, tile_layer.get("json_pointer", ""))
+		var cells: Array = []
+		if not cell_pointer.ok or typeof(cell_pointer.value) != TYPE_ARRAY:
+			errors.append("Unable to resolve the %s layer JSON pointer to an array." % layer_id)
+		else:
+			var raw_cells: Array = cell_pointer.value
+			if raw_cells.size() != prepared.width * prepared.height:
+				errors.append("%s cell count does not match dimensions_cells." % layer_id.capitalize())
+			for cell_value: Variant in raw_cells:
+				if not _is_json_integer(cell_value):
+					errors.append("%s cells must contain integer tile IDs." % layer_id.capitalize())
+					break
+				var cell_id := int(cell_value)
+				if cell_id != -1:
+					if not prepared.tile_lookup.has(cell_id):
+						errors.append("%s layer references undeclared tile ID %s." % [layer_id.capitalize(), cell_value])
+						break
+					var tile_definition: Dictionary = prepared.tile_lookup[cell_id]
+					if tile_definition.atlas_id != atlas_id:
+						errors.append("%s tile ID %s belongs to a different atlas." % [layer_id.capitalize(), cell_value])
+						break
+					if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+						var expected_terrain_set := "" if layer_id == "ground" else layer_id
+						if tile_definition.terrain_set_id != expected_terrain_set:
+							errors.append("%s tile ID %s has incompatible terrain metadata." % [layer_id.capitalize(), cell_value])
+							break
+				cells.append(cell_id)
+		prepared.layer_cells[layer_id] = cells
+		var non_empty_count := 0
+		for cell_id_value: Variant in cells:
+			if cell_id_value != -1:
+				non_empty_count += 1
+		prepared.layer_cell_counts[layer_id] = non_empty_count
+	prepared.tile_layer_ids = expected_tile_layer_ids
+	prepared.cells = prepared.layer_cells.get("ground", [])
+	prepared.cell_count = int(prepared.layer_cell_counts.get("ground", 0))
 	if map_data.get("width") != prepared.width or map_data.get("height") != prepared.height:
 		errors.append("Demo map dimensions do not match the ground layer manifest.")
 	if _is_json_integer(world_width_value) and _is_json_integer(world_height_value) and (prepared.width != int(world_width_value) or prepared.height != int(world_height_value)):
 		errors.append("Ground layer dimensions do not match the World Spec.")
-
-	var cell_pointer := _resolve_json_pointer(map_data, ground_layer.get("json_pointer", ""))
-	if not cell_pointer.ok or typeof(cell_pointer.value) != TYPE_ARRAY:
-		errors.append("Unable to resolve the ground layer JSON pointer to an array.")
-	else:
-		var raw_cells: Array = cell_pointer.value
-		if raw_cells.size() != prepared.width * prepared.height:
-			errors.append("Ground cell count does not match dimensions_cells.")
-		for cell_value: Variant in raw_cells:
-			if not _is_json_integer(cell_value):
-				errors.append("Ground cells must contain integer tile IDs.")
-				break
-			var cell_id := int(cell_value)
-			if cell_id != int(ground_layer.get("empty_tile_id", -1)):
-				if not prepared.tile_lookup.has(cell_id):
-					errors.append("Ground layer references undeclared tile ID %s." % cell_value)
-					break
-				if prepared.tile_lookup[cell_id].atlas_id != ground_atlas_id:
-					errors.append("Ground tile ID %s belongs to a different atlas." % cell_value)
-					break
-			prepared.cells.append(cell_id)
-	prepared.cell_count = 0
-	for cell_value: Variant in prepared.cells:
-		if cell_value != int(ground_layer.get("empty_tile_id", -1)):
-			prepared.cell_count += 1
 
 	var prop_pointer := _resolve_json_pointer(map_data, props_layer.get("json_pointer", ""))
 	if not prop_pointer.ok or typeof(prop_pointer.value) != TYPE_ARRAY:
@@ -799,7 +841,7 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	var sprite_build := _validate_sprites(manifest.get("sprites"), pack_root, prepared.textures, errors)
 	prepared.sprites = sprite_build.sprites
 	prepared.textures = sprite_build.textures
-	_validate_props(prepared.props, prepared.sprites, props_layer.get("sprite_atlas"), prepared.width, prepared.height, errors)
+	_validate_props(prepared.props, prepared.sprites, props_layer.get("sprite_atlas"), prepared.width, prepared.height, schema_version, errors)
 	return prepared
 
 
@@ -892,7 +934,161 @@ static func _collect_referenced_paths(manifest: Dictionary, errors: Array[String
 	return paths
 
 
-static func _build_tile_set(value: Variant, pack_root: String, errors: Array[String]) -> Dictionary:
+static func _configure_terrain_sets(tile_set: TileSet, value: Variant, errors: Array[String]) -> Dictionary:
+	var lookup := {}
+	if typeof(value) != TYPE_ARRAY or value.size() != 2:
+		errors.append("Schema 0.2.0 requires exactly the water and roads terrain sets.")
+		return lookup
+	var expected_sets: Array[String] = ["water", "roads"]
+	var expected_terrains: Array[String] = ["water", "road"]
+	for set_index: int in expected_sets.size():
+		var set_value: Variant = value[set_index]
+		if typeof(set_value) != TYPE_DICTIONARY:
+			errors.append("Terrain set %d must be an object." % set_index)
+			continue
+		var terrain_set: Dictionary = set_value
+		var set_id := expected_sets[set_index]
+		if terrain_set.get("id") != set_id or terrain_set.get("mode") != "match-sides":
+			errors.append("Terrain set %d must be ordered %s with match-sides mode." % [set_index, set_id])
+			continue
+		var terrains_value: Variant = terrain_set.get("terrains")
+		if typeof(terrains_value) != TYPE_ARRAY or terrains_value.size() != 1 or typeof(terrains_value[0]) != TYPE_DICTIONARY:
+			errors.append("Terrain set %s must contain exactly one terrain." % set_id)
+			continue
+		var terrain: Dictionary = terrains_value[0]
+		var terrain_id := expected_terrains[set_index]
+		var terrain_name: Variant = terrain.get("name")
+		var color_value: Variant = terrain.get("color")
+		if terrain.get("id") != terrain_id or typeof(terrain_name) != TYPE_STRING or terrain_name.is_empty() or typeof(color_value) != TYPE_STRING or not _is_hex_color(color_value):
+			errors.append("Terrain set %s has an invalid terrain id, name, or #RRGGBB color." % set_id)
+			continue
+		tile_set.add_terrain_set(set_index)
+		tile_set.set_terrain_set_mode(set_index, TileSet.TERRAIN_MODE_MATCH_SIDES)
+		tile_set.add_terrain(set_index, 0)
+		tile_set.set_terrain_name(set_index, 0, terrain_name)
+		tile_set.set_terrain_color(set_index, 0, Color.html(color_value))
+		lookup[set_id] = {"set_index": set_index, "terrains": {terrain_id: 0}}
+	return lookup
+
+
+static func _configure_physics_layers(tile_set: TileSet, value: Variant, errors: Array[String]) -> Dictionary:
+	var lookup := {}
+	if typeof(value) != TYPE_ARRAY or value.size() != 1 or typeof(value[0]) != TYPE_DICTIONARY:
+		errors.append("Schema 0.2.0 requires exactly one world-blocking physics layer.")
+		return lookup
+	var layer: Dictionary = value[0]
+	if layer.get("id") != "world-blocking" or layer.get("collision_layer") != 1 or layer.get("collision_mask") != 1:
+		errors.append("The world-blocking physics layer must use collision layer/mask 1.")
+		return lookup
+	var layer_index := 0
+	tile_set.add_physics_layer(layer_index)
+	var collision_layer: int = layer.collision_layer
+	var collision_mask: int = layer.collision_mask
+	tile_set.set_physics_layer_collision_layer(layer_index, collision_layer)
+	tile_set.set_physics_layer_collision_mask(layer_index, collision_mask)
+	lookup["world-blocking"] = {"layer_index": layer_index}
+	return lookup
+
+
+static func _validate_tile_metadata(
+	tile: Dictionary,
+	tile_id: int,
+	schema_version: String,
+	terrain_sets: Dictionary,
+	physics_layers: Dictionary,
+	errors: Array[String]
+) -> Dictionary:
+	var result := {
+		"ok": false,
+		"terrain_set_id": "",
+		"terrain_set_index": -1,
+		"terrain_index": -1,
+		"peering": {},
+		"collision_type": "",
+		"physics_layer_index": -1,
+	}
+	var collision_value: Variant = tile.get("collision")
+	if typeof(collision_value) != TYPE_DICTIONARY:
+		errors.append("Tile %d collision must be an object." % tile_id)
+		return result
+	var collision: Dictionary = collision_value
+	if schema_version == LEGACY_SCHEMA_VERSION:
+		if collision.get("type") != "none":
+			errors.append("Tile %d collision must be {type: none} in schema 0.1.0." % tile_id)
+			return result
+		result.ok = true
+		result.collision_type = "none"
+		return result
+
+	var terrain_value: Variant = tile.get("terrain")
+	if terrain_value != null:
+		if typeof(terrain_value) != TYPE_DICTIONARY:
+			errors.append("Tile %d terrain must be null or an object." % tile_id)
+			return result
+		var terrain: Dictionary = terrain_value
+		var set_id: Variant = terrain.get("set_id")
+		var terrain_id: Variant = terrain.get("terrain_id")
+		if typeof(set_id) != TYPE_STRING or not terrain_sets.has(set_id):
+			errors.append("Tile %d references an unknown terrain set." % tile_id)
+			return result
+		var set_definition: Dictionary = terrain_sets[set_id]
+		if typeof(terrain_id) != TYPE_STRING or not set_definition.terrains.has(terrain_id):
+			errors.append("Tile %d references an unknown terrain in set %s." % [tile_id, set_id])
+			return result
+		var peering_value: Variant = terrain.get("peering")
+		if typeof(peering_value) != TYPE_DICTIONARY:
+			errors.append("Tile %d terrain peering must contain north/east/south/west." % tile_id)
+			return result
+		var peering: Dictionary = peering_value
+		var sides := {
+			"north": TileSet.CELL_NEIGHBOR_TOP_SIDE,
+			"east": TileSet.CELL_NEIGHBOR_RIGHT_SIDE,
+			"south": TileSet.CELL_NEIGHBOR_BOTTOM_SIDE,
+			"west": TileSet.CELL_NEIGHBOR_LEFT_SIDE,
+		}
+		if peering.size() != 4:
+			errors.append("Tile %d terrain peering must contain only north/east/south/west." % tile_id)
+			return result
+		for side: String in sides:
+			if not peering.has(side) or (peering[side] != null and peering[side] != terrain_id):
+				errors.append("Tile %d has invalid %s terrain peering." % [tile_id, side])
+				return result
+			result.peering[sides[side]] = -1 if peering[side] == null else int(set_definition.terrains[terrain_id])
+		result.terrain_set_id = set_id
+		result.terrain_set_index = int(set_definition.set_index)
+		result.terrain_index = int(set_definition.terrains[terrain_id])
+
+	var collision_type: Variant = collision.get("type")
+	if collision_type == "none":
+		result.collision_type = "none"
+	elif collision_type == "full-cell":
+		var physics_id: Variant = collision.get("physics_layer")
+		if typeof(physics_id) != TYPE_STRING or not physics_layers.has(physics_id):
+			errors.append("Tile %d references an unknown physics layer." % tile_id)
+			return result
+		result.collision_type = "full-cell"
+		result.physics_layer_index = int(physics_layers[physics_id].layer_index)
+	else:
+		errors.append("Tile %d collision type is unsupported." % tile_id)
+		return result
+	if result.terrain_set_id == "water" and result.collision_type != "full-cell":
+		errors.append("Water tile %d must use full-cell collision." % tile_id)
+		return result
+	if result.terrain_set_id != "water" and result.collision_type != "none":
+		errors.append("Only water terrain tiles may use full-cell collision (tile %d)." % tile_id)
+		return result
+	result.ok = true
+	return result
+
+
+static func _build_tile_set(
+	value: Variant,
+	pack_root: String,
+	errors: Array[String],
+	schema_version: String,
+	terrain_sets_value: Variant,
+	physics_layers_value: Variant
+) -> Dictionary:
 	var tile_set := TileSet.new()
 	tile_set.add_custom_data_layer()
 	tile_set.set_custom_data_layer_name(0, "walkable")
@@ -905,6 +1101,13 @@ static func _build_tile_set(value: Variant, pack_root: String, errors: Array[Str
 	var textures := {}
 	var expected_tile_size := Vector2i.ZERO
 	var source_ids := {}
+	var terrain_sets := {}
+	var physics_layers := {}
+	if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+		terrain_sets = _configure_terrain_sets(tile_set, terrain_sets_value, errors)
+		physics_layers = _configure_physics_layers(tile_set, physics_layers_value, errors)
+		if not errors.is_empty():
+			return {"tile_set": tile_set, "tile_lookup": tile_lookup, "atlas_ids": atlas_ids, "textures": textures, "tile_size": expected_tile_size}
 	if typeof(value) != TYPE_ARRAY or value.is_empty():
 		errors.append("manifest.atlases must contain at least one atlas.")
 		return {"tile_set": tile_set, "tile_lookup": tile_lookup, "atlas_ids": atlas_ids, "textures": textures, "tile_size": expected_tile_size}
@@ -944,7 +1147,7 @@ static func _build_tile_set(value: Variant, pack_root: String, errors: Array[Str
 			expected_tile_size = cell_size
 			tile_set.tile_size = cell_size
 		elif cell_size != expected_tile_size:
-			errors.append("All v0.1 atlases must use one cell size.")
+			errors.append("All Mapsoo atlases must use one cell size.")
 		pair_error_count = errors.size()
 		var declared_size := _positive_int_pair(atlas.get("image_size_px"), "atlas image_size_px", errors)
 		if errors.size() != pair_error_count:
@@ -982,7 +1185,7 @@ static func _build_tile_set(value: Variant, pack_root: String, errors: Array[Str
 		if tiles_value.size() > MAX_TILE_COUNT:
 			errors.append("Atlas exceeds the importer limit of %d tiles." % MAX_TILE_COUNT)
 			continue
-		var pending_custom_data: Array[Dictionary] = []
+		var pending_tile_data: Array[Dictionary] = []
 		for tile_value: Variant in tiles_value:
 			if typeof(tile_value) != TYPE_DICTIONARY:
 				errors.append("Each atlas tile must be an object.")
@@ -1006,9 +1209,15 @@ static func _build_tile_set(value: Variant, pack_root: String, errors: Array[Str
 			var size_cells := _positive_int_pair(tile.get("size_cells"), "tile size_cells", errors)
 			if errors.size() != tile_pair_error_count:
 				continue
-			var collision_value: Variant = tile.get("collision")
-			if typeof(collision_value) != TYPE_DICTIONARY or collision_value.get("type") != "none":
-				errors.append("Tile %d collision must be {type: none} in this importer version." % tile_id)
+			var tile_metadata := _validate_tile_metadata(
+				tile,
+				tile_id,
+				schema_version,
+				terrain_sets,
+				physics_layers,
+				errors
+			)
+			if not tile_metadata.ok:
 				continue
 			if not source.has_room_for_tile(coords, size_cells, 1, Vector2i.ZERO, 1):
 				errors.append("Atlas tile does not fit or overlaps at %s." % coords)
@@ -1021,24 +1230,55 @@ static func _build_tile_set(value: Variant, pack_root: String, errors: Array[Str
 			if typeof(custom_data_value) != TYPE_DICTIONARY or typeof(custom_data_value.get("walkable")) != TYPE_BOOL or typeof(custom_data_value.get("biome")) != TYPE_STRING:
 				errors.append("Tile %d custom_data must contain boolean walkable and string biome." % tile_id)
 				continue
-			pending_custom_data.append({
+			pending_tile_data.append({
 				"tile_id": tile_id,
 				"coords": coords,
 				"alternative_id": alternative_id,
 				"walkable": custom_data_value.walkable,
 				"biome": custom_data_value.biome,
+				"terrain_set_id": tile_metadata.terrain_set_id,
+				"terrain_set_index": tile_metadata.terrain_set_index,
+				"terrain_index": tile_metadata.terrain_index,
+				"peering": tile_metadata.peering,
+				"collision_type": tile_metadata.collision_type,
+				"physics_layer_index": tile_metadata.physics_layer_index,
 			})
-			tile_lookup[tile_id] = {"atlas_id": atlas_id, "source_id": source_id, "coords": coords, "alternative_id": alternative_id}
+			tile_lookup[tile_id] = {
+				"atlas_id": atlas_id,
+				"source_id": source_id,
+				"coords": coords,
+				"alternative_id": alternative_id,
+				"terrain_set_id": tile_metadata.terrain_set_id,
+				"collision_type": tile_metadata.collision_type,
+			}
 		if tile_set.add_source(source, source_id) != source_id:
 			errors.append("Unable to preserve atlas source_id %d." % source_id)
 			continue
-		for pending: Dictionary in pending_custom_data:
+		for pending: Dictionary in pending_tile_data:
 			var tile_data := source.get_tile_data(pending.coords, pending.alternative_id)
 			if tile_data == null:
 				errors.append("Unable to access TileData for tile %d." % pending.tile_id)
 				continue
 			tile_data.set_custom_data("walkable", pending.walkable)
 			tile_data.set_custom_data("biome", pending.biome)
+			if pending.terrain_set_index >= 0:
+				tile_data.set_terrain_set(pending.terrain_set_index)
+				tile_data.set_terrain(pending.terrain_index)
+				for neighbor: int in pending.peering:
+					tile_data.set_terrain_peering_bit(neighbor, int(pending.peering[neighbor]))
+			if pending.collision_type == "full-cell":
+				tile_data.set_collision_polygons_count(pending.physics_layer_index, 1)
+				var half_size := Vector2(expected_tile_size) * 0.5
+				tile_data.set_collision_polygon_points(
+					pending.physics_layer_index,
+					0,
+					PackedVector2Array([
+						Vector2(-half_size.x, -half_size.y),
+						Vector2(half_size.x, -half_size.y),
+						Vector2(half_size.x, half_size.y),
+						Vector2(-half_size.x, half_size.y),
+					])
+				)
 	return {"tile_set": tile_set, "tile_lookup": tile_lookup, "atlas_ids": atlas_ids, "textures": textures, "tile_size": expected_tile_size}
 
 
@@ -1081,7 +1321,15 @@ static func _validate_sprites(value: Variant, pack_root: String, texture_cache: 
 	return {"sprites": sprites, "textures": textures}
 
 
-static func _validate_props(props: Array, sprites: Dictionary, layer_atlas: Variant, width: int, height: int, errors: Array[String]) -> void:
+static func _validate_props(
+	props: Array,
+	sprites: Dictionary,
+	layer_atlas: Variant,
+	width: int,
+	height: int,
+	schema_version: String,
+	errors: Array[String]
+) -> void:
 	if typeof(layer_atlas) != TYPE_STRING or not _is_safe_relative_path(layer_atlas):
 		errors.append("The props layer sprite_atlas path is unsafe.")
 		return
@@ -1099,9 +1347,10 @@ static func _validate_props(props: Array, sprites: Dictionary, layer_atlas: Vari
 			errors.append("Prop IDs must be unique lowercase ASCII identifiers.")
 			continue
 		ids[prop_id] = true
-		if typeof(kind) != TYPE_STRING or not sprites.has("%s_01" % kind):
-			errors.append("Prop %s does not have a matching <kind>_01 sprite." % prop_id)
-		elif sprites["%s_01" % kind].atlas != layer_atlas:
+		var sprite_id := _sprite_id_for_kind(str(kind), schema_version) if typeof(kind) == TYPE_STRING else ""
+		if sprite_id.is_empty() or not sprites.has(sprite_id):
+			errors.append("Prop %s does not have a matching versioned <kind> sprite." % prop_id)
+		elif sprites[sprite_id].atlas != layer_atlas:
 			errors.append("Prop %s sprite is not in the props layer atlas." % prop_id)
 		if not _is_json_integer(x) or not _is_json_integer(y) or x < 0 or y < 0 or x >= width or y >= height:
 			errors.append("Prop %s is outside the map bounds." % prop_id)
@@ -1114,30 +1363,35 @@ static func _build_scene(prepared: Dictionary, tile_set: TileSet) -> Dictionary:
 	var root := Node2D.new()
 	root.name = "MapsooWorld"
 	root.set_meta("mapsoo_pack_id", prepared.pack_id)
-	var ground := TileMapLayer.new()
-	ground.name = "Ground"
-	ground.tile_set = tile_set
-	ground.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	root.add_child(ground)
-	ground.owner = root
 	var width: int = prepared.width
-	for index: int in prepared.cells.size():
-		var tile_id: int = prepared.cells[index]
-		if tile_id == -1:
-			continue
-		var tile: Dictionary = prepared.tile_lookup[tile_id]
-		ground.set_cell(Vector2i(index % width, index / width), tile.source_id, tile.coords, tile.alternative_id)
+	for layer_index: int in prepared.tile_layer_ids.size():
+		var layer_id: String = prepared.tile_layer_ids[layer_index]
+		var tile_layer := TileMapLayer.new()
+		tile_layer.name = _scene_layer_name(layer_id)
+		tile_layer.tile_set = tile_set
+		tile_layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tile_layer.z_index = layer_index
+		root.add_child(tile_layer)
+		tile_layer.owner = root
+		var cells: Array = prepared.layer_cells[layer_id]
+		for index: int in cells.size():
+			var tile_id: int = cells[index]
+			if tile_id == -1:
+				continue
+			var tile: Dictionary = prepared.tile_lookup[tile_id]
+			tile_layer.set_cell(Vector2i(index % width, index / width), tile.source_id, tile.coords, tile.alternative_id)
 
 	var props_root := Node2D.new()
 	props_root.name = "Props"
 	props_root.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	props_root.z_index = 1
+	props_root.z_index = prepared.tile_layer_ids.size()
 	root.add_child(props_root)
 	props_root.owner = root
 	var tile_size: Vector2i = prepared.tile_size
 	for prop_value: Variant in prepared.props:
 		var prop: Dictionary = prop_value
-		var sprite_def: Dictionary = prepared.sprites["%s_01" % prop.kind]
+		var sprite_id := _sprite_id_for_kind(str(prop.kind), prepared.schema_version)
+		var sprite_def: Dictionary = prepared.sprites[sprite_id]
 		var atlas_texture := AtlasTexture.new()
 		atlas_texture.atlas = prepared.textures[sprite_def.atlas]
 		atlas_texture.region = sprite_def.region
@@ -1155,6 +1409,18 @@ static func _build_scene(prepared: Dictionary, tile_set: TileSet) -> Dictionary:
 		props_root.add_child(sprite)
 		sprite.owner = root
 	return {"ok": true, "root": root, "error": ""}
+
+
+static func _sprite_id_for_kind(kind: String, schema_version: String) -> String:
+	return "%s-01" % kind if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION else "%s_01" % kind
+
+
+static func _scene_layer_name(layer_id: String) -> String:
+	match layer_id:
+		"ground": return "Ground"
+		"water": return "Water"
+		"roads": return "Roads"
+		_: return layer_id.capitalize()
 
 
 static func _resolve_json_pointer(root: Variant, pointer: Variant) -> Dictionary:
@@ -1475,6 +1741,11 @@ static func _is_asset_id(value: String) -> bool:
 static func _is_sha256(value: String) -> bool:
 	var pattern := RegEx.new()
 	return pattern.compile("^[0-9a-f]{64}$") == OK and pattern.search(value) != null
+
+
+static func _is_hex_color(value: String) -> bool:
+	var pattern := RegEx.new()
+	return pattern.compile("^#[0-9A-Fa-f]{6}$") == OK and pattern.search(value) != null
 
 
 static func _result(ok: bool, errors: Array[String], warnings: Array[String]) -> Dictionary:

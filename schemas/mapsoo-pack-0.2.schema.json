@@ -1,0 +1,827 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-pack-0.2.0.json",
+  "title": "Mapsoo Asset Pack Manifest 0.2",
+  "description": "Strict portable asset-pack manifest contract for terrain-aware Godot imports.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack",
+    "compatibility",
+    "world_spec",
+    "demo",
+    "layers",
+    "terrain_sets",
+    "physics_layers",
+    "receipt",
+    "atlases",
+    "sprites",
+    "files",
+    "license",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": { "const": "0.2.0" },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "version", "generator", "created_at"],
+      "properties": {
+        "id": { "$ref": "#/$defs/packId" },
+        "title": { "$ref": "#/$defs/bounded120" },
+        "version": { "$ref": "#/$defs/semver" },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "const": "Mapsoo Worldsmith" },
+            "version": { "$ref": "#/$defs/semver" }
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["godot_min", "grid", "art_style", "importer"],
+      "properties": {
+        "godot_min": { "const": "4.3" },
+        "grid": { "const": "orthogonal" },
+        "art_style": { "const": "pixel_art" },
+        "importer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "min_version", "source"],
+          "properties": {
+            "id": { "const": "mapsoo_importer" },
+            "min_version": { "const": "0.1.0-alpha.4" },
+            "source": { "const": "https://github.com/babyrush0101-source/mapsoo-kids" }
+          }
+        }
+      }
+    },
+    "world_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map", "preview"],
+      "properties": {
+        "map": { "$ref": "#/$defs/relativePath" },
+        "preview": { "$ref": "#/$defs/relativePath" }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        { "$ref": "#/$defs/groundLayer" },
+        { "$ref": "#/$defs/waterLayer" },
+        { "$ref": "#/$defs/roadsLayer" },
+        { "$ref": "#/$defs/objectLayer" }
+      ],
+      "items": false
+    },
+    "terrain_sets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/waterTerrainSet" },
+        { "$ref": "#/$defs/roadsTerrainSet" }
+      ],
+      "items": false
+    },
+    "physics_layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        {
+          "const": {
+            "id": "world-blocking",
+            "collision_layer": 1,
+            "collision_mask": 1
+          }
+        }
+      ],
+      "items": false
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" }
+      }
+    },
+    "atlases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        { "$ref": "#/$defs/terrainAtlas" }
+      ],
+      "items": false
+    },
+    "sprites": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        { "$ref": "#/$defs/treeSprite" },
+        { "$ref": "#/$defs/rockSprite" },
+        { "$ref": "#/$defs/flowerSprite" },
+        { "$ref": "#/$defs/shrubSprite" },
+        { "$ref": "#/$defs/logSprite" },
+        { "$ref": "#/$defs/markerSprite" }
+      ],
+      "items": false
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "media_type", "bytes", "sha256"],
+        "properties": {
+          "path": { "$ref": "#/$defs/relativePath" },
+          "media_type": { "$ref": "#/$defs/mediaType" },
+          "bytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assets"],
+      "properties": {
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "file"],
+          "properties": {
+            "id": { "const": "CC0-1.0" },
+            "file": { "$ref": "#/$defs/relativePath" }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contains_generative_ai", "human_curated"],
+      "properties": {
+        "contains_generative_ai": { "type": "boolean" },
+        "human_curated": { "type": "boolean" },
+        "model_provider": { "$ref": "#/$defs/nullableBounded160" },
+        "model": { "$ref": "#/$defs/nullableBounded160" },
+        "seed": { "$ref": "#/$defs/bounded160" }
+      }
+    }
+  },
+  "$defs": {
+    "packId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "semver": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 80,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[a-z0-9][a-z0-9._-]*(?:/[a-z0-9][a-z0-9._-]*)*$"
+    },
+    "jsonPointer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?:/(?:[^~/\\u0000-\\u001f\\u007f-\\u009f]|~[01])*)+$"
+    },
+    "bounded120": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "bounded160": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "nullableBounded160": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/bounded160" }
+      ]
+    },
+    "mediaType": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 127,
+      "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$"
+    },
+    "positivePair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "type": "integer", "minimum": 1, "maximum": 1024 },
+        { "type": "integer", "minimum": 1, "maximum": 1024 }
+      ],
+      "items": false
+    },
+    "imagePair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "type": "integer", "minimum": 1, "maximum": 16384 },
+        { "type": "integer", "minimum": 1, "maximum": 16384 }
+      ],
+      "items": false
+    },
+    "cellPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "type": "integer", "minimum": 1, "maximum": 1024 },
+        { "type": "integer", "minimum": 1, "maximum": 1024 }
+      ],
+      "items": false
+    },
+    "imageOffsetPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "type": "integer", "minimum": 0, "maximum": 16384 },
+        { "type": "integer", "minimum": 0, "maximum": 16384 }
+      ],
+      "items": false
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40,
+        "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+      }
+    },
+    "groundLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "dimensions_cells", "atlas_id", "empty_tile_id"],
+      "properties": {
+        "id": { "const": "ground" },
+        "kind": { "const": "tilemap" },
+        "path": { "const": "worlds/demo-world.json" },
+        "json_pointer": { "const": "/layers/0/cells" },
+        "encoding": { "const": "row-major" },
+        "dimensions_cells": { "$ref": "#/$defs/positivePair" },
+        "atlas_id": { "const": "terrain" },
+        "empty_tile_id": { "const": -1 }
+      }
+    },
+    "waterLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "dimensions_cells", "atlas_id", "empty_tile_id"],
+      "properties": {
+        "id": { "const": "water" },
+        "kind": { "const": "tilemap" },
+        "path": { "const": "worlds/demo-world.json" },
+        "json_pointer": { "const": "/layers/1/cells" },
+        "encoding": { "const": "row-major" },
+        "dimensions_cells": { "$ref": "#/$defs/positivePair" },
+        "atlas_id": { "const": "terrain" },
+        "empty_tile_id": { "const": -1 }
+      }
+    },
+    "roadsLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "dimensions_cells", "atlas_id", "empty_tile_id"],
+      "properties": {
+        "id": { "const": "roads" },
+        "kind": { "const": "tilemap" },
+        "path": { "const": "worlds/demo-world.json" },
+        "json_pointer": { "const": "/layers/2/cells" },
+        "encoding": { "const": "row-major" },
+        "dimensions_cells": { "$ref": "#/$defs/positivePair" },
+        "atlas_id": { "const": "terrain" },
+        "empty_tile_id": { "const": -1 }
+      }
+    },
+    "objectLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "sprite_atlas"],
+      "properties": {
+        "id": { "const": "props" },
+        "kind": { "const": "objects" },
+        "path": { "const": "worlds/demo-world.json" },
+        "json_pointer": { "const": "/props" },
+        "encoding": { "const": "objects" },
+        "sprite_atlas": { "const": "atlases/props.png" }
+      }
+    },
+    "biome": { "enum": ["meadow", "desert", "snow"] },
+    "terrainColor": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+    "waterTerrainSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "terrains"],
+      "properties": {
+        "id": { "const": "water" },
+        "mode": { "const": "match-sides" },
+        "terrains": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [{
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "color"],
+            "properties": {
+              "id": { "const": "water" },
+              "name": { "const": "Water" },
+              "color": { "$ref": "#/$defs/terrainColor" }
+            }
+          }],
+          "items": false
+        }
+      }
+    },
+    "roadsTerrainSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "terrains"],
+      "properties": {
+        "id": { "const": "roads" },
+        "mode": { "const": "match-sides" },
+        "terrains": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [{
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "color"],
+            "properties": {
+              "id": { "const": "road" },
+              "name": { "const": "Road" },
+              "color": { "$ref": "#/$defs/terrainColor" }
+            }
+          }],
+          "items": false
+        }
+      }
+    },
+    "spriteBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "atlas", "region_px", "pivot_px", "footprint_cells", "tags"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "atlas": { "const": "atlases/props.png" },
+        "region_px": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            { "type": "integer", "minimum": 0, "maximum": 320 },
+            { "const": 0 },
+            { "enum": [16, 32, 64] },
+            { "enum": [16, 32, 64] }
+          ],
+          "items": false
+        },
+        "pivot_px": {
+          "enum": [[8, 16], [16, 32], [32, 64]]
+        },
+        "footprint_cells": { "const": [1, 1] },
+        "tags": { "$ref": "#/$defs/tags" }
+      }
+    },
+    "treeSprite": {
+      "allOf": [
+        { "$ref": "#/$defs/spriteBase" },
+        {
+          "type": "object",
+          "properties": {
+            "id": { "const": "tree-01" },
+            "tags": { "$ref": "#/$defs/treeSpriteTags" }
+          }
+        },
+        {
+          "oneOf": [
+            { "type": "object", "properties": { "region_px": { "const": [0, 0, 16, 16] }, "pivot_px": { "const": [8, 16] } } },
+            { "type": "object", "properties": { "region_px": { "const": [0, 0, 32, 32] }, "pivot_px": { "const": [16, 32] } } },
+            { "type": "object", "properties": { "region_px": { "const": [0, 0, 64, 64] }, "pivot_px": { "const": [32, 64] } } }
+          ]
+        }
+      ]
+    },
+    "rockSprite": {
+      "allOf": [
+        { "$ref": "#/$defs/spriteBase" },
+        { "type": "object", "properties": { "id": { "const": "rock-01" }, "tags": { "$ref": "#/$defs/rockSpriteTags" } } },
+        { "oneOf": [
+          { "type": "object", "properties": { "region_px": { "const": [16, 0, 16, 16] }, "pivot_px": { "const": [8, 16] } } },
+          { "type": "object", "properties": { "region_px": { "const": [32, 0, 32, 32] }, "pivot_px": { "const": [16, 32] } } },
+          { "type": "object", "properties": { "region_px": { "const": [64, 0, 64, 64] }, "pivot_px": { "const": [32, 64] } } }
+        ] }
+      ]
+    },
+    "flowerSprite": {
+      "allOf": [
+        { "$ref": "#/$defs/spriteBase" },
+        { "type": "object", "properties": { "id": { "const": "flower-01" }, "tags": { "$ref": "#/$defs/flowerSpriteTags" } } },
+        { "oneOf": [
+          { "type": "object", "properties": { "region_px": { "const": [32, 0, 16, 16] }, "pivot_px": { "const": [8, 16] } } },
+          { "type": "object", "properties": { "region_px": { "const": [64, 0, 32, 32] }, "pivot_px": { "const": [16, 32] } } },
+          { "type": "object", "properties": { "region_px": { "const": [128, 0, 64, 64] }, "pivot_px": { "const": [32, 64] } } }
+        ] }
+      ]
+    },
+    "shrubSprite": {
+      "allOf": [
+        { "$ref": "#/$defs/spriteBase" },
+        { "type": "object", "properties": { "id": { "const": "shrub-01" }, "tags": { "$ref": "#/$defs/shrubSpriteTags" } } },
+        { "oneOf": [
+          { "type": "object", "properties": { "region_px": { "const": [48, 0, 16, 16] }, "pivot_px": { "const": [8, 16] } } },
+          { "type": "object", "properties": { "region_px": { "const": [96, 0, 32, 32] }, "pivot_px": { "const": [16, 32] } } },
+          { "type": "object", "properties": { "region_px": { "const": [192, 0, 64, 64] }, "pivot_px": { "const": [32, 64] } } }
+        ] }
+      ]
+    },
+    "logSprite": {
+      "allOf": [
+        { "$ref": "#/$defs/spriteBase" },
+        { "type": "object", "properties": { "id": { "const": "log-01" }, "tags": { "$ref": "#/$defs/logSpriteTags" } } },
+        { "oneOf": [
+          { "type": "object", "properties": { "region_px": { "const": [64, 0, 16, 16] }, "pivot_px": { "const": [8, 16] } } },
+          { "type": "object", "properties": { "region_px": { "const": [128, 0, 32, 32] }, "pivot_px": { "const": [16, 32] } } },
+          { "type": "object", "properties": { "region_px": { "const": [256, 0, 64, 64] }, "pivot_px": { "const": [32, 64] } } }
+        ] }
+      ]
+    },
+    "markerSprite": {
+      "allOf": [
+        { "$ref": "#/$defs/spriteBase" },
+        { "type": "object", "properties": { "id": { "const": "marker-01" }, "tags": { "$ref": "#/$defs/markerSpriteTags" } } },
+        { "oneOf": [
+          { "type": "object", "properties": { "region_px": { "const": [80, 0, 16, 16] }, "pivot_px": { "const": [8, 16] } } },
+          { "type": "object", "properties": { "region_px": { "const": [160, 0, 32, 32] }, "pivot_px": { "const": [16, 32] } } },
+          { "type": "object", "properties": { "region_px": { "const": [320, 0, 64, 64] }, "pivot_px": { "const": [32, 64] } } }
+        ] }
+      ]
+    },
+    "treeSpriteTags": { "$ref": "#/$defs/treeTagsTuple" },
+    "rockSpriteTags": { "$ref": "#/$defs/rockTagsTuple" },
+    "flowerSpriteTags": { "$ref": "#/$defs/flowerTagsTuple" },
+    "shrubSpriteTags": { "$ref": "#/$defs/shrubTagsTuple" },
+    "logSpriteTags": { "$ref": "#/$defs/logTagsTuple" },
+    "markerSpriteTags": { "$ref": "#/$defs/markerTagsTuple" },
+    "treeTagsTuple": { "type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{ "const": "prop" }, { "const": "tree" }, { "$ref": "#/$defs/biome" }], "items": false },
+    "rockTagsTuple": { "type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{ "const": "prop" }, { "const": "rock" }, { "$ref": "#/$defs/biome" }], "items": false },
+    "flowerTagsTuple": { "type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{ "const": "prop" }, { "const": "flower" }, { "$ref": "#/$defs/biome" }], "items": false },
+    "shrubTagsTuple": { "type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{ "const": "prop" }, { "const": "shrub" }, { "$ref": "#/$defs/biome" }], "items": false },
+    "logTagsTuple": { "type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{ "const": "prop" }, { "const": "log" }, { "$ref": "#/$defs/biome" }], "items": false },
+    "markerTagsTuple": { "type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{ "const": "prop" }, { "const": "marker" }, { "$ref": "#/$defs/biome" }], "items": false },
+    "groundTile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tile_id", "id", "atlas_coords", "size_cells", "alternative_id", "collision", "terrain", "custom_data", "tags"],
+      "properties": {
+        "tile_id": { "type": "integer" },
+        "id": { "$ref": "#/$defs/id" },
+        "atlas_coords": { "$ref": "#/$defs/imageOffsetPair" },
+        "size_cells": { "const": [1, 1] },
+        "alternative_id": { "const": 0 },
+        "collision": { "const": { "type": "none" } },
+        "terrain": { "type": "null" },
+        "custom_data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["walkable", "biome"],
+          "properties": { "walkable": { "const": true }, "biome": { "$ref": "#/$defs/biome" } }
+        },
+        "tags": { "$ref": "#/$defs/tags" }
+      }
+    },
+    "waterTile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tile_id", "id", "atlas_coords", "size_cells", "alternative_id", "collision", "terrain", "custom_data", "tags"],
+      "properties": {
+        "tile_id": { "type": "integer" },
+        "id": { "$ref": "#/$defs/id" },
+        "atlas_coords": { "$ref": "#/$defs/imageOffsetPair" },
+        "size_cells": { "const": [1, 1] },
+        "alternative_id": { "const": 0 },
+        "collision": { "const": { "type": "full-cell", "physics_layer": "world-blocking" } },
+        "terrain": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["set_id", "terrain_id", "peering"],
+          "properties": {
+            "set_id": { "const": "water" },
+            "terrain_id": { "const": "water" },
+            "peering": { "$ref": "#/$defs/waterPeering" }
+          }
+        },
+        "custom_data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["walkable", "biome"],
+          "properties": { "walkable": { "const": false }, "biome": { "$ref": "#/$defs/biome" } }
+        },
+        "tags": { "$ref": "#/$defs/tags" }
+      }
+    },
+    "roadTile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tile_id", "id", "atlas_coords", "size_cells", "alternative_id", "collision", "terrain", "custom_data", "tags"],
+      "properties": {
+        "tile_id": { "type": "integer" },
+        "id": { "$ref": "#/$defs/id" },
+        "atlas_coords": { "$ref": "#/$defs/imageOffsetPair" },
+        "size_cells": { "const": [1, 1] },
+        "alternative_id": { "const": 0 },
+        "collision": { "const": { "type": "none" } },
+        "terrain": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["set_id", "terrain_id", "peering"],
+          "properties": {
+            "set_id": { "const": "roads" },
+            "terrain_id": { "const": "road" },
+            "peering": { "$ref": "#/$defs/roadPeering" }
+          }
+        },
+        "custom_data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["walkable", "biome"],
+          "properties": { "walkable": { "const": true }, "biome": { "$ref": "#/$defs/biome" } }
+        },
+        "tags": { "$ref": "#/$defs/tags" }
+      }
+    },
+    "waterPeering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["north", "east", "south", "west"],
+      "properties": {
+        "north": { "enum": [null, "water"] },
+        "east": { "enum": [null, "water"] },
+        "south": { "enum": [null, "water"] },
+        "west": { "enum": [null, "water"] }
+      }
+    },
+    "roadPeering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["north", "east", "south", "west"],
+      "properties": {
+        "north": { "enum": [null, "road"] },
+        "east": { "enum": [null, "road"] },
+        "south": { "enum": [null, "road"] },
+        "west": { "enum": [null, "road"] }
+      }
+    },
+    "terrainAtlas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source_id", "file", "image_size_px", "cell_size_px", "margin_px", "separation_px", "texture_padding", "tiles"],
+      "properties": {
+        "id": { "const": "terrain" },
+        "source_id": { "const": 0 },
+        "file": { "const": "atlases/terrain.png" },
+        "image_size_px": { "enum": [[128, 96], [256, 192], [512, 384]] },
+        "cell_size_px": { "enum": [[16, 16], [32, 32], [64, 64]] },
+        "margin_px": { "const": [0, 0] },
+        "separation_px": { "const": [0, 0] },
+        "texture_padding": { "const": true },
+        "tiles": {
+          "type": "array",
+          "minItems": 35,
+          "maxItems": 35,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/groundTile" }, { "$ref": "#/$defs/groundTile0" }] },
+            { "allOf": [{ "$ref": "#/$defs/groundTile" }, { "$ref": "#/$defs/groundTile1" }] },
+            { "allOf": [{ "$ref": "#/$defs/groundTile" }, { "$ref": "#/$defs/groundTile2" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile0" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile1" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile2" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile3" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile4" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile5" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile6" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile7" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile8" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile9" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile10" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile11" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile12" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile13" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile14" }] },
+            { "allOf": [{ "$ref": "#/$defs/waterTile" }, { "$ref": "#/$defs/waterTile15" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile0" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile1" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile2" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile3" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile4" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile5" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile6" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile7" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile8" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile9" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile10" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile11" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile12" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile13" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile14" }] },
+            { "allOf": [{ "$ref": "#/$defs/roadTile" }, { "$ref": "#/$defs/roadTile15" }] }
+          ],
+          "items": false
+        }
+      }
+    },
+    "groundTile0": { "type": "object", "properties": { "tile_id": { "const": 0 }, "id": { "const": "ground-base-a" }, "atlas_coords": { "const": [0, 0] }, "tags": { "const": ["terrain", "ground", "ground-base-a"] } } },
+    "groundTile1": { "type": "object", "properties": { "tile_id": { "const": 1 }, "id": { "const": "ground-base-b" }, "atlas_coords": { "const": [1, 0] }, "tags": { "const": ["terrain", "ground", "ground-base-b"] } } },
+    "groundTile2": { "type": "object", "properties": { "tile_id": { "const": 2 }, "id": { "const": "ground-detail" }, "atlas_coords": { "const": [2, 0] }, "tags": { "const": ["terrain", "ground", "ground-detail"] } } },
+    "waterTile0": { "$ref": "#/$defs/waterMask0" },
+    "waterTile1": { "$ref": "#/$defs/waterMask1" },
+    "waterTile2": { "$ref": "#/$defs/waterMask2" },
+    "waterTile3": { "$ref": "#/$defs/waterMask3" },
+    "waterTile4": { "$ref": "#/$defs/waterMask4" },
+    "waterTile5": { "$ref": "#/$defs/waterMask5" },
+    "waterTile6": { "$ref": "#/$defs/waterMask6" },
+    "waterTile7": { "$ref": "#/$defs/waterMask7" },
+    "waterTile8": { "$ref": "#/$defs/waterMask8" },
+    "waterTile9": { "$ref": "#/$defs/waterMask9" },
+    "waterTile10": { "$ref": "#/$defs/waterMask10" },
+    "waterTile11": { "$ref": "#/$defs/waterMask11" },
+    "waterTile12": { "$ref": "#/$defs/waterMask12" },
+    "waterTile13": { "$ref": "#/$defs/waterMask13" },
+    "waterTile14": { "$ref": "#/$defs/waterMask14" },
+    "waterTile15": { "$ref": "#/$defs/waterMask15" },
+    "roadTile0": { "$ref": "#/$defs/roadMask0" },
+    "roadTile1": { "$ref": "#/$defs/roadMask1" },
+    "roadTile2": { "$ref": "#/$defs/roadMask2" },
+    "roadTile3": { "$ref": "#/$defs/roadMask3" },
+    "roadTile4": { "$ref": "#/$defs/roadMask4" },
+    "roadTile5": { "$ref": "#/$defs/roadMask5" },
+    "roadTile6": { "$ref": "#/$defs/roadMask6" },
+    "roadTile7": { "$ref": "#/$defs/roadMask7" },
+    "roadTile8": { "$ref": "#/$defs/roadMask8" },
+    "roadTile9": { "$ref": "#/$defs/roadMask9" },
+    "roadTile10": { "$ref": "#/$defs/roadMask10" },
+    "roadTile11": { "$ref": "#/$defs/roadMask11" },
+    "roadTile12": { "$ref": "#/$defs/roadMask12" },
+    "roadTile13": { "$ref": "#/$defs/roadMask13" },
+    "roadTile14": { "$ref": "#/$defs/roadMask14" },
+    "roadTile15": { "$ref": "#/$defs/roadMask15" },
+    "waterMask0": { "$ref": "#/$defs/waterExact0" },
+    "waterMask1": { "$ref": "#/$defs/waterExact1" },
+    "waterMask2": { "$ref": "#/$defs/waterExact2" },
+    "waterMask3": { "$ref": "#/$defs/waterExact3" },
+    "waterMask4": { "$ref": "#/$defs/waterExact4" },
+    "waterMask5": { "$ref": "#/$defs/waterExact5" },
+    "waterMask6": { "$ref": "#/$defs/waterExact6" },
+    "waterMask7": { "$ref": "#/$defs/waterExact7" },
+    "waterMask8": { "$ref": "#/$defs/waterExact8" },
+    "waterMask9": { "$ref": "#/$defs/waterExact9" },
+    "waterMask10": { "$ref": "#/$defs/waterExact10" },
+    "waterMask11": { "$ref": "#/$defs/waterExact11" },
+    "waterMask12": { "$ref": "#/$defs/waterExact12" },
+    "waterMask13": { "$ref": "#/$defs/waterExact13" },
+    "waterMask14": { "$ref": "#/$defs/waterExact14" },
+    "waterMask15": { "$ref": "#/$defs/waterExact15" },
+    "roadMask0": { "$ref": "#/$defs/roadExact0" },
+    "roadMask1": { "$ref": "#/$defs/roadExact1" },
+    "roadMask2": { "$ref": "#/$defs/roadExact2" },
+    "roadMask3": { "$ref": "#/$defs/roadExact3" },
+    "roadMask4": { "$ref": "#/$defs/roadExact4" },
+    "roadMask5": { "$ref": "#/$defs/roadExact5" },
+    "roadMask6": { "$ref": "#/$defs/roadExact6" },
+    "roadMask7": { "$ref": "#/$defs/roadExact7" },
+    "roadMask8": { "$ref": "#/$defs/roadExact8" },
+    "roadMask9": { "$ref": "#/$defs/roadExact9" },
+    "roadMask10": { "$ref": "#/$defs/roadExact10" },
+    "roadMask11": { "$ref": "#/$defs/roadExact11" },
+    "roadMask12": { "$ref": "#/$defs/roadExact12" },
+    "roadMask13": { "$ref": "#/$defs/roadExact13" },
+    "roadMask14": { "$ref": "#/$defs/roadExact14" },
+    "roadMask15": { "$ref": "#/$defs/roadExact15" },
+    "waterExact0": { "$ref": "#/$defs/waterExactProperties0" },
+    "waterExact1": { "$ref": "#/$defs/waterExactProperties1" },
+    "waterExact2": { "$ref": "#/$defs/waterExactProperties2" },
+    "waterExact3": { "$ref": "#/$defs/waterExactProperties3" },
+    "waterExact4": { "$ref": "#/$defs/waterExactProperties4" },
+    "waterExact5": { "$ref": "#/$defs/waterExactProperties5" },
+    "waterExact6": { "$ref": "#/$defs/waterExactProperties6" },
+    "waterExact7": { "$ref": "#/$defs/waterExactProperties7" },
+    "waterExact8": { "$ref": "#/$defs/waterExactProperties8" },
+    "waterExact9": { "$ref": "#/$defs/waterExactProperties9" },
+    "waterExact10": { "$ref": "#/$defs/waterExactProperties10" },
+    "waterExact11": { "$ref": "#/$defs/waterExactProperties11" },
+    "waterExact12": { "$ref": "#/$defs/waterExactProperties12" },
+    "waterExact13": { "$ref": "#/$defs/waterExactProperties13" },
+    "waterExact14": { "$ref": "#/$defs/waterExactProperties14" },
+    "waterExact15": { "$ref": "#/$defs/waterExactProperties15" },
+    "roadExact0": { "$ref": "#/$defs/roadExactProperties0" },
+    "roadExact1": { "$ref": "#/$defs/roadExactProperties1" },
+    "roadExact2": { "$ref": "#/$defs/roadExactProperties2" },
+    "roadExact3": { "$ref": "#/$defs/roadExactProperties3" },
+    "roadExact4": { "$ref": "#/$defs/roadExactProperties4" },
+    "roadExact5": { "$ref": "#/$defs/roadExactProperties5" },
+    "roadExact6": { "$ref": "#/$defs/roadExactProperties6" },
+    "roadExact7": { "$ref": "#/$defs/roadExactProperties7" },
+    "roadExact8": { "$ref": "#/$defs/roadExactProperties8" },
+    "roadExact9": { "$ref": "#/$defs/roadExactProperties9" },
+    "roadExact10": { "$ref": "#/$defs/roadExactProperties10" },
+    "roadExact11": { "$ref": "#/$defs/roadExactProperties11" },
+    "roadExact12": { "$ref": "#/$defs/roadExactProperties12" },
+    "roadExact13": { "$ref": "#/$defs/roadExactProperties13" },
+    "roadExact14": { "$ref": "#/$defs/roadExactProperties14" },
+    "roadExact15": { "$ref": "#/$defs/roadExactProperties15" },
+    "waterExactProperties0": { "type": "object", "properties": { "tile_id": { "const": 16 }, "id": { "const": "water-0" }, "atlas_coords": { "const": [0, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": null, "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-0"] } } },
+    "waterExactProperties1": { "type": "object", "properties": { "tile_id": { "const": 17 }, "id": { "const": "water-1" }, "atlas_coords": { "const": [1, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": null, "south": null, "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-1"] } } },
+    "waterExactProperties2": { "type": "object", "properties": { "tile_id": { "const": 18 }, "id": { "const": "water-2" }, "atlas_coords": { "const": [2, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "water", "south": null, "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-2"] } } },
+    "waterExactProperties3": { "type": "object", "properties": { "tile_id": { "const": 19 }, "id": { "const": "water-3" }, "atlas_coords": { "const": [3, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": "water", "south": null, "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-3"] } } },
+    "waterExactProperties4": { "type": "object", "properties": { "tile_id": { "const": 20 }, "id": { "const": "water-4" }, "atlas_coords": { "const": [4, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": "water", "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-4"] } } },
+    "waterExactProperties5": { "type": "object", "properties": { "tile_id": { "const": 21 }, "id": { "const": "water-5" }, "atlas_coords": { "const": [5, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": null, "south": "water", "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-5"] } } },
+    "waterExactProperties6": { "type": "object", "properties": { "tile_id": { "const": 22 }, "id": { "const": "water-6" }, "atlas_coords": { "const": [6, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "water", "south": "water", "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-6"] } } },
+    "waterExactProperties7": { "type": "object", "properties": { "tile_id": { "const": 23 }, "id": { "const": "water-7" }, "atlas_coords": { "const": [7, 2] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": "water", "south": "water", "west": null } } } }, "tags": { "const": ["terrain", "water", "mask-7"] } } },
+    "waterExactProperties8": { "type": "object", "properties": { "tile_id": { "const": 24 }, "id": { "const": "water-8" }, "atlas_coords": { "const": [0, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": null, "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-8"] } } },
+    "waterExactProperties9": { "type": "object", "properties": { "tile_id": { "const": 25 }, "id": { "const": "water-9" }, "atlas_coords": { "const": [1, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": null, "south": null, "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-9"] } } },
+    "waterExactProperties10": { "type": "object", "properties": { "tile_id": { "const": 26 }, "id": { "const": "water-a" }, "atlas_coords": { "const": [2, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "water", "south": null, "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-10"] } } },
+    "waterExactProperties11": { "type": "object", "properties": { "tile_id": { "const": 27 }, "id": { "const": "water-b" }, "atlas_coords": { "const": [3, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": "water", "south": null, "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-11"] } } },
+    "waterExactProperties12": { "type": "object", "properties": { "tile_id": { "const": 28 }, "id": { "const": "water-c" }, "atlas_coords": { "const": [4, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": "water", "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-12"] } } },
+    "waterExactProperties13": { "type": "object", "properties": { "tile_id": { "const": 29 }, "id": { "const": "water-d" }, "atlas_coords": { "const": [5, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": null, "south": "water", "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-13"] } } },
+    "waterExactProperties14": { "type": "object", "properties": { "tile_id": { "const": 30 }, "id": { "const": "water-e" }, "atlas_coords": { "const": [6, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "water", "south": "water", "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-14"] } } },
+    "waterExactProperties15": { "type": "object", "properties": { "tile_id": { "const": 31 }, "id": { "const": "water-f" }, "atlas_coords": { "const": [7, 3] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "water", "east": "water", "south": "water", "west": "water" } } } }, "tags": { "const": ["terrain", "water", "mask-15"] } } },
+    "roadExactProperties0": { "type": "object", "properties": { "tile_id": { "const": 32 }, "id": { "const": "road-0" }, "atlas_coords": { "const": [0, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": null, "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-0"] } } },
+    "roadExactProperties1": { "type": "object", "properties": { "tile_id": { "const": 33 }, "id": { "const": "road-1" }, "atlas_coords": { "const": [1, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": null, "south": null, "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-1"] } } },
+    "roadExactProperties2": { "type": "object", "properties": { "tile_id": { "const": 34 }, "id": { "const": "road-2" }, "atlas_coords": { "const": [2, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "road", "south": null, "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-2"] } } },
+    "roadExactProperties3": { "type": "object", "properties": { "tile_id": { "const": 35 }, "id": { "const": "road-3" }, "atlas_coords": { "const": [3, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": "road", "south": null, "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-3"] } } },
+    "roadExactProperties4": { "type": "object", "properties": { "tile_id": { "const": 36 }, "id": { "const": "road-4" }, "atlas_coords": { "const": [4, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": "road", "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-4"] } } },
+    "roadExactProperties5": { "type": "object", "properties": { "tile_id": { "const": 37 }, "id": { "const": "road-5" }, "atlas_coords": { "const": [5, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": null, "south": "road", "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-5"] } } },
+    "roadExactProperties6": { "type": "object", "properties": { "tile_id": { "const": 38 }, "id": { "const": "road-6" }, "atlas_coords": { "const": [6, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "road", "south": "road", "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-6"] } } },
+    "roadExactProperties7": { "type": "object", "properties": { "tile_id": { "const": 39 }, "id": { "const": "road-7" }, "atlas_coords": { "const": [7, 4] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": "road", "south": "road", "west": null } } } }, "tags": { "const": ["terrain", "roads", "mask-7"] } } },
+    "roadExactProperties8": { "type": "object", "properties": { "tile_id": { "const": 40 }, "id": { "const": "road-8" }, "atlas_coords": { "const": [0, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": null, "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-8"] } } },
+    "roadExactProperties9": { "type": "object", "properties": { "tile_id": { "const": 41 }, "id": { "const": "road-9" }, "atlas_coords": { "const": [1, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": null, "south": null, "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-9"] } } },
+    "roadExactProperties10": { "type": "object", "properties": { "tile_id": { "const": 42 }, "id": { "const": "road-a" }, "atlas_coords": { "const": [2, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "road", "south": null, "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-10"] } } },
+    "roadExactProperties11": { "type": "object", "properties": { "tile_id": { "const": 43 }, "id": { "const": "road-b" }, "atlas_coords": { "const": [3, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": "road", "south": null, "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-11"] } } },
+    "roadExactProperties12": { "type": "object", "properties": { "tile_id": { "const": 44 }, "id": { "const": "road-c" }, "atlas_coords": { "const": [4, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": null, "south": "road", "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-12"] } } },
+    "roadExactProperties13": { "type": "object", "properties": { "tile_id": { "const": 45 }, "id": { "const": "road-d" }, "atlas_coords": { "const": [5, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": null, "south": "road", "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-13"] } } },
+    "roadExactProperties14": { "type": "object", "properties": { "tile_id": { "const": 46 }, "id": { "const": "road-e" }, "atlas_coords": { "const": [6, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": null, "east": "road", "south": "road", "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-14"] } } },
+    "roadExactProperties15": { "type": "object", "properties": { "tile_id": { "const": 47 }, "id": { "const": "road-f" }, "atlas_coords": { "const": [7, 5] }, "terrain": { "type": "object", "properties": { "peering": { "const": { "north": "road", "east": "road", "south": "road", "west": "road" } } } }, "tags": { "const": ["terrain", "roads", "mask-15"] } } }
+  }
+}

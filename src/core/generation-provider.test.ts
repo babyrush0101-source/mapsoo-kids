@@ -15,6 +15,7 @@ import {
 } from './generation-evidence';
 import { cloneWorldSpec, DEFAULT_WORLD_SPEC, type GeneratedWorld, type WorldSpec } from './world-spec';
 import { PROCEDURAL_PIXEL_PROVIDER } from '../providers/procedural-pixel-provider';
+import { PROCEDURAL_TERRAIN_PROVIDER } from '../providers/procedural-terrain-provider';
 import {
   isValidGeneratorVersion,
   PROCEDURAL_PIXEL_GENERATOR_ID,
@@ -85,11 +86,11 @@ function fakeProvider(
 }
 
 describe('generation provider contract', () => {
-  it('registers the local procedural provider with explicit capabilities', () => {
-    expect(DEFAULT_GENERATION_PROVIDER).not.toBe(PROCEDURAL_PIXEL_PROVIDER);
+  it('registers both versioned local providers and advances the candidate default to v2', () => {
+    expect(DEFAULT_GENERATION_PROVIDER).not.toBe(PROCEDURAL_TERRAIN_PROVIDER);
     expect(DEFAULT_GENERATION_PROVIDER).toMatchObject({
-      id: PROCEDURAL_PIXEL_PROVIDER.id,
-      version: PROCEDURAL_PIXEL_PROVIDER.version,
+      id: PROCEDURAL_TERRAIN_PROVIDER.id,
+      version: PROCEDURAL_TERRAIN_PROVIDER.version,
     });
     expect(Object.isFrozen(DEFAULT_GENERATION_PROVIDER)).toBe(true);
     const summaries = GENERATION_PROVIDER_REGISTRY.list();
@@ -106,9 +107,22 @@ describe('generation provider contract', () => {
           supportsPartialRegeneration: false,
         }),
       }),
+      expect.objectContaining({
+        id: PROCEDURAL_TERRAIN_PROVIDER.id,
+        version: PROCEDURAL_TERRAIN_PROVIDER.version,
+        capabilities: expect.objectContaining({
+          execution: 'local',
+          determinism: 'seeded',
+          requiresCredentials: false,
+          outputProvenance: 'procedural',
+          supportsAbort: false,
+          supportsPartialRegeneration: false,
+        }),
+      }),
     ]);
     expect(Object.isFrozen(summaries)).toBe(true);
     expect(Object.isFrozen(summaries[0].capabilities)).toBe(true);
+    expect(Object.isFrozen(summaries[1].capabilities)).toBe(true);
   });
 
   it('runs the procedural provider without changing v0.1 output', async () => {

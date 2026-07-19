@@ -57,16 +57,19 @@ const receiptVerifierVersions = Object.freeze({
   'legacy-alpha1': Object.freeze(['0.1.0-alpha.1']),
   'builtin-procedural-alpha2-v0.2': Object.freeze(['0.1.0-alpha.2']),
   'builtin-procedural-alpha3-v0.2': Object.freeze(['0.1.0-alpha.3']),
+  'builtin-playable-terrain-alpha4-v0.2': Object.freeze(['0.1.0-alpha.4']),
 });
 const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
   'sunny-meadow-procedural-cc0-v2',
   'sunny-meadow-procedural-cc0-v3',
+  'sunny-meadow-playable-terrain-cc0-v4',
 ]);
 const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
   'sunny-meadow-procedural-cc0-v2',
   'sunny-meadow-procedural-cc0-v3',
+  'sunny-meadow-playable-terrain-cc0-v4',
 ]);
 
 export function assertReceiptVerifierBinding(receiptVerifier, version) {
@@ -476,10 +479,88 @@ const alpha3 = deepFreeze(validateReleaseConfig({
   },
 }));
 
+const ALPHA_4_VERSION = '0.1.0-alpha.4';
+const ALPHA_4_TAG = `v${ALPHA_4_VERSION}`;
+const alpha4ReleaseFiles = releaseFiles(ALPHA_4_TAG, { receiptSchema: true });
+
+const alpha4 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_4_VERSION,
+  tag: ALPHA_4_TAG,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-playable-terrain-alpha4-v0.2',
+  expectedExamplePackSha256: 'a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'sunny-meadow-playable-terrain-cc0-v4',
+    files: alpha4ReleaseFiles,
+    notes: `docs/releases/${ALPHA_4_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_4_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_4_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      {
+        releaseFileKey: 'worldSchema',
+        source: 'schemas/mapsoo-world.schema.json',
+        packPath: 'schema/mapsoo-world.schema.json',
+      },
+      {
+        releaseFileKey: 'packSchema',
+        source: 'schemas/mapsoo-pack-0.2.schema.json',
+        packPath: 'schema/mapsoo-pack-0.2.schema.json',
+      },
+      {
+        releaseFileKey: 'receiptSchema',
+        source: 'schemas/mapsoo-generation-receipt.schema.json',
+        packPath: 'schema/mapsoo-generation-receipt.schema.json',
+      },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'sunny-meadow-playable-terrain-cc0-v4',
+    shortDescription: 'Free CC0 layered terrain pack with Godot Terrain Sets, six props, and basic water collision.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_4_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_4_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_4_TAG}.html`,
+    rendererFrames: ['cover', 'hero', 'workbench', 'contents', 'godot', 'contract'],
+    requiredRendererFacts: [
+      ALPHA_4_TAG,
+      'Pack schema 0.2.0',
+      'Ground / Water / Roads / Props',
+      '35 terrain tiles',
+      '6 prop sprites',
+      'CC0-1.0',
+      'Godot 4.3',
+      'Godot 4.7',
+      'contains_generative_ai',
+      'Executable-free asset ZIP',
+    ],
+    supportingFiles: [],
+    visuals: [
+      { name: 'cover-1260x1000.png', width: 1260, height: 1000, minBytes: 100_000, role: 'cover' },
+      { name: '01-generated-pack-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '02-workbench-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '03-pack-contents-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '04-godot-verification-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '05-open-contract-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+    ],
+  },
+}));
+
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
   [alpha2.version]: alpha2,
   [alpha3.version]: alpha3,
+  [alpha4.version]: alpha4,
 });
 
 export function getReleaseConfig(version) {
@@ -502,6 +583,11 @@ export function assertReleaseBuildAllowed(config) {
   if (registered.lifecycle === 'published') {
     throw new Error(
       `Refusing to rebuild published release ${registered.tag}; create a new candidate version instead`,
+    );
+  }
+  if (!/^[a-f0-9]{64}$/.test(registered.expectedExamplePackSha256 ?? '')) {
+    throw new Error(
+      `Refusing to build candidate ${registered.tag}; capture and pin its canonical example-pack hash first`,
     );
   }
   return registered;

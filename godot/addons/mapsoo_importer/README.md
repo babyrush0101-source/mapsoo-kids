@@ -1,6 +1,6 @@
 # Mapsoo Pack Importer
 
-This Godot 4.3+ editor plugin turns an extracted Mapsoo portable pack into a `TileSet` and a scene containing `TileMapLayer` terrain plus `Sprite2D` props.
+This Godot 4.3+ editor plugin turns an extracted Mapsoo portable pack into a `TileSet` and a scene containing `TileMapLayer` terrain plus `Sprite2D` props. It preserves schema `0.1.0` Ground + Props imports and adds schema `0.2.0` Ground + Water + Roads + Props imports.
 
 ## Install and import
 
@@ -15,7 +15,7 @@ The importer validates paths, declared byte sizes, SHA-256 hashes, map dimension
 
 Mapsoo data packs intentionally contain no executable addon. Never enable GDScript copied from a third-party asset pack: manifest hashes prove internal consistency, not publisher identity.
 
-## Safe re-import contract (`alpha.3` candidate)
+## Safe re-import contract (`alpha.4`)
 
 Each managed output directory contains exactly three files:
 
@@ -43,11 +43,13 @@ This is a process-level transaction with rollback, not a claim of power-loss ato
 
 ## Current development boundaries
 
-- Orthogonal 2D packs using schema `0.1.0`.
+- Orthogonal 2D packs using schema `0.1.0` or `0.2.0`.
+- Schema `0.1.0` keeps its historical Ground + Props scene and `none`-only collision behavior.
+- Schema `0.2.0` creates Ground/Water/Roads `TileMapLayer` nodes at z-index 0/1/2 and Props at z-index 3. Water and Roads use separate `TERRAIN_MODE_MATCH_SIDES` TerrainSets; scene cells still come from explicit portable tile IDs rather than importer-side terrain selection.
+- Schema `0.2.0` collision is restricted to a centered full-cell polygon on Water tiles in the declared `world-blocking` physics layer/mask 1. Ground and Roads have no collision.
 - Godot 4.3 or newer.
 - Extracted packs only; direct ZIP import is intentionally excluded until zip-bomb limits can be enforced before decompression.
-- Collision metadata is currently limited to `none`.
-- Prop sprites follow the `<kind>_01` naming convention.
+- Prop sprites follow `<kind>_01` in schema `0.1.0` and `<kind>-01` in schema `0.2.0`.
 - Scene currently embeds its generated TileSet while the standalone `.tres` is also provided for direct reuse. Externalizing that scene dependency is a separate UID/path migration.
 - A hard process or machine crash can leave a staging/backup directory that requires manual inspection; crash journal recovery is not yet claimed.
 

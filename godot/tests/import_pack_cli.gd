@@ -38,6 +38,8 @@ func _init() -> void:
 		return
 	var world := packed.instantiate()
 	var ground := world.get_node_or_null("Ground") as TileMapLayer
+	var water := world.get_node_or_null("Water") as TileMapLayer
+	var roads := world.get_node_or_null("Roads") as TileMapLayer
 	var props := world.get_node_or_null("Props")
 	if ground == null:
 		world.free()
@@ -58,6 +60,26 @@ func _init() -> void:
 		world.free()
 		_fail("Prop count differs from the importer result.")
 		return
+	var manifest_parser := JSON.new()
+	if manifest_parser.parse(FileAccess.get_file_as_string(manifest_path)) != OK or typeof(manifest_parser.data) != TYPE_DICTIONARY:
+		world.free()
+		_fail("Validated manifest could not be re-read for the CLI scene contract.")
+		return
+	var schema_version := str((manifest_parser.data as Dictionary).get("schema_version", ""))
+	if schema_version == "0.2.0":
+		if water == null or roads == null:
+			world.free()
+			_fail("Schema 0.2.0 scene is missing Water or Roads: TileMapLayer.")
+			return
+		var tile_set := ResourceLoader.load(tileset_path, "TileSet", ResourceLoader.CACHE_MODE_IGNORE) as TileSet
+		if tile_set == null or tile_set.get_terrain_sets_count() != 2 or tile_set.get_physics_layers_count() != 1:
+			world.free()
+			_fail("Schema 0.2.0 TileSet is missing terrain or physics metadata.")
+			return
+		if water.z_index != 1 or roads.z_index != 2 or props.z_index != 3:
+			world.free()
+			_fail("Schema 0.2.0 scene layer z-order differs from the portable contract.")
+			return
 
 	var pack_id := str(result.get("pack_id", ""))
 	world.free()
@@ -76,7 +98,7 @@ func _init() -> void:
 		if FileAccess.get_file_as_bytes(path) != before_bytes[path] or FileAccess.get_modified_time(path) != before_mtimes[path]:
 			_fail("Unchanged exact-pack import rewrote %s." % path)
 			return
-	print("MAPSOO_PACK_CLI_OK pack_id=%s cells=%d props=%d first=%s second=unchanged" % [pack_id, expected_cells, expected_props, first_status])
+	print("MAPSOO_PACK_CLI_OK pack_id=%s schema=%s cells=%d props=%d first=%s second=unchanged" % [pack_id, schema_version, expected_cells, expected_props, first_status])
 	quit(0)
 
 

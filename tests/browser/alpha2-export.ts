@@ -3,7 +3,7 @@ import { ALPHA2_PACK_VERSION } from '../../src/core/pack-manifest-alpha2';
 import { parseStoyoAssetRequestJson } from '../../src/adapters/import-stoyo-asset-request';
 import { runGenerationProviderWithEvidence } from '../../src/core/generation-provider';
 import { DEFAULT_WORLD_SPEC } from '../../src/core/world-spec';
-import { DEFAULT_GENERATION_PROVIDER } from '../../src/providers/provider-registry';
+import { PROCEDURAL_PIXEL_PROVIDER } from '../../src/providers/procedural-pixel-provider';
 import stoyoExampleRequest from '../../examples/integrations/stoyo/river-valley-asset-request.json';
 
 const FIXED_COMPLETION_TIME = '2026-07-18T20:38:44.843Z';
@@ -23,7 +23,7 @@ async function exportDefaultPack(): Promise<void> {
 
   try {
     const run = await runGenerationProviderWithEvidence(
-      DEFAULT_GENERATION_PROVIDER,
+      PROCEDURAL_PIXEL_PROVIDER,
       DEFAULT_WORLD_SPEC,
       { now: () => new Date(FIXED_COMPLETION_TIME) },
     );

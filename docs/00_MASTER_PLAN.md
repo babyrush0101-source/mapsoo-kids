@@ -2,7 +2,7 @@
 
 状态：执行中
 
-当前阶段：[`v0.1.0-alpha.3`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.3) 已作为当前公开 prerelease 发布，包含安全重导入合同、独立 fixture/receipt/release/itch 策略，以及已通过的 Linux/Windows Godot 4.3/4.7 发布门禁。11 个远端附件摘要已锁定，公开下载入口已切换。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
+当前阶段：[`v0.1.0-alpha.3`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.3) 仍是当前公开 prerelease，11 个远端附件摘要与公开下载入口保持锁定；`v0.1.0-alpha.4` 正作为 Playable Terrain candidate 接受审计，已固定真实浏览器 fixture、schema 0.2、35 个 terrain tile、6 个 prop sprite 以及本地 Godot 4.3/4.7 exact-pack 证据，但在公开 PR/CI、tag workflow 与 prerelease 发布完成前不冒充公开版本。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
 
 主分支：`main`
 

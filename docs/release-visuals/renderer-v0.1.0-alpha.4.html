@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapsoo alpha.4 release visuals</title>
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, "Segoe UI", Arial, sans-serif;
+        color: #f4f8f0;
+        --lime: #d9ff68; --mint: #78e7b1; --blue: #79c9ef;
+        --sand: #e5c97f; --muted: #9eb0a4; --line: #294036;
+        --panel: #0a1712; --ink: #050b08;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--ink); }
+      .frame {
+        position: relative; display: none; overflow: hidden;
+        background:
+          linear-gradient(rgba(217,255,104,.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(217,255,104,.035) 1px, transparent 1px),
+          radial-gradient(circle at 78% 8%, rgba(74,147,109,.24), transparent 38%), #050b08;
+        background-size: 32px 32px, 32px 32px, auto, auto;
+      }
+      .frame.active { display: block; }
+      .cover { width: 1260px; height: 1000px; }
+      .shot { width: 1600px; height: 900px; }
+      .brand { position: absolute; top: 42px; left: 56px; display: flex; align-items: center; gap: 14px; z-index: 4; }
+      .mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 13px; color: #17200b; background: var(--lime); font-size: 29px; font-weight: 950; }
+      .brand strong { display: block; font-size: 23px; }
+      .brand small { display: block; margin-top: 5px; color: var(--muted); font-size: 14px; }
+      .eyebrow { margin: 0; color: var(--lime); font-size: 17px; font-weight: 850; letter-spacing: .15em; text-transform: uppercase; }
+      .pixel { image-rendering: pixelated; image-rendering: crisp-edges; }
+      .panel { border: 1px solid var(--line); background: rgba(7,17,12,.97); box-shadow: 0 28px 80px rgba(0,0,0,.34); }
+      .head { position: absolute; top: 46px; left: 64px; right: 64px; display: flex; justify-content: space-between; z-index: 5; }
+      .head h1 { margin: 10px 0 0; font-size: 55px; line-height: 1; letter-spacing: -.045em; }
+      .number { color: #53655a; font-size: 76px; font-weight: 950; line-height: .9; }
+      .foot { position: absolute; left: 64px; right: 64px; bottom: 31px; display: flex; justify-content: space-between; color: var(--muted); font-size: 15px; }
+      .pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid #3c5949; border-radius: 999px; color: #dce8df; font-size: 14px; font-weight: 760; }
+      .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 16px var(--mint); }
+
+      .cover-copy { position: absolute; top: 145px; left: 56px; z-index: 3; }
+      .cover-copy h1 { margin: 13px 0 16px; font-size: 83px; font-weight: 950; line-height: .93; letter-spacing: -.055em; }
+      .cover-copy p:last-child { width: 890px; margin: 0; color: #bccac0; font-size: 24px; line-height: 1.42; }
+      .cover-map { position: absolute; right: 54px; bottom: 65px; width: 1000px; height: 500px; padding: 18px; }
+      .cover-map img { width: 962px; height: 462px; object-fit: cover; }
+      .cover-badges { position: absolute; top: 44px; right: 54px; display: flex; gap: 10px; }
+      .cover-meta { position: absolute; left: 56px; bottom: 22px; color: var(--muted); font-size: 14px; font-weight: 780; letter-spacing: .05em; }
+
+      .hero { position: absolute; top: 181px; left: 64px; width: 1472px; height: 639px; display: grid; grid-template-columns: 1060px 1fr; gap: 24px; padding: 20px; }
+      .hero > img { width: 1020px; height: 597px; object-fit: cover; }
+      .facts { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 12px; }
+      .fact { min-height: 116px; padding: 18px; border: 1px solid var(--line); background: var(--panel); }
+      .fact strong { display: block; color: var(--lime); font-size: 30px; }
+      .fact span { color: var(--muted); font-size: 13px; }
+      .receipt-note { grid-column: 1 / -1; padding: 17px; border-left: 3px solid var(--lime); background: #102119; color: #e1ebe4; font-size: 15px; line-height: 1.45; }
+
+      .layers { position: absolute; top: 170px; left: 64px; width: 1472px; height: 650px; display: grid; grid-template-columns: 830px 1fr; gap: 24px; }
+      .layers-map { padding: 18px; }
+      .layers-map img { width: 792px; height: 612px; object-fit: cover; }
+      .layer-list { display: grid; gap: 12px; }
+      .layer { position: relative; padding: 19px 22px; border: 1px solid var(--line); background: var(--panel); }
+      .layer b { display: block; color: var(--lime); font-size: 25px; }
+      .layer span { display: block; margin-top: 6px; color: var(--muted); font-size: 14px; }
+      .z { position: absolute; top: 18px; right: 18px; color: #597065; font: 800 17px/1 Consolas, monospace; }
+
+      .contents { position: absolute; top: 167px; left: 64px; width: 1472px; height: 654px; display: grid; grid-template-columns: 618px 1fr; gap: 23px; }
+      .panel-head { display: flex; justify-content: space-between; padding: 16px 19px; border-bottom: 1px solid var(--line); color: #dfe8e2; font-size: 14px; font-weight: 800; }
+      pre { margin: 0; padding: 18px 26px; color: #c9d5cd; font: 15px/1.42 "Cascadia Code", Consolas, monospace; white-space: pre; }
+      .assets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+      .asset { padding: 11px; border: 1px solid var(--line); background: var(--panel); }
+      .asset img { width: 100%; height: 94px; object-fit: contain; background: #06100b; }
+      .asset.wide { grid-column: 1 / -1; }
+      .asset.wide img { height: 190px; object-fit: cover; }
+      .asset p { margin: 8px 3px 1px; color: var(--muted); font-size: 13px; }
+      .manifest-facts { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 0 16px 16px; }
+      .manifest-facts div { padding: 13px 10px; border: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+      .manifest-facts strong { display: block; margin-bottom: 3px; color: var(--lime); font-size: 17px; }
+
+      .godot { position: absolute; top: 177px; left: 64px; width: 1472px; height: 640px; display: grid; grid-template-columns: 800px 1fr; gap: 24px; }
+      .godot-map { padding: 18px; }
+      .godot-map img { width: 762px; height: 602px; object-fit: cover; }
+      .checks { display: grid; gap: 14px; }
+      .check { position: relative; padding: 21px 22px; border: 1px solid var(--line); background: var(--panel); }
+      .check strong { display: block; color: var(--lime); font-size: 24px; }
+      .check code { display: block; margin-top: 12px; color: #bcd0c2; font: 14px/1.55 "Cascadia Code", Consolas, monospace; }
+      .check p { color: var(--muted); font-size: 15px; line-height: 1.45; }
+      .gate { position: absolute; top: 19px; right: 20px; color: var(--sand); font-size: 15px; font-weight: 900; letter-spacing: .08em; }
+
+      .flow { position: absolute; top: 239px; left: 64px; width: 1472px; display: grid; grid-template-columns: 1fr 42px 1fr 42px 1fr 42px 1fr; align-items: center; }
+      .node { min-height: 283px; padding: 27px; border: 1px solid var(--line); background: var(--panel); }
+      .node small { color: var(--lime); font-weight: 850; letter-spacing: .12em; }
+      .node h2 { margin: 21px 0 12px; font-size: 30px; }
+      .node p { color: var(--muted); font-size: 16px; line-height: 1.48; }
+      .arrow { color: #5c7567; font-size: 35px; text-align: center; }
+      .promise { position: absolute; left: 64px; right: 64px; bottom: 105px; display: flex; justify-content: center; gap: 12px; padding: 17px; border: 1px solid #3d5948; background: #0d1c15; }
+      .promise .pill:first-child { color: #152008; border-color: var(--lime); background: var(--lime); }
+      .promise .pill:first-child::before { background: #17200b; box-shadow: none; }
+    </style>
+  </head>
+  <body>
+    <section class="frame cover" data-frame="cover">
+      <div class="brand"><span class="mark">M</span><div><strong>Mapsoo Worldsmith</strong><small>v0.1.0-alpha.4 candidate</small></div></div>
+      <div class="cover-badges"><span class="pill">Pack schema 0.2.0</span><span class="pill">CC0-1.0</span></div>
+      <div class="cover-copy"><p class="eyebrow">Free layered pixel terrain pack</p><h1>Sunny Meadow<br />for Godot</h1><p>Ground / Water / Roads / Props with editable terrain metadata and basic Water blocking.</p></div>
+      <div class="cover-map panel"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/previews/map-preview.png" alt="Actual Sunny Meadow alpha.4 candidate map" /></div>
+      <div class="cover-meta">EXECUTABLE-FREE ASSET ZIP · GODOT 4.3 / GODOT 4.7 RELEASE GATES · PNG + JSON</div>
+    </section>
+
+    <section class="frame shot" data-frame="hero">
+      <header class="head"><div><p class="eyebrow">Actual alpha.4 candidate fixture</p><h1>Playable Terrain Pack</h1></div><span class="number">01</span></header>
+      <div class="hero panel">
+        <img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/previews/map-preview.png" alt="Sunny Meadow candidate preview" />
+        <div class="facts">
+          <div class="fact"><strong>24 × 16</strong><span>orthogonal map cells</span></div><div class="fact"><strong>4 layers</strong><span>Ground / Water / Roads / Props</span></div>
+          <div class="fact"><strong>35</strong><span>35 terrain tiles</span></div><div class="fact"><strong>6</strong><span>6 prop sprites · 29 instances</span></div>
+          <div class="receipt-note"><b>Generation receipt 0.2.0</b><br />The exact World Spec, seed, procedural-terrain-v2 runner, transformations, license, and disclosure are bound to this candidate.</div>
+        </div>
+      </div>
+      <footer class="foot"><span>Seed: mapsoo-demo-001</span><span title="a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35">SHA-256 a57e810baaf2…47735a6109b8fb35 · no image-model output</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="workbench">
+      <header class="head"><div><p class="eyebrow">Portable layer contract</p><h1>One world, four explicit layers</h1></div><span class="number">02</span></header>
+      <div class="layers">
+        <div class="layers-map panel"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/previews/map-preview.png" alt="Actual layered Sunny Meadow preview" /></div>
+        <div class="layer-list">
+          <div class="layer"><span class="z">z0</span><b>Ground</b><span>384 deterministic base cells · three variants</span></div>
+          <div class="layer"><span class="z">z1</span><b>Water</b><span>16 cardinal masks · full-cell world-blocking collision</span></div>
+          <div class="layer"><span class="z">z2</span><b>Roads</b><span>16 cardinal masks · no collision</span></div>
+          <div class="layer"><span class="z">z3</span><b>Props</b><span>Six sprite kinds · 29 placed instances</span></div>
+        </div>
+      </div>
+      <footer class="foot"><span>Explicit tile IDs keep first import deterministic</span><span>Not a complete game or navigation system</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="contents">
+      <header class="head"><div><p class="eyebrow">Inspectable by design</p><h1>12 files · 11 payload records</h1></div><span class="number">03</span></header>
+      <div class="contents">
+        <div class="panel">
+          <div class="panel-head"><span>mapsoo-sunny-meadow-v0.1.0-alpha.4/</span><span>12 files</span></div>
+          <pre>atlases/
+  props.png
+  terrain.png
+previews/map-preview.png
+schema/
+  mapsoo-generation-receipt.schema.json
+  mapsoo-pack-0.2.schema.json
+  mapsoo-world.schema.json
+worlds/
+  demo-world.json
+  sunny-meadow.world.json
+generation-receipt.json
+license-assets.md
+mapsoo.manifest.json
+readme.md</pre>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span>Portable source of truth</span><span>PNG + JSON + Markdown only</span></div>
+          <div class="assets">
+            <div class="asset"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/atlases/terrain.png" alt="Actual alpha.4 terrain atlas" /><p>terrain.png · 35 terrain tiles</p></div>
+            <div class="asset"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/atlases/props.png" alt="Actual alpha.4 props atlas" /><p>props.png · 6 prop sprites</p></div>
+            <div class="asset wide"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/previews/map-preview.png" alt="Actual alpha.4 map preview" /><p>map-preview.png · exact candidate fixture</p></div>
+          </div>
+          <div class="manifest-facts"><div><strong>SHA-256</strong>Every payload</div><div><strong>CC0-1.0</strong>Asset license</div><div><strong>false</strong>contains_generative_ai</div><div><strong>0 scripts</strong>No addon</div></div>
+        </div>
+      </div>
+      <footer class="foot"><span>Pack schema 0.2.0 shipped beside the data</span><span>Executable-free asset ZIP · importer distributed separately</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="godot">
+      <header class="head"><div><p class="eyebrow">Same fixed-hash candidate · required release matrix</p><h1>Godot 4.3 and Godot 4.7 gates</h1></div><span class="number">04</span></header>
+      <div class="godot">
+        <div class="godot-map panel"><img class="pixel" src="../../examples/packs/sunny-meadow-v0.1.0-alpha.4/previews/map-preview.png" alt="Sunny Meadow world imported from explicit layers" /></div>
+        <div class="checks">
+          <div class="check"><span class="gate">REQUIRED</span><strong>Godot 4.3</strong><code>Linux + Windows<br />created → unchanged<br />4 layers · 384 ground cells<br />29 prop instances</code></div>
+          <div class="check"><span class="gate">REQUIRED</span><strong>Godot 4.7</strong><code>Linux + Windows<br />2 MATCH_SIDES Terrain Sets<br />Water collision layer/mask 1<br />35 explicit atlas tiles</code></div>
+          <div class="check"><strong>Candidate binding</strong><p>v0.1.0-alpha.4<br />a57e810baaf2…47735a6109b8fb35<br />GitHub prerelease publication is still pending.</p></div>
+        </div>
+      </div>
+      <footer class="foot"><span>Importer 0.1.0-alpha.4 installed separately</span><span>Static art does not claim completed public CI</span></footer>
+    </section>
+
+    <section class="frame shot" data-frame="contract">
+      <header class="head"><div><p class="eyebrow">Editable metadata · conservative scope</p><h1>A portable terrain contract</h1></div><span class="number">05</span></header>
+      <div class="flow">
+        <article class="node"><small>01 · SOURCE</small><h2>Pack</h2><p>Validated PNG + JSON with per-file hashes and generation receipt 0.2.0.</p></article><div class="arrow">→</div>
+        <article class="node"><small>02 · TERRAIN</small><h2>Paint</h2><p>Separate Water and Roads MATCH_SIDES metadata supports continued Godot editing.</p></article><div class="arrow">→</div>
+        <article class="node"><small>03 · PHYSICS</small><h2>Block</h2><p>Only Water receives full-cell world-blocking collision; Ground and Roads remain open.</p></article><div class="arrow">→</div>
+        <article class="node"><small>04 · IMPORT</small><h2>Godot</h2><p>Explicit IDs build the four-layer candidate scene with fail-closed ownership state.</p></article>
+      </div>
+      <div class="promise"><span class="pill">Layered terrain, not a full game</span><span class="pill">No navigation claim</span><span class="pill">itch.io upload postponed</span></div>
+      <footer class="foot"><span>Mapsoo Worldsmith v0.1.0-alpha.4 candidate</span><span>Executable-free asset ZIP · CC0-1.0 · contains_generative_ai: false</span></footer>
+    </section>
+
+    <script>
+      const name = new URLSearchParams(location.search).get("frame") || "cover";
+      const frame = document.querySelector('[data-frame="' + name + '"]');
+      if (!frame) throw new Error("Unknown release visual frame: " + name);
+      frame.classList.add("active");
+      document.title = "Mapsoo alpha.4 candidate visual · " + name;
+    </script>
+  </body>
+</html>

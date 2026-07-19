@@ -5,6 +5,7 @@ import {
   type GeneratorProvider,
 } from '../core/generation-provider';
 import { PROCEDURAL_PIXEL_PROVIDER } from './procedural-pixel-provider';
+import { PROCEDURAL_TERRAIN_PROVIDER } from './procedural-terrain-provider';
 
 export interface GeneratorProviderSummary {
   readonly id: string;
@@ -51,6 +52,9 @@ export class GeneratorProviderRegistry {
   }
 }
 
-export const DEFAULT_GENERATION_PROVIDER_ID = PROCEDURAL_PIXEL_PROVIDER.id;
-export const GENERATION_PROVIDER_REGISTRY = new GeneratorProviderRegistry([PROCEDURAL_PIXEL_PROVIDER]);
+export const DEFAULT_GENERATION_PROVIDER_ID = PROCEDURAL_TERRAIN_PROVIDER.id;
+export const GENERATION_PROVIDER_REGISTRY = new GeneratorProviderRegistry([
+  PROCEDURAL_PIXEL_PROVIDER,
+  PROCEDURAL_TERRAIN_PROVIDER,
+]);
 export const DEFAULT_GENERATION_PROVIDER = GENERATION_PROVIDER_REGISTRY.require(DEFAULT_GENERATION_PROVIDER_ID);

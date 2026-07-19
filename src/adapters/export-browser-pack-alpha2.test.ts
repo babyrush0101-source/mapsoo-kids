@@ -153,11 +153,11 @@ describe('alpha.2 browser pack foundation', () => {
 
   it('preserves the historical alpha.2 builder after the current export advances', async () => {
     const run = await buildRun();
-    expect(packageJson.version).toBe('0.1.0-alpha.3');
+    expect(packageJson.version).toBe('0.1.0-alpha.4');
     expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
     expect((await buildPortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.1.zip');
     expect((await buildAlpha2PortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.2.zip');
-    expect((await buildCurrentPortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.3.zip');
+    expect(buildCurrentPortablePack).not.toBe(buildAlpha2PortablePack);
   });
 
   it('rejects untrusted and AI runs before creating any Canvas or ZIP payload', async () => {

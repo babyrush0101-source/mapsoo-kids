@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { renderWorldToCanvas } from '../../adapters/canvas/render-world';
+import { renderPlayableWorldToCanvas } from '../../adapters/canvas/render-playable-world';
 import type { GeneratedWorld } from '../../core/world-spec';
 
 interface WorldPreviewProps {
@@ -13,7 +13,7 @@ export function WorldPreview({ world }: WorldPreviewProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const cellSize = Math.max(12, Math.min(28, Math.floor(760 / world.spec.map.width)));
-    renderWorldToCanvas(canvas, world, cellSize);
+    renderPlayableWorldToCanvas(canvas, world, cellSize);
   }, [world]);
 
   return (

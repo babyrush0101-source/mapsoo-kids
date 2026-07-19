@@ -167,6 +167,7 @@ async function runReceiptPolicyNegativeCases() {
       return;
     case 'builtin-procedural-alpha2-v0.2':
     case 'builtin-procedural-alpha3-v0.2':
+    case 'builtin-playable-terrain-alpha4-v0.2':
       await expectPackFailure(
         'receipt-0.2 AI disclosure conflict with recomputed inner integrity',
         () => rewriteCurrentReceipt(({ receipt }) => {
