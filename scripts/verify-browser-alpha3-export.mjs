@@ -8,15 +8,20 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 
 import {
-  CURRENT_RELEASE_CONFIG,
   REPOSITORY_ROOT,
   assertSafeOutputPath,
   buildExamplePackArchive,
   sha256,
 } from './release-lib.mjs';
+import { getReleaseConfig } from './release-config.mjs';
 
 const execFileAsync = promisify(execFile);
 const captureArgument = process.argv.find((argument) => argument.startsWith('--capture='));
+const versionArgument = process.argv.find((argument) => argument.startsWith('--version='));
+const browserVersion = versionArgument?.slice('--version='.length) || '0.1.0-alpha.3';
+const browserReleaseConfig = getReleaseConfig(browserVersion);
+const browserLabel = browserVersion.endsWith('alpha.4') ? 'ALPHA4' : 'ALPHA3';
+const browserSlug = browserVersion.endsWith('alpha.4') ? 'alpha4' : 'alpha3';
 const captureRoot = resolve(REPOSITORY_ROOT, 'release', 'browser-captures');
 
 function assert(condition, message) {
@@ -101,12 +106,15 @@ function capturePath() {
 }
 
 async function verify() {
-  assert(CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.3', 'Browser gate is bound to the alpha.3 release policy.');
+  assert(
+    ['0.1.0-alpha.3', '0.1.0-alpha.4'].includes(browserReleaseConfig.version),
+    'Browser gate only supports the alpha.3 and alpha.4 release policies.',
+  );
   const port = await freePort();
   assert(Number.isSafeInteger(port), 'Unable to allocate a local browser-harness port.');
-  const harnessUrl = `http://127.0.0.1:${port}/tests/browser/alpha3-export.html`;
+  const harnessUrl = `http://127.0.0.1:${port}/tests/browser/${browserSlug}-export.html`;
   const viteEntry = join(REPOSITORY_ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
-  const profile = await mkdtemp(join(tmpdir(), 'mapsoo-alpha3-browser-'));
+  const profile = await mkdtemp(join(tmpdir(), `mapsoo-${browserSlug}-browser-`));
   const vite = spawn(process.execPath, [viteEntry, '--host', '127.0.0.1', '--port', String(port), '--strictPort'], {
     cwd: REPOSITORY_ROOT,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -131,8 +139,8 @@ async function verify() {
       harnessUrl,
     ], { maxBuffer: 8 * 1024 * 1024, timeout: 60_000, windowsHide: true });
     const exported = decodeHarnessDom(stdout);
-    assert(exported.filename === CURRENT_RELEASE_CONFIG.release.files.examplePack, 'Browser export filename differs from the release registry.');
-    assert(exported.version === CURRENT_RELEASE_CONFIG.version, 'Browser export version differs from the release registry.');
+    assert(exported.filename === browserReleaseConfig.release.files.examplePack, 'Browser export filename differs from the release registry.');
+    assert(exported.version === browserReleaseConfig.version, 'Browser export version differs from the release registry.');
     assert(
       exported.stoyoRequestSha256 === 'ea279ebbfd3c12693469472fbca6bbc1286e07515632bd5e34b7bf698602a144',
       'Real browser STOYO request hash differs from the registered integration fixture.',
@@ -148,17 +156,17 @@ async function verify() {
       await assertSafeOutputPath(captureRoot, output, 'Browser capture output must stay inside a link-free release/browser-captures/ directory');
       await writeFile(output, exported.bytes);
       console.log(
-        `MAPSOO_BROWSER_ALPHA3_CAPTURED ${relative(REPOSITORY_ROOT, output)} bytes=${exported.bytes.length} sha256=${hash}`
+        `MAPSOO_BROWSER_${browserLabel}_CAPTURED ${relative(REPOSITORY_ROOT, output)} bytes=${exported.bytes.length} sha256=${hash}`
         + ` stoyo_request_sha256=${exported.stoyoRequestSha256} stoyo_world=${exported.stoyoWorldId}`,
       );
       return;
     }
 
-    const canonical = await buildExamplePackArchive(CURRENT_RELEASE_CONFIG.version);
-    assert(exported.bytes.equals(canonical), 'Real browser export bytes differ from the registered canonical alpha.3 pack.');
-    assert(hash === CURRENT_RELEASE_CONFIG.expectedExamplePackSha256, 'Real browser export hash differs from the registered alpha.3 hash.');
+    const canonical = await buildExamplePackArchive(browserReleaseConfig.version);
+    assert(exported.bytes.equals(canonical), 'Real browser export bytes differ from the registered canonical pack.');
+    assert(hash === browserReleaseConfig.expectedExamplePackSha256, 'Real browser export hash differs from the registered hash.');
     console.log(
-      `MAPSOO_BROWSER_ALPHA3_OK bytes=${exported.bytes.length} sha256=${hash}`
+      `MAPSOO_BROWSER_${browserLabel}_OK bytes=${exported.bytes.length} sha256=${hash}`
       + ` stoyo_request_sha256=${exported.stoyoRequestSha256} stoyo_world=${exported.stoyoWorldId}`,
     );
   } finally {

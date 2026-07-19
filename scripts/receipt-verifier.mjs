@@ -30,6 +30,23 @@ const ALPHA2_TRANSFORMATIONS = Object.freeze([
   Object.freeze({ id: 'procedural-pixel-atlas', version: '0.1.0' }),
   Object.freeze({ id: 'png-rgba-export', version: '0.1.0' }),
 ]);
+const ALPHA4_PROVIDER = Object.freeze({
+  id: 'procedural-terrain-v2',
+  version: '0.2.0',
+  execution: 'local',
+  output_provenance: 'procedural',
+});
+const ALPHA4_WORKFLOW = Object.freeze({
+  id: 'mapsoo-playable-terrain-pack',
+  version: '0.2.0',
+  definition_sha256: null,
+});
+const ALPHA4_TRANSFORMATIONS = Object.freeze([
+  Object.freeze({ id: 'seeded-map-layout', version: '0.1.0' }),
+  Object.freeze({ id: 'cardinal-terrain-projection', version: '0.2.0' }),
+  Object.freeze({ id: 'procedural-pixel-atlas', version: '0.2.0' }),
+  Object.freeze({ id: 'png-rgba-export', version: '0.1.0' }),
+]);
 const ALPHA2_PAYLOAD_PATHS = Object.freeze([
   'atlases/props.png',
   'atlases/terrain.png',
@@ -56,6 +73,18 @@ const ALPHA2_PAYLOAD_MEDIA_TYPES = Object.freeze({
   'worlds/demo-world.json': 'application/json',
   'worlds/sunny-meadow.world.json': 'application/json',
 });
+const ALPHA4_PACK_SCHEMA_PATH = 'schema/mapsoo-pack-0.2.schema.json';
+const ALPHA4_PAYLOAD_PATHS = Object.freeze(
+  ALPHA2_PAYLOAD_PATHS.map((path) => path === 'schema/mapsoo-pack.schema.json'
+    ? ALPHA4_PACK_SCHEMA_PATH
+    : path),
+);
+const ALPHA4_PAYLOAD_MEDIA_TYPES = Object.freeze(Object.fromEntries(
+  Object.entries(ALPHA2_PAYLOAD_MEDIA_TYPES).map(([path, mediaType]) => [
+    path === 'schema/mapsoo-pack.schema.json' ? ALPHA4_PACK_SCHEMA_PATH : path,
+    mediaType,
+  ]),
+));
 const EXPECTED_ALPHA2_RECEIPT_SCHEMA_SOURCE = JSON.parse(await readFile(
   join(REPOSITORY_ROOT, 'schemas', 'mapsoo-generation-receipt.schema.json'),
   'utf8',
@@ -502,6 +531,144 @@ export async function verifyAlpha3BuiltinReceipt({ manifest, readPackFile, conte
 }
 
 /**
+ * Verifies the exact procedural-terrain-v2 receipt introduced by alpha.4.
+ * The alpha.4-only identity, workflow, and transformation snapshot is checked
+ * before the unchanged receipt-0.2 file, World Spec, licensing, and canonical
+ * JSON checks are delegated to the frozen alpha.2 common contract.
+ */
+export async function verifyAlpha4PlayableTerrainReceipt({
+  manifest,
+  readPackFile,
+  context = 'alpha4 pack',
+}) {
+  assertPlainObject(manifest, `${context} manifest`);
+  assert(typeof readPackFile === 'function', `${context} readPackFile must be a function`);
+  assert(manifest.schema_version === '0.2.0', `${context} manifest schema must be 0.2.0`);
+  assertExactKeys(manifest.pack, ['created_at', 'generator', 'id', 'title', 'version'], `${context} manifest.pack`);
+  assert(manifest.pack.id === 'sunny-meadow', `${context} pack ID must be sunny-meadow`);
+  assert(manifest.pack.version === '0.1.0-alpha.4', `${context} pack version mismatch`);
+  assertExactKeys(manifest.pack.generator, ['name', 'version'], `${context} manifest.pack.generator`);
+  assert(
+    manifest.pack.generator.name === 'Mapsoo Worldsmith'
+      && manifest.pack.generator.version === '0.1.0-alpha.4',
+    `${context} pack generator mismatch`,
+  );
+
+  const records = indexManifestFiles(manifest, context);
+  assert(records.size === 11, `${context} alpha.4 manifest must contain 11 payload records`);
+  assert(
+    JSON.stringify([...records.keys()].sort()) === JSON.stringify([...ALPHA4_PAYLOAD_PATHS].sort()),
+    `${context} alpha.4 payload path set mismatch`,
+  );
+  for (const [path, mediaType] of Object.entries(ALPHA4_PAYLOAD_MEDIA_TYPES)) {
+    assert(records.get(path).media_type === mediaType, `${context} media type mismatch: ${path}`);
+  }
+
+  assertExactKeys(manifest.receipt, ['path'], `${context} manifest.receipt`);
+  assert(manifest.receipt.path === 'generation-receipt.json', `${context} receipt path mismatch`);
+  const receiptBytes = await requireVerifiedFile(
+    manifest.receipt.path,
+    records,
+    readPackFile,
+    `${context} receipt`,
+  );
+  assert(receiptBytes.length <= MAX_RECEIPT_BYTES, `${context} receipt exceeds size limit`);
+  const receipt = decodeCanonicalJson(receiptBytes, `${context} receipt`);
+  assertExactKeys(receipt, [
+    'ai_disclosure',
+    'created_at',
+    'licensing',
+    'model',
+    'provider',
+    'schema_version',
+    'sources',
+    'transformations',
+    'workflow',
+    'world',
+  ], `${context} receipt`);
+  assert(receipt.schema_version === '0.2.0', `${context} receipt schema must be 0.2.0`);
+
+  assertExactKeys(receipt.provider, ['execution', 'id', 'output_provenance', 'version'], `${context} receipt.provider`);
+  assert(JSON.stringify(receipt.provider) === JSON.stringify(ALPHA4_PROVIDER), `${context} provider evidence mismatch`);
+  assert(receipt.model === null, `${context} playable terrain receipt model must be null`);
+  assertExactKeys(receipt.workflow, ['definition_sha256', 'id', 'version'], `${context} receipt.workflow`);
+  assert(JSON.stringify(receipt.workflow) === JSON.stringify(ALPHA4_WORKFLOW), `${context} workflow mismatch`);
+  assert(
+    JSON.stringify(receipt.transformations) === JSON.stringify(ALPHA4_TRANSFORMATIONS),
+    `${context} transformations mismatch`,
+  );
+  for (const [index, transformation] of receipt.transformations.entries()) {
+    assertExactKeys(transformation, ['id', 'version'], `${context} receipt.transformations[${index}]`);
+  }
+  assertExactKeys(
+    receipt.ai_disclosure,
+    ['contains_generative_ai', 'human_curated', 'statement'],
+    `${context} receipt.ai_disclosure`,
+  );
+  assert(
+    JSON.stringify(receipt.ai_disclosure) === JSON.stringify({
+      contains_generative_ai: false,
+      human_curated: false,
+      statement: null,
+    }),
+    `${context} AI disclosure mismatch`,
+  );
+  assertExactKeys(receipt.licensing, ['output', 'provider_terms'], `${context} receipt.licensing`);
+  assertExactKeys(receipt.licensing.output, ['id', 'notice_path'], `${context} receipt.licensing.output`);
+  assert(
+    JSON.stringify(receipt.licensing) === JSON.stringify({
+      output: { id: 'CC0-1.0', notice_path: 'license-assets.md' },
+      provider_terms: null,
+    }),
+    `${context} licensing mismatch`,
+  );
+  assert(Array.isArray(receipt.sources) && receipt.sources.length === 0, `${context} sources must be empty`);
+
+  // Rebind only the already-verified alpha.4-specific fields so the historical
+  // common verifier can check the unchanged receipt schema bytes, World Spec,
+  // license boundary, provenance projection, timestamps, and payload hashes.
+  const commonReceipt = {
+    ...receipt,
+    provider: ALPHA2_PROVIDER,
+    workflow: ALPHA2_WORKFLOW,
+    transformations: ALPHA2_TRANSFORMATIONS,
+  };
+  const commonReceiptBytes = Buffer.from(`${JSON.stringify(commonReceipt, null, 2)}\n`, 'utf8');
+  const commonManifest = {
+    ...manifest,
+    schema_version: '0.1.0',
+    pack: {
+      ...manifest.pack,
+      version: '0.1.0-alpha.2',
+      generator: {
+        ...manifest.pack.generator,
+        version: '0.1.0-alpha.2',
+      },
+    },
+    files: manifest.files.map((record) => {
+      if (record.path === manifest.receipt.path) {
+        return { ...record, bytes: commonReceiptBytes.length, sha256: sha256(commonReceiptBytes) };
+      }
+      if (record.path === ALPHA4_PACK_SCHEMA_PATH) {
+        return { ...record, path: 'schema/mapsoo-pack.schema.json' };
+      }
+      return record;
+    }),
+  };
+
+  await verifyAlpha2BuiltinReceipt({
+    manifest: commonManifest,
+    readPackFile: async (path) => {
+      if (path === manifest.receipt.path) return commonReceiptBytes;
+      if (path === 'schema/mapsoo-pack.schema.json') return readPackFile(ALPHA4_PACK_SCHEMA_PATH);
+      return readPackFile(path);
+    },
+    context,
+  });
+  return { receipt, receiptSha256: sha256(receiptBytes) };
+}
+
+/**
  * Selects a receipt policy from the trusted release registry. The manifest and
  * receipt never choose their own verifier; unknown versions and policies fail closed.
  */
@@ -535,6 +702,13 @@ export async function verifyReceiptForRelease({
         'The builtin-procedural-alpha3-v0.2 receipt policy only authorizes release 0.1.0-alpha.3',
       );
       verifier = verifyAlpha3BuiltinReceipt;
+      break;
+    case 'builtin-playable-terrain-alpha4-v0.2':
+      assert(
+        config.version === '0.1.0-alpha.4',
+        'The builtin-playable-terrain-alpha4-v0.2 receipt policy only authorizes release 0.1.0-alpha.4',
+      );
+      verifier = verifyAlpha4PlayableTerrainReceipt;
       break;
     default:
       throw new Error(

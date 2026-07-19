@@ -124,9 +124,22 @@ async function expectFailure(action, expectedPattern, context) {
 
 async function assertReceiptDispatchFailsClosed() {
   const configs = listReleaseConfigs();
+  assert(configs.length >= 4, 'release registry must contain alpha.1 through alpha.4');
   const config = configs.find(({ version }) => version === '0.1.0-alpha.1');
   assert(config, 'release registry is missing alpha.1');
   for (const registered of configs) assertDeepFrozen(registered, `${registered.tag} config`);
+  const alpha4 = getReleaseConfig('0.1.0-alpha.4');
+  assert(alpha4.lifecycle === 'candidate', 'alpha.4 must remain a candidate until publication');
+  assert(
+    alpha4.expectedExamplePackSha256 === null
+      || /^[a-f0-9]{64}$/.test(alpha4.expectedExamplePackSha256),
+    'alpha.4 candidate hash must be null before capture or a pinned lowercase SHA-256',
+  );
+  assert(
+    alpha4.release.schemas.find(({ releaseFileKey }) => releaseFileKey === 'packSchema')?.source
+      === 'schemas/mapsoo-pack-0.2.schema.json',
+    'alpha.4 must bind the release pack schema to mapsoo-pack-0.2.schema.json',
+  );
   let reads = 0;
   const readPackFile = async () => {
     reads += 1;
@@ -233,6 +246,25 @@ async function assertReceiptDispatchFailsClosed() {
     /does not authorize/,
     'alpha3 receipt verifier on alpha2',
   );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('builtin-playable-terrain-alpha4-v0.2', '0.1.0-alpha.3'),
+    /does not authorize/,
+    'alpha4 receipt verifier on alpha3',
+  );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('builtin-procedural-alpha3-v0.2', '0.1.0-alpha.4'),
+    /does not authorize/,
+    'alpha3 receipt verifier on alpha4',
+  );
+  if (alpha4.expectedExamplePackSha256 === null) {
+    await expectFailure(
+      () => assertReleaseBuildAllowed(alpha4),
+      /capture and pin its canonical example-pack hash first/,
+      'unpinned alpha4 candidate build',
+    );
+  } else {
+    assert(assertReleaseBuildAllowed(alpha4) === alpha4, 'pinned alpha4 candidate build must be authorized');
+  }
 
   for (const action of [
     () => getReleaseConfig('9999.0.0-unknown'),

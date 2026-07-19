@@ -37,7 +37,7 @@ export interface TileDefinition {
   walkable: boolean;
 }
 
-export type PropKind = 'tree' | 'rock' | 'flower';
+export type PropKind = 'tree' | 'rock' | 'flower' | 'shrub' | 'log' | 'marker';
 
 export interface WorldProp {
   id: string;

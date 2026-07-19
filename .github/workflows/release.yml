@@ -237,7 +237,7 @@ jobs:
             echo "Godot emitted an engine error while importing the exact release pack." >&2
             exit 1
           fi
-          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged' "$log_file"
+          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=0.2.0 cells=384 props=29 first=created second=unchanged' "$log_file"
 
   godot-release-windows-smoke:
     name: Godot ${{ matrix.version }} Windows release transaction
@@ -360,7 +360,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
             throw 'Exact release pack import emitted an error.'
           }
-          $expected = 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged'
+          $expected = 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=0.2.0 cells=384 props=29 first=created second=unchanged'
           if (-not (($output | ForEach-Object { $_.ToString() }) -contains $expected)) { throw 'Exact release pack re-import sentinel is missing.' }
 
   publish-draft:

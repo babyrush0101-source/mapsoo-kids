@@ -57,7 +57,7 @@ jobs:
         run: pnpm release:browser:verify
 
       - name: Build and verify reproducible release and itch.io operator bundles
-        run: pnpm release:itch
+        run: pnpm release:local && pnpm release:itch
 
       - name: Verify historical alpha.1 video source and committed MP4
         run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output
@@ -232,7 +232,7 @@ jobs:
             echo "Godot emitted an engine error while importing the candidate pack." >&2
             exit 1
           fi
-          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged' "$log_file"
+          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=0.2.0 cells=384 props=29 first=created second=unchanged' "$log_file"
 
   godot-windows-smoke:
     name: Godot ${{ matrix.version }} Windows transaction smoke
@@ -359,5 +359,5 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
             throw 'Exact-pack import emitted an error.'
           }
-          $expected = 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged'
+          $expected = 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=0.2.0 cells=384 props=29 first=created second=unchanged'
           if (-not (($output | ForEach-Object { $_.ToString() }) -contains $expected)) { throw 'Exact-pack re-import sentinel is missing.' }

@@ -8,7 +8,7 @@ Build and verify everything from source:
 pnpm release:itch
 ```
 
-The verified alpha.2 operator directory was written to `release/itch/v0.1.0-alpha.2/` before the GitHub release. Its itch.io page remains postponed; both published GitHub versions are immutable and must never be rebuilt from newer source.
+Versioned source inputs are preserved under `docs/itch-kit/` for alpha.1 through alpha.4. Alpha.1, alpha.2, and alpha.3 are immutable published GitHub releases and must never be rebuilt from newer source. Alpha.4 remains a fixed-hash prerelease candidate; its itch.io page and upload are postponed until the GitHub release gates and manual page review are complete.
 
 - `uploads/` — the asset ZIP and itch-specific `SHA256SUMS`;
 - `page/` — reviewed operator inputs for page fields and bilingual copy;

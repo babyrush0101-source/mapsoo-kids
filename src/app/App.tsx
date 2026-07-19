@@ -7,6 +7,8 @@ import { readStoyoAssetRequestFile } from '../adapters/import-stoyo-asset-reques
 import { readWorldSpecFile } from '../adapters/import-world-spec';
 import type { GenerationRunResult } from '../core/generation-evidence';
 import { runGenerationProviderWithEvidence } from '../core/generation-provider';
+import { PLAYABLE_PROP_KINDS } from '../core/generate-playable-world';
+import { PLAYABLE_TERRAIN_TILE_DEFINITIONS } from '../core/playable-terrain';
 import {
   BIOME_PALETTES,
   DEFAULT_WORLD_SPEC,
@@ -474,9 +476,14 @@ export function App() {
               <>
                 <WorldPreview world={world} />
                 <div className="legend-row">
-                  {world.tiles.map((tile) => (
-                    <span key={tile.id}>
-                      <i style={{ background: tile.color }} /> {tile.name}
+                  {[
+                    ['ground', world.spec.visual.palette[1]],
+                    ['water', world.spec.visual.palette[3]],
+                    ['roads', world.spec.visual.palette[4]],
+                    ['props', world.spec.visual.palette[2]],
+                  ].map(([label, color]) => (
+                    <span key={label}>
+                      <i style={{ background: color }} /> {label}
                     </span>
                   ))}
                 </div>
@@ -526,9 +533,9 @@ export function App() {
 
             <div className="metric-grid">
               <article><strong>{world?.ground.length ?? '—'}</strong><span>map cells</span></article>
-              <article><strong>{world?.tiles.length ?? '—'}</strong><span>tile types</span></article>
-              <article><strong>{world?.props.length ?? '—'}</strong><span>props</span></article>
-              <article><strong>1</strong><span>portable ZIP</span></article>
+              <article><strong>{PLAYABLE_TERRAIN_TILE_DEFINITIONS.length}</strong><span>terrain tiles</span></article>
+              <article><strong>{PLAYABLE_PROP_KINDS.length}</strong><span>prop sprites</span></article>
+              <article><strong>{world?.props.length ?? '—'}</strong><span>placed props</span></article>
             </div>
 
             <h3>Validation</h3>

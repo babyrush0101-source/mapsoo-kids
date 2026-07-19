@@ -31,6 +31,162 @@ function assert(condition, message) {
   }
 }
 
+function exactJson(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function verifyAlpha4PlayableTerrainManifest(manifest) {
+  assert(manifest.schema_version === '0.2.0', 'Playable terrain manifest schema must be 0.2.0');
+  assert(
+    exactJson(manifest.pack?.generator, { name: 'Mapsoo Worldsmith', version: VERSION }),
+    'Playable terrain manifest generator mismatch',
+  );
+  assert(
+    exactJson(manifest.compatibility, {
+      godot_min: '4.3',
+      grid: 'orthogonal',
+      art_style: 'pixel_art',
+      importer: {
+        id: 'mapsoo_importer',
+        min_version: '0.1.0-alpha.4',
+        source: 'https://github.com/babyrush0101-source/mapsoo-kids',
+      },
+    }),
+    'Playable terrain compatibility contract mismatch',
+  );
+  assert(manifest.receipt?.path === 'generation-receipt.json', 'Playable terrain receipt path mismatch');
+
+  const layers = manifest.layers;
+  assert(Array.isArray(layers) && layers.length === 4, 'Playable terrain manifest must declare exactly four layers');
+  const tileDimensions = layers[0]?.dimensions_cells;
+  assert(
+    Array.isArray(tileDimensions)
+      && tileDimensions.length === 2
+      && tileDimensions.every((value) => Number.isSafeInteger(value) && value > 0),
+    'Playable terrain layer dimensions are invalid',
+  );
+  assert(
+    exactJson(layers, [
+      { id: 'ground', kind: 'tilemap', path: 'worlds/demo-world.json', json_pointer: '/layers/0/cells', encoding: 'row-major', dimensions_cells: tileDimensions, atlas_id: 'terrain', empty_tile_id: -1 },
+      { id: 'water', kind: 'tilemap', path: 'worlds/demo-world.json', json_pointer: '/layers/1/cells', encoding: 'row-major', dimensions_cells: tileDimensions, atlas_id: 'terrain', empty_tile_id: -1 },
+      { id: 'roads', kind: 'tilemap', path: 'worlds/demo-world.json', json_pointer: '/layers/2/cells', encoding: 'row-major', dimensions_cells: tileDimensions, atlas_id: 'terrain', empty_tile_id: -1 },
+      { id: 'props', kind: 'objects', path: 'worlds/demo-world.json', json_pointer: '/props', encoding: 'objects', sprite_atlas: 'atlases/props.png' },
+    ]),
+    'Playable terrain layer contract mismatch',
+  );
+
+  assert(
+    Array.isArray(manifest.terrain_sets) && manifest.terrain_sets.length === 2,
+    'Playable terrain manifest must declare exactly two Terrain Sets',
+  );
+  const [waterSet, roadSet] = manifest.terrain_sets;
+  assert(
+    waterSet?.id === 'water'
+      && waterSet.mode === 'match-sides'
+      && waterSet.terrains?.length === 1
+      && waterSet.terrains[0]?.id === 'water'
+      && waterSet.terrains[0]?.name === 'Water'
+      && /^#[0-9A-Fa-f]{6}$/.test(waterSet.terrains[0]?.color ?? ''),
+    'Playable terrain Water Terrain Set mismatch',
+  );
+  assert(
+    roadSet?.id === 'roads'
+      && roadSet.mode === 'match-sides'
+      && roadSet.terrains?.length === 1
+      && roadSet.terrains[0]?.id === 'road'
+      && roadSet.terrains[0]?.name === 'Road'
+      && /^#[0-9A-Fa-f]{6}$/.test(roadSet.terrains[0]?.color ?? ''),
+    'Playable terrain Roads Terrain Set mismatch',
+  );
+  assert(
+    exactJson(manifest.physics_layers, [{ id: 'world-blocking', collision_layer: 1, collision_mask: 1 }]),
+    'Playable terrain physics layer contract mismatch',
+  );
+
+  assert(Array.isArray(manifest.atlases) && manifest.atlases.length === 1, 'Playable terrain manifest must declare one terrain atlas');
+  const atlas = manifest.atlases[0];
+  const tileSize = atlas?.cell_size_px?.[0];
+  assert(
+    Number.isSafeInteger(tileSize)
+      && tileSize > 0
+      && exactJson(atlas.cell_size_px, [tileSize, tileSize])
+      && exactJson(atlas.image_size_px, [tileSize * 8, tileSize * 6])
+      && atlas.id === 'terrain'
+      && atlas.source_id === 0
+      && atlas.file === 'atlases/terrain.png'
+      && exactJson(atlas.margin_px, [0, 0])
+      && exactJson(atlas.separation_px, [0, 0])
+      && atlas.texture_padding === true,
+    'Playable terrain atlas geometry mismatch',
+  );
+  assert(Array.isArray(atlas.tiles) && atlas.tiles.length === 35, 'Playable terrain atlas must declare exactly 35 tiles');
+  const byTileId = new Map(atlas.tiles.map((tile) => [tile.tile_id, tile]));
+  assert(byTileId.size === 35, 'Playable terrain atlas contains duplicate tile IDs');
+  const biome = atlas.tiles[0]?.custom_data?.biome;
+  assert(['meadow', 'desert', 'snow'].includes(biome), 'Playable terrain atlas biome is invalid');
+
+  const groundIds = ['ground-base-a', 'ground-base-b', 'ground-detail'];
+  for (let tileId = 0; tileId < groundIds.length; tileId += 1) {
+    const tile = byTileId.get(tileId);
+    assert(
+      tile
+        && tile.id === groundIds[tileId]
+        && exactJson(tile.atlas_coords, [tileId % 8, Math.floor(tileId / 8)])
+        && exactJson(tile.size_cells, [1, 1])
+        && tile.alternative_id === 0
+        && exactJson(tile.collision, { type: 'none' })
+        && tile.terrain === null
+        && exactJson(tile.custom_data, { walkable: true, biome })
+        && exactJson(tile.tags, ['terrain', 'ground', groundIds[tileId]]),
+      `Playable terrain ground tile contract mismatch: ${tileId}`,
+    );
+  }
+
+  for (const definition of [
+    { first: 16, layer: 'water', terrainSet: 'water', terrain: 'water', walkable: false, collision: { type: 'full-cell', physics_layer: 'world-blocking' } },
+    { first: 32, layer: 'roads', terrainSet: 'roads', terrain: 'road', walkable: true, collision: { type: 'none' } },
+  ]) {
+    for (let mask = 0; mask < 16; mask += 1) {
+      const tileId = definition.first + mask;
+      const tile = byTileId.get(tileId);
+      const tileNamePrefix = definition.layer === 'roads' ? 'road' : 'water';
+      const peering = {
+        north: mask & 1 ? definition.terrain : null,
+        east: mask & 2 ? definition.terrain : null,
+        south: mask & 4 ? definition.terrain : null,
+        west: mask & 8 ? definition.terrain : null,
+      };
+      assert(
+        tile
+          && tile.id === `${tileNamePrefix}-${mask.toString(16)}`
+          && exactJson(tile.atlas_coords, [tileId % 8, Math.floor(tileId / 8)])
+          && exactJson(tile.size_cells, [1, 1])
+          && tile.alternative_id === 0
+          && exactJson(tile.collision, definition.collision)
+          && exactJson(tile.terrain, { set_id: definition.terrainSet, terrain_id: definition.terrain, peering })
+          && exactJson(tile.custom_data, { walkable: definition.walkable, biome })
+          && exactJson(tile.tags, ['terrain', definition.layer, `mask-${mask}`]),
+        `Playable terrain ${definition.layer} tile contract mismatch: mask ${mask}`,
+      );
+    }
+  }
+
+  assert(Array.isArray(manifest.sprites) && manifest.sprites.length === 6, 'Playable terrain manifest must declare exactly six prop sprites');
+  const propKinds = ['tree', 'rock', 'flower', 'shrub', 'log', 'marker'];
+  for (const [index, kind] of propKinds.entries()) {
+    const sprite = manifest.sprites[index];
+    assert(
+      sprite?.id === `${kind}-01`
+        && sprite.atlas === 'atlases/props.png'
+        && exactJson(sprite.region_px, [index * tileSize, 0, tileSize, tileSize])
+        && exactJson(sprite.pivot_px, [Math.floor(tileSize / 2), tileSize])
+        && exactJson(sprite.footprint_cells, [1, 1])
+        && exactJson(sprite.tags, ['prop', kind, biome]),
+      `Playable terrain prop sprite contract mismatch: ${kind}`,
+    );
+  }
+}
+
 function verifyConfiguredExampleManifest(manifest) {
   assert(
     manifest.pack?.id === CURRENT_RELEASE_CONFIG.release.examplePack.id,
@@ -71,6 +227,14 @@ function verifyConfiguredExampleManifest(manifest) {
         );
       }
       return;
+    case 'sunny-meadow-playable-terrain-cc0-v4':
+      assert(
+        manifest.provenance?.contains_generative_ai === false,
+        'Playable terrain pack must disclose contains_generative_ai=false',
+      );
+      assert(manifest.license?.assets?.id === 'CC0-1.0', 'Playable terrain asset license mismatch');
+      verifyAlpha4PlayableTerrainManifest(manifest);
+      return;
     default:
       throw new Error(
         `Unsupported pack verification policy: ${CURRENT_RELEASE_CONFIG.release.verificationPolicy}`,
@@ -83,6 +247,7 @@ function verifyConfiguredWorldSpec(worldSpec) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
+    case 'sunny-meadow-playable-terrain-cc0-v4':
       assert(worldSpec.schemaVersion === '0.1.0', 'Example World Spec has an unexpected schema version');
       assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
       assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
