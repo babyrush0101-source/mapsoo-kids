@@ -19,12 +19,11 @@ function deepFreeze(value) {
   return value;
 }
 
-function releaseFiles(tag) {
-  return {
+function releaseFiles(tag, { evidenceVideo = false, receiptSchema = false } = {}) {
+  const files = {
     web: `mapsoo-worldsmith-web-${tag}.zip`,
     godotImporter: `mapsoo-godot-importer-${tag}.zip`,
     examplePack: `mapsoo-sunny-meadow-${tag}.zip`,
-    evidenceVideo: `mapsoo-worldsmith-${tag}-75s.mp4`,
     exampleWorldSpec: `sunny-meadow-${tag}.world.json`,
     worldSchema: `mapsoo-world.schema-${tag}.json`,
     packSchema: `mapsoo-pack.schema-${tag}.json`,
@@ -33,6 +32,11 @@ function releaseFiles(tag) {
     manifest: 'release-manifest.json',
     checksums: 'SHA256SUMS',
   };
+  if (evidenceVideo) files.evidenceVideo = `mapsoo-worldsmith-${tag}-75s.mp4`;
+  if (receiptSchema) {
+    files.receiptSchema = `mapsoo-generation-receipt.schema-${tag}.json`;
+  }
+  return files;
 }
 
 function assertConfig(condition, message) {
@@ -51,9 +55,16 @@ function assertRelativeConfigPath(path, context) {
 
 const receiptVerifierVersions = Object.freeze({
   'legacy-alpha1': Object.freeze(['0.1.0-alpha.1']),
+  'builtin-procedural-alpha2-v0.2': Object.freeze(['0.1.0-alpha.2']),
 });
-const packVerificationPolicies = Object.freeze(['sunny-meadow-procedural-cc0-v1']);
-const itchVerificationPolicies = Object.freeze(['sunny-meadow-procedural-cc0-v1']);
+const packVerificationPolicies = Object.freeze([
+  'sunny-meadow-procedural-cc0-v1',
+  'sunny-meadow-procedural-cc0-v2',
+]);
+const itchVerificationPolicies = Object.freeze([
+  'sunny-meadow-procedural-cc0-v1',
+  'sunny-meadow-procedural-cc0-v2',
+]);
 
 export function assertReceiptVerifierBinding(receiptVerifier, version) {
   assertConfig(
@@ -92,7 +103,6 @@ function validateReleaseConfig(config) {
     'web',
     'godotImporter',
     'examplePack',
-    'evidenceVideo',
     'exampleWorldSpec',
     'worldSchema',
     'packSchema',
@@ -152,9 +162,14 @@ function validateReleaseConfig(config) {
     config.release.examplePack.worldSpecPackPath,
     `${config.tag} pack World Spec path`,
   );
-  for (const key of ['exampleWorldSpec', 'license', 'changelog', 'evidenceVideo']) {
+  for (const key of ['exampleWorldSpec', 'license', 'changelog']) {
     assertConfig(typeof config.release.inputs[key] === 'string', `${config.tag} release.inputs.${key} is missing`);
   }
+  assertConfig(
+    Object.hasOwn(config.release.files, 'evidenceVideo')
+      === Object.hasOwn(config.release.inputs, 'evidenceVideo'),
+    `${config.tag} evidence video file and input must be declared together`,
+  );
   for (const [key, path] of Object.entries(config.release.inputs)) {
     assertRelativeConfigPath(path, `${config.tag} release.inputs.${key}`);
   }
@@ -175,6 +190,14 @@ function validateReleaseConfig(config) {
   for (const key of ['sourceDirectory', 'visualDirectory', 'renderer']) {
     assertRelativeConfigPath(config.itch[key], `${config.tag} itch.${key}`);
   }
+  assertConfig(
+    typeof config.itch.shortDescription === 'string' && config.itch.shortDescription.length > 0,
+    `${config.tag} itch short description is missing`,
+  );
+  assertConfig(
+    typeof config.itch.feedbackUrl === 'string' && config.itch.feedbackUrl.startsWith('https://github.com/'),
+    `${config.tag} itch feedback URL is invalid`,
+  );
   const visualNames = new Set();
   for (const visual of config.itch.visuals) {
     assertRelativeConfigPath(visual.name, `${config.tag} itch visual name`);
@@ -182,13 +205,17 @@ function validateReleaseConfig(config) {
     visualNames.add(visual.name);
     assertConfig(Number.isSafeInteger(visual.width) && visual.width > 0, `${visual.name} width is invalid`);
     assertConfig(Number.isSafeInteger(visual.height) && visual.height > 0, `${visual.name} height is invalid`);
+    assertConfig(
+      Number.isSafeInteger(visual.minBytes) && visual.minBytes > 0,
+      `${visual.name} minimum byte size is invalid`,
+    );
   }
   return config;
 }
 
 const ALPHA_1_VERSION = '0.1.0-alpha.1';
 const ALPHA_1_TAG = `v${ALPHA_1_VERSION}`;
-const alpha1ReleaseFiles = releaseFiles(ALPHA_1_TAG);
+const alpha1ReleaseFiles = releaseFiles(ALPHA_1_TAG, { evidenceVideo: true });
 
 const alpha1 = deepFreeze(validateReleaseConfig({
   version: ALPHA_1_VERSION,
@@ -241,6 +268,8 @@ const alpha1 = deepFreeze(validateReleaseConfig({
   },
   itch: {
     verificationPolicy: 'sunny-meadow-procedural-cc0-v1',
+    shortDescription: 'Free CC0 pixel-art tiles, props, map JSON, and an import workflow tested on Godot 4.3 and 4.7.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/12',
     sourceDirectory: `docs/itch-kit/${ALPHA_1_TAG}`,
     visualDirectory: `docs/media/${ALPHA_1_TAG}/itch`,
     renderer: 'docs/release-visuals/renderer.html',
@@ -254,18 +283,95 @@ const alpha1 = deepFreeze(validateReleaseConfig({
     ],
     supportingFiles: ['captions-75s.json'],
     visuals: [
-      { name: 'cover-1260x1000.png', width: 1260, height: 1000, role: 'cover' },
-      { name: '01-generated-pack-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-      { name: '02-workbench-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-      { name: '03-pack-contents-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-      { name: '04-godot-verification-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
-      { name: '05-open-contract-1600x900.png', width: 1600, height: 900, role: 'screenshot' },
+      { name: 'cover-1260x1000.png', width: 1260, height: 1000, minBytes: 100_000, role: 'cover' },
+      { name: '01-generated-pack-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '02-workbench-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '03-pack-contents-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '04-godot-verification-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '05-open-contract-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+    ],
+  },
+}));
+
+const ALPHA_2_VERSION = '0.1.0-alpha.2';
+const ALPHA_2_TAG = `v${ALPHA_2_VERSION}`;
+const alpha2ReleaseFiles = releaseFiles(ALPHA_2_TAG, { receiptSchema: true });
+
+const alpha2 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_2_VERSION,
+  tag: ALPHA_2_TAG,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-procedural-alpha2-v0.2',
+  expectedExamplePackSha256: '8c7720a8578cdc276ff69677ed0d64d8a1524d32fd00da0ffb8035b5a52bfcb6',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'sunny-meadow-procedural-cc0-v2',
+    files: alpha2ReleaseFiles,
+    notes: `docs/releases/${ALPHA_2_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_2_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_2_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      {
+        releaseFileKey: 'worldSchema',
+        source: 'schemas/mapsoo-world.schema.json',
+        packPath: 'schema/mapsoo-world.schema.json',
+      },
+      {
+        releaseFileKey: 'packSchema',
+        source: 'schemas/mapsoo-pack.schema.json',
+        packPath: 'schema/mapsoo-pack.schema.json',
+      },
+      {
+        releaseFileKey: 'receiptSchema',
+        source: 'schemas/mapsoo-generation-receipt.schema.json',
+        packPath: 'schema/mapsoo-generation-receipt.schema.json',
+      },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'sunny-meadow-procedural-cc0-v2',
+    shortDescription: 'Free CC0 pixel-art tiles, props, map JSON, and a fixed-hash import workflow CI-gated on Godot 4.3 and 4.7.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=bug-report.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_2_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_2_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_2_TAG}.html`,
+    rendererFrames: ['cover', 'hero', 'workbench', 'contents', 'godot', 'contract'],
+    requiredRendererFacts: [
+      ALPHA_2_TAG,
+      'Generation receipt 0.2.0',
+      '12 files',
+      '11 payload records',
+      'CC0-1.0',
+      'Godot 4.3',
+      'Godot 4.7',
+      'contains_generative_ai',
+      'Executable-free asset ZIP',
+    ],
+    supportingFiles: [],
+    visuals: [
+      { name: 'cover-1260x1000.png', width: 1260, height: 1000, minBytes: 100_000, role: 'cover' },
+      { name: '01-generated-pack-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '02-workbench-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '03-pack-contents-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '04-godot-verification-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '05-open-contract-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
     ],
   },
 }));
 
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
+  [alpha2.version]: alpha2,
 });
 
 export function getReleaseConfig(version) {

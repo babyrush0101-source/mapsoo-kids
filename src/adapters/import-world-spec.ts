@@ -23,15 +23,23 @@ export type WorldSpecImportErrorCode =
   | 'import.invalid-spec'
   | 'import.read-failed';
 
+export type StrictJsonImportErrorCode = Exclude<WorldSpecImportErrorCode, 'import.invalid-spec'>;
+
+export type StrictJsonImportResult =
+  | { ok: true; value: unknown }
+  | { ok: false; code: StrictJsonImportErrorCode; message: string };
+
 export type WorldSpecImportResult =
   | { ok: true; spec: WorldSpec; issues: ValidationIssue[] }
   | { ok: false; code: WorldSpecImportErrorCode; message: string; issues: ValidationIssue[] };
 
-export interface ReadableWorldSpecFile {
+export interface ReadableJsonFile {
   name: string;
   size: number;
   arrayBuffer(): Promise<ArrayBuffer>;
 }
+
+export type ReadableWorldSpecFile = ReadableJsonFile;
 
 class DuplicateJsonKeyError extends Error {
   constructor(readonly key: string) {
@@ -56,11 +64,15 @@ function failure(
   return { ok: false, code, message, issues };
 }
 
+function strictFailure(code: StrictJsonImportErrorCode, message: string): StrictJsonImportResult {
+  return { ok: false, code, message };
+}
+
 function isValidatedWorldSpec(value: unknown, issues: ValidationIssue[]): value is WorldSpec {
   return issues.every((issue) => issue.severity !== 'error');
 }
 
-function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
+function inspectJsonTree(value: unknown, documentName: string): StrictJsonImportResult | null {
   const pending: Array<{ value: unknown; depth: number }> = [{ value, depth: 0 }];
   let visitedNodes = 0;
 
@@ -70,25 +82,28 @@ function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
 
     visitedNodes += 1;
     if (visitedNodes > MAX_WORLD_SPEC_JSON_NODES) {
-      return failure(
+      return strictFailure(
         'import.too-complex',
-        `World Spec JSON may contain at most ${MAX_WORLD_SPEC_JSON_NODES} values.`,
+        `${documentName} JSON may contain at most ${MAX_WORLD_SPEC_JSON_NODES} values.`,
       );
     }
 
     if (current.depth > MAX_WORLD_SPEC_JSON_DEPTH) {
-      return failure(
+      return strictFailure(
         'import.too-deep',
-        `World Spec JSON may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
+        `${documentName} JSON may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
       );
     }
 
     if (typeof current.value === 'number') {
       if (!Number.isFinite(current.value)) {
-        return failure('import.non-finite-number', 'World Spec JSON may contain only finite numbers.');
+        return strictFailure('import.non-finite-number', `${documentName} JSON may contain only finite numbers.`);
       }
       if (Number.isInteger(current.value) && !Number.isSafeInteger(current.value)) {
-        return failure('import.unsafe-integer', 'World Spec JSON integers must stay within the safe integer range.');
+        return strictFailure(
+          'import.unsafe-integer',
+          `${documentName} JSON integers must stay within the safe integer range.`,
+        );
       }
     }
 
@@ -101,7 +116,7 @@ function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
 
     for (const [key, child] of Object.entries(current.value)) {
       if (FORBIDDEN_WORLD_SPEC_OBJECT_KEYS.has(key)) {
-        return failure('import.unsafe-key', `World Spec JSON contains a forbidden object key: ${key}.`);
+        return strictFailure('import.unsafe-key', `${documentName} JSON contains a forbidden object key: ${key}.`);
       }
       pending.push({ value: child, depth: current.depth + 1 });
     }
@@ -110,7 +125,7 @@ function inspectJsonTree(value: unknown): WorldSpecImportResult | null {
   return null;
 }
 
-function assertNoDuplicateObjectKeys(text: string): void {
+function assertNoDuplicateObjectKeys(text: string, documentName: string): void {
   let cursor = 0;
   let visitedNodes = 0;
 
@@ -142,13 +157,13 @@ function assertNoDuplicateObjectKeys(text: string): void {
     if (visitedNodes > MAX_WORLD_SPEC_JSON_NODES) {
       throw new JsonStructureLimitError(
         'import.too-complex',
-        `World Spec JSON may contain at most ${MAX_WORLD_SPEC_JSON_NODES} values.`,
+        `${documentName} JSON may contain at most ${MAX_WORLD_SPEC_JSON_NODES} values.`,
       );
     }
     if (depth > MAX_WORLD_SPEC_JSON_DEPTH) {
       throw new JsonStructureLimitError(
         'import.too-deep',
-        `World Spec JSON may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
+        `${documentName} JSON may be nested at most ${MAX_WORLD_SPEC_JSON_DEPTH} levels.`,
       );
     }
 
@@ -215,18 +230,21 @@ function assertNoDuplicateObjectKeys(text: string): void {
   readValue(0);
 }
 
-export function parseWorldSpecJson(text: string): WorldSpecImportResult {
+export function parseStrictJsonDocument(
+  text: string,
+  documentName = 'Document',
+): StrictJsonImportResult {
   const normalizedText = text.startsWith('\uFEFF') ? text.slice(1) : text;
   const byteLength = new TextEncoder().encode(normalizedText).byteLength;
 
   if (normalizedText.trim().length === 0) {
-    return failure('import.empty', 'Choose a non-empty World Spec JSON file.');
+    return strictFailure('import.empty', `Choose a non-empty ${documentName} JSON file.`);
   }
 
   if (byteLength > MAX_WORLD_SPEC_FILE_BYTES) {
-    return failure(
+    return strictFailure(
       'import.too-large',
-      `World Spec JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
+      `${documentName} JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
     );
   }
 
@@ -234,24 +252,29 @@ export function parseWorldSpecJson(text: string): WorldSpecImportResult {
   try {
     candidate = JSON.parse(normalizedText);
   } catch {
-    return failure('import.invalid-json', 'The selected file is not valid JSON.');
+    return strictFailure('import.invalid-json', 'The selected file is not valid JSON.');
   }
 
   try {
-    assertNoDuplicateObjectKeys(normalizedText);
+    assertNoDuplicateObjectKeys(normalizedText, documentName);
   } catch (error) {
     if (error instanceof JsonStructureLimitError) {
-      return failure(error.code, error.message);
+      return strictFailure(error.code, error.message);
     }
     if (error instanceof DuplicateJsonKeyError) {
       const displayKey = error.key.length > 80 ? `${error.key.slice(0, 77)}...` : error.key;
-      return failure('import.duplicate-key', `World Spec JSON repeats the object key: ${displayKey}.`);
+      return strictFailure('import.duplicate-key', `${documentName} JSON repeats the object key: ${displayKey}.`);
     }
-    return failure('import.invalid-json', 'The selected file is not valid JSON.');
+    return strictFailure('import.invalid-json', 'The selected file is not valid JSON.');
   }
 
-  const unsafeTree = inspectJsonTree(candidate);
+  const unsafeTree = inspectJsonTree(candidate, documentName);
   if (unsafeTree) return unsafeTree;
+
+  return { ok: true, value: candidate };
+}
+
+function validateParsedWorldSpec(candidate: unknown): WorldSpecImportResult {
 
   const issues = validateWorldSpec(candidate);
   const errors = issues.filter((issue) => issue.severity === 'error');
@@ -266,34 +289,53 @@ export function parseWorldSpecJson(text: string): WorldSpecImportResult {
   return { ok: true, spec: cloneWorldSpec(candidate), issues };
 }
 
-export async function readWorldSpecFile(file: ReadableWorldSpecFile): Promise<WorldSpecImportResult> {
+function worldSpecFailure(result: Extract<StrictJsonImportResult, { ok: false }>): WorldSpecImportResult {
+  return { ...result, issues: [] };
+}
+
+export function parseWorldSpecJson(text: string): WorldSpecImportResult {
+  const parsed = parseStrictJsonDocument(text, 'World Spec');
+  if (!parsed.ok) return worldSpecFailure(parsed);
+  return validateParsedWorldSpec(parsed.value);
+}
+
+export async function readStrictJsonDocumentFile(
+  file: ReadableJsonFile,
+  documentName = 'Document',
+): Promise<StrictJsonImportResult> {
   if (file.size <= 0) {
-    return failure('import.empty', 'Choose a non-empty World Spec JSON file.');
+    return strictFailure('import.empty', `Choose a non-empty ${documentName} JSON file.`);
   }
 
   if (file.size > MAX_WORLD_SPEC_FILE_BYTES) {
-    return failure(
+    return strictFailure(
       'import.too-large',
-      `World Spec JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
+      `${documentName} JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
     );
   }
 
   try {
     const bytes = await file.arrayBuffer();
     if (bytes.byteLength > MAX_WORLD_SPEC_FILE_BYTES) {
-      return failure(
+      return strictFailure(
         'import.too-large',
-        `World Spec JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
+        `${documentName} JSON must be no larger than ${MAX_WORLD_SPEC_FILE_BYTES / 1024} KiB.`,
       );
     }
     let text: string;
     try {
       text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     } catch {
-      return failure('import.invalid-utf8', 'World Spec JSON must use valid UTF-8 encoding.');
+      return strictFailure('import.invalid-utf8', `${documentName} JSON must use valid UTF-8 encoding.`);
     }
-    return parseWorldSpecJson(text);
+    return parseStrictJsonDocument(text, documentName);
   } catch {
-    return failure('import.read-failed', `Could not read ${file.name || 'the selected file'}.`);
+    return strictFailure('import.read-failed', `Could not read ${file.name || 'the selected file'}.`);
   }
+}
+
+export async function readWorldSpecFile(file: ReadableWorldSpecFile): Promise<WorldSpecImportResult> {
+  const parsed = await readStrictJsonDocumentFile(file, 'World Spec');
+  if (!parsed.ok) return worldSpecFailure(parsed);
+  return validateParsedWorldSpec(parsed.value);
 }

@@ -160,12 +160,27 @@ export function assertDescendantPath(parent, candidate, context, pathApi = nodeP
   return resolvedCandidate;
 }
 
+export function assertPathInsideOrEqual(parent, candidate, context, pathApi = nodePath) {
+  const resolvedParent = pathApi.resolve(parent);
+  const resolvedCandidate = pathApi.resolve(candidate);
+  const child = pathApi.relative(resolvedParent, resolvedCandidate);
+  if (
+    pathApi.isAbsolute(child)
+    || child === '..'
+    || child.startsWith(`..${pathApi.sep}`)
+  ) {
+    throw new Error(`${context}: ${resolvedCandidate}`);
+  }
+  return resolvedCandidate;
+}
+
 async function assertNoLinkedPathComponents(parent, candidate, context) {
   const resolvedParent = resolve(parent);
-  const resolvedCandidate = assertDescendantPath(resolvedParent, candidate, context);
+  const resolvedCandidate = assertPathInsideOrEqual(resolvedParent, candidate, context);
   const components = [resolvedParent];
   let current = resolvedParent;
-  for (const segment of relative(resolvedParent, resolvedCandidate).split(sep)) {
+  const child = relative(resolvedParent, resolvedCandidate);
+  for (const segment of child ? child.split(sep) : []) {
     current = join(current, segment);
     components.push(current);
   }
@@ -189,7 +204,7 @@ async function assertNoLinkedPathComponents(parent, candidate, context) {
 
 export async function assertSafeOutputPath(parent, candidate, context) {
   const resolvedCandidate = assertDescendantPath(parent, candidate, context);
-  assertDescendantPath(REPOSITORY_ROOT, parent, `${context}; parent must stay inside the repository`);
+  assertPathInsideOrEqual(REPOSITORY_ROOT, parent, `${context}; parent must stay inside the repository`);
   await assertNoLinkedPathComponents(REPOSITORY_ROOT, parent, context);
   await mkdir(parent, { recursive: true });
   await assertNoLinkedPathComponents(REPOSITORY_ROOT, resolvedCandidate, context);
@@ -284,7 +299,7 @@ export async function buildExamplePackArchive(version = VERSION) {
   return createDeterministicZip(examplePackZipEntries);
 }
 
-export async function buildRelease(outputRoot, version = VERSION) {
+export async function buildRelease(outputRoot, version = VERSION, options = {}) {
   const config = assertReleaseBuildAllowed(getReleaseConfig(version));
   const releaseTag = config.tag;
   const releaseFiles = config.release.files;
@@ -298,7 +313,12 @@ export async function buildRelease(outputRoot, version = VERSION) {
     'Refusing to replace output outside release/',
   );
 
-  const distRoot = join(REPOSITORY_ROOT, 'dist');
+  const requestedDistRoot = options.distRoot ?? join(REPOSITORY_ROOT, 'dist');
+  const distRoot = await assertSafeOutputPath(
+    REPOSITORY_ROOT,
+    requestedDistRoot,
+    'Release web input must stay inside the repository',
+  );
   const webFiles = await listFiles(distRoot);
   if (!webFiles.some((entry) => entry.archivePath === 'index.html')) {
     throw new Error('dist/index.html is missing; run the web build first');
@@ -340,8 +360,13 @@ export async function buildRelease(outputRoot, version = VERSION) {
     ]),
     [join(REPOSITORY_ROOT, config.release.inputs.license), releaseFiles.license],
     [join(REPOSITORY_ROOT, config.release.inputs.changelog), releaseFiles.changelog],
-    [join(REPOSITORY_ROOT, config.release.inputs.evidenceVideo), releaseFiles.evidenceVideo],
   ];
+  if (releaseFiles.evidenceVideo) {
+    copiedFiles.push([
+      join(REPOSITORY_ROOT, config.release.inputs.evidenceVideo),
+      releaseFiles.evidenceVideo,
+    ]);
+  }
 
   for (const [source, targetName] of copiedFiles) {
     const bytes = await readPortableFile(source, targetName);
@@ -367,12 +392,14 @@ export async function buildRelease(outputRoot, version = VERSION) {
       },
       examplePack: {
         file: releaseFiles.examplePack,
-        purpose: 'Executable-free Sunny Meadow PNG + JSON pack verified in Godot 4.3 and 4.7',
+        purpose: 'Executable-free Sunny Meadow PNG + JSON pack CI-gated on Godot 4.3 and 4.7',
       },
-      evidenceVideo: {
-        file: releaseFiles.evidenceVideo,
-        purpose: 'Silent bilingual 75-second H.264 evidence cut for the verified release candidate',
-      },
+      ...(releaseFiles.evidenceVideo ? {
+        evidenceVideo: {
+          file: releaseFiles.evidenceVideo,
+          purpose: 'Silent bilingual 75-second H.264 evidence cut for the verified release candidate',
+        },
+      } : {}),
       exampleWorldSpec: {
         file: releaseFiles.exampleWorldSpec,
         purpose: 'Versioned Sunny Meadow input example',

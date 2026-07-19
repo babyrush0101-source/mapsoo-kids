@@ -2,7 +2,7 @@
 
 状态：执行中
 
-当前阶段：`v0.1.0-alpha.1` 已公开发布，GitHub Pages、公开 CI 与可复现 itch.io 上传套件已闭环；等待 itch.io 页面和外部反馈
+当前阶段：`v0.1.0-alpha.1` 已公开发布，`v0.1.0-alpha.2` Draft PR 已通过公开 CI；GitHub Release/Pages 是当前主发布渠道，itch.io 页面按维护者决定延期，等待人工审查与外部反馈
 
 主分支：`main`
 
@@ -36,7 +36,7 @@
 - **供应商可替换**：AI 图像服务、本地工作流和程序化生成都实现同一个 provider 接口。
 - **格式是产品**：清晰的 schema、manifest、命名和验证规则比一次漂亮出图更重要。
 - **许可证跟随资产**：每个来源、生成器与输出包都有可追踪的许可和生成记录。
-- **STOYO 可复用但不绑死**：Mapsoo 服务所有 Godot 创作者，STOYO 是首个真实的大型使用方。
+- **STOYO 可复用但不绑死**：Mapsoo 服务所有 Godot 创作者，STOYO 是计划中的首个大型真实使用方；当前只完成公开对接契约，尚无生产消费端证据。
 
 ## 4. 工作流分解
 
@@ -90,7 +90,7 @@
 | v0.5 Community Beta | 示例、文档、贡献流程、预发布 | 至少 3 个示例包、外部 issue/反馈、首个 beta release |
 | v1.0 Stable | 稳定 schema 和兼容策略 | schema 版本化、迁移策略、跨平台测试和正式 release |
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Godot 4.3/4.7 中的跨管线验收。公开 `v0.1.0-alpha.1` pre-release、Pages Demo、公开 CI、发布视频和反馈入口均已完成；尚未完成 itch.io 页面和外部反馈。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Godot 4.3/4.7 中的跨管线验收。公开 `v0.1.0-alpha.1` pre-release、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.2 候选与 STOYO 请求导入已有全绿 Draft PR。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
 
 ## 6. 总控节奏
 
@@ -134,6 +134,7 @@
 
 ## 9. 当前下一步
 
-1. 创建并复核 itch.io 免费 Graphical Assets 页面，直接上传已验证的 Sunny Meadow 素材 ZIP；
-2. 邀请第一轮外部用户完成下载 → Godot 导入，并在统一反馈 issue 公开响应；
-3. 用真实的 itch URL、反馈与精确指标更新 Codex for OSS 证据台账，再决定申请时机。
+1. 人工审查 Draft PR #23/#24；只有取得明确授权后才合并、打 `v0.1.0-alpha.2` tag 并发布 GitHub prerelease；
+2. 通过 GitHub Release 与 Pages 邀请第一轮外部用户完成下载 → Godot 导入，并在统一反馈 issue 公开响应；
+3. 用真实 release、反馈与精确指标更新 Codex for OSS 证据台账，再决定申请时机；
+4. 保留已验证的 itch.io 上传套件，但页面创建和公开发布延期；以后能通过人工验证时再恢复，不阻塞 GitHub 路线。

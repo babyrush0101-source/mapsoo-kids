@@ -11,29 +11,31 @@ Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a loc
 
 ## Project status
 
-The public `main` branch and **v0.1.0-alpha.1 pre-release** provide a deterministic, offline generation and export loop without accounts, a backend, or API keys:
+The public `main` branch and **v0.1.0-alpha.1 pre-release** provide the immutable first public baseline. The current `v0.1.0-alpha.2` candidate keeps the same account-free, backend-free, API-key-free loop and upgrades the default export to a runner-verifiable receipt:
 
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same starter tiles and map again from the same seed.
 3. Preview the pixel-art result in the browser and review validation issues.
-4. Download the World Spec JSON, then load it again later to reproduce the saved project.
-5. Export an executable-free ZIP containing PNG atlases, a map preview, schemas, manifest, provenance receipt, and asset license.
+4. Download/load a World Spec JSON, or load the strict synthetic STOYO Asset Request example and project it locally.
+5. Export an executable-free 12-file ZIP containing PNG atlases, a map preview, three schemas, manifest, receipt 0.2, and asset license.
 
-The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json).
+The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
-Local World Spec imports are capped at 128 KiB and use strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema validation. Initial generation, editor generation, and imported specs all run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
+Local World Spec and STOYO Asset Request imports share the same 128 KiB cap, strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema/runtime validation. A STOYO request is first projected to a World Spec with a canonical SHA-256 binding; initial generation, editor generation, and both import paths then run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
-![Actual Sunny Meadow pack preview](examples/packs/sunny-meadow-v0.1.0-alpha.1/previews/map-preview.png)
+![Actual Sunny Meadow alpha.2 candidate preview](examples/packs/sunny-meadow-v0.1.0-alpha.2/previews/map-preview.png)
 
-The committed [Sunny Meadow release fixture](examples/packs/sunny-meadow-v0.1.0-alpha.1/) was exported through the real browser UI and imported successfully with Godot 4.3 and 4.7. It is also rebuilt as a deterministic release ZIP, so the example shown above is the example users download—not a concept image.
+The committed [Sunny Meadow alpha.2 fixture](examples/packs/sunny-meadow-v0.1.0-alpha.2/) was captured from the real default browser exporter. It has 12 files, 11 manifest payload records, and fixed SHA-256 `8c7720a8578cdc276ff69677ed0d64d8a1524d32fd00da0ffb8035b5a52bfcb6`. A pinned pure-JavaScript PNG encoder removes browser-native PNG compression drift, and CI runs the real browser exporter before passing the byte-identical canonical ZIP to both Godot 4.3 and 4.7 jobs.
 
-The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; it derives a `TileSet`, `TileMapLayer` scene, and prop sprites under `res://mapsoo_imports/`. The importer and example project are headless-tested on Godot 4.3 and 4.7. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
+The first public exact-pack evidence is attached to [Draft PR #24](https://github.com/babyrush0101-source/mapsoo-kids/pull/24) for implementation commit `d1317ea`: [check](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29662576831/job/88127620978), [Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29662576831/job/88127703698), and [Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29662576831/job/88127703719) all passed. This is candidate evidence, not a published alpha.2 release.
+
+The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; it derives a `TileSet`, `TileMapLayer` scene, and prop sprites under `res://mapsoo_imports/`. The importer and example project already have headless smoke coverage on Godot 4.3 and 4.7; alpha.2 additionally makes import of the exact fixed-hash candidate pack a required matrix gate. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
 ## Why this order
 
-Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, and imported World Specs through the provider SDK, atomically stores a deeply frozen runner-owned world/evidence result, exposes the Provider snapshot that produced it, and keeps only the latest request eligible to update the preview. The legacy exporter rejects bare worlds and optional AI providers; full receipt/manifest projection enters a new versioned pack rather than rewriting the published alpha.
+Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, imported World Specs, and projected STOYO requests through the provider SDK, atomically stores a deeply frozen runner-owned world/evidence result, exposes the Provider snapshot that produced it, and keeps only the latest request eligible to update the preview. The legacy exporter rejects bare worlds and optional AI providers; full receipt/manifest projection enters a new versioned pack rather than rewriting the published alpha.
 
-The repository defines the next full generation-receipt contract separately from the frozen `v0.1.0-alpha.1` example. An isolated alpha.2 export foundation already binds runner-owned evidence and exact payload hashes into receipt `0.2.0` and its manifest, while the published/default alpha keeps its legacy receipt bytes and procedural-only allowlist. The new builder will become the default only with a new registered package version, committed fixture, verification gates, and public hash.
+The registered alpha.2 candidate binds runner-owned evidence and actual World Spec bytes into receipt `0.2.0`; the manifest derives time, input binding, license, and provenance from the shipped canonical receipt. A version-bound Node verifier rejects cross-version policies and 31 semantic mutation cases, while the frozen `v0.1.0-alpha.1` fixture and public attachment hashes remain unchanged. AI-provider publication remains fail-closed: the current export policy authorizes only the exact source-free CC0 built-in procedural profile.
 
 Release tooling now resolves `package.json` through a fail-closed, immutable version registry. That registry selects the exact fixture, release inputs, itch.io page/media, and receipt policy; CI also rebuilds every published example pack and compares it with its pinned public SHA-256. Every GitHub attachment digest for a published tag is pinned, and the builder refuses to overwrite that tag—continued development must use a new candidate version.
 
@@ -47,14 +49,17 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [Open-source and Codex OSS readiness](docs/05_OPEN_SOURCE_READINESS.md)
 - [Security and migration audit](docs/06_SECURITY_AND_MIGRATION.md)
 - [STOYO integration](docs/07_STOYO_INTEGRATION.md)
+- [Executable STOYO Asset Request contract](integrations/stoyo/README.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
 - [Generation Provider SDK](docs/09_PROVIDER_SDK.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
 - [Verified itch.io operator upload kit](docs/itch-kit/README.md)
 - [75-second evidence video source and verification](video/README.md)
 - [v0.1.0-alpha.1 release notes](docs/releases/v0.1.0-alpha.1.md)
+- [v0.1.0-alpha.2 candidate notes](docs/releases/v0.1.0-alpha.2.md)
+- [v0.1.0-alpha.2 release visual source](docs/release-visuals/README-v0.1.0-alpha.2.md)
 
-The reviewed [silent bilingual 75-second MP4](docs/media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) is also published as a versioned [GitHub release asset](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4). It demonstrates the exact candidate pack, validator, and Godot CLI evidence; it does not claim external adoption.
+The reviewed [silent bilingual 75-second MP4](docs/media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) remains an immutable alpha.1 [GitHub release asset](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4). Alpha.2 does not rename or reuse it as evidence.
 
 ## Local development
 
@@ -69,7 +74,12 @@ Run the complete local verification before contributing:
 
 ```bash
 pnpm check
+pnpm security:audit
+pnpm release:history:remote
+pnpm release:browser:verify
 ```
+
+`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final two commands confirm the immutable public GitHub attachments and execute the current exporter in a real browser, comparing its raw ZIP bytes with the registered candidate pack.
 
 Build, validate, and reproduce a complete **unpublished candidate** release bundle:
 

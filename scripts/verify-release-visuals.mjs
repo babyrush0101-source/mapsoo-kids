@@ -3,13 +3,21 @@
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { CURRENT_RELEASE_CONFIG, REPOSITORY_ROOT } from './release-lib.mjs';
+import {
+  CURRENT_RELEASE_CONFIG,
+  REPOSITORY_ROOT,
+  getReleaseConfig,
+  sha256,
+} from './release-lib.mjs';
 
 const visualRoot = join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.itch.visualDirectory);
 const rendererPath = join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.itch.renderer);
 
 const expectedVisuals = new Map(
-  CURRENT_RELEASE_CONFIG.itch.visuals.map(({ name, width, height }) => [name, [width, height]]),
+  CURRENT_RELEASE_CONFIG.itch.visuals.map(({ name, width, height, minBytes }) => [
+    name,
+    { width, height, minBytes },
+  ]),
 );
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -20,11 +28,14 @@ function assert(condition, message) {
   }
 }
 
-async function verifyPng(fileName, expectedWidth, expectedHeight) {
+async function verifyPng(fileName, { width: expectedWidth, height: expectedHeight, minBytes }) {
   const path = join(visualRoot, fileName);
   const fileStat = await stat(path);
   assert(fileStat.isFile(), `Release visual is not a file: ${fileName}`);
-  assert(fileStat.size >= 100_000, `Release visual is unexpectedly small: ${fileName}`);
+  assert(
+    fileStat.size >= minBytes,
+    `Release visual is unexpectedly small: ${fileName} (${fileStat.size} < ${minBytes})`,
+  );
 
   const bytes = await readFile(path);
   assert(bytes.subarray(0, 8).equals(pngSignature), `Invalid PNG signature: ${fileName}`);
@@ -39,8 +50,25 @@ async function verifyPng(fileName, expectedWidth, expectedHeight) {
 }
 
 async function verify() {
-  for (const [fileName, [width, height]] of expectedVisuals) {
-    await verifyPng(fileName, width, height);
+  for (const [fileName, visual] of expectedVisuals) {
+    await verifyPng(fileName, visual);
+  }
+
+  if (CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2') {
+    const alpha1VisualRoot = join(
+      REPOSITORY_ROOT,
+      getReleaseConfig('0.1.0-alpha.1').itch.visualDirectory,
+    );
+    for (const fileName of expectedVisuals.keys()) {
+      const [alpha1Bytes, alpha2Bytes] = await Promise.all([
+        readFile(join(alpha1VisualRoot, fileName)),
+        readFile(join(visualRoot, fileName)),
+      ]);
+      assert(
+        sha256(alpha1Bytes) !== sha256(alpha2Bytes),
+        `alpha.2 release visual must not reuse alpha.1 bytes: ${fileName}`,
+      );
+    }
   }
 
   const renderer = await readFile(rendererPath, 'utf8');

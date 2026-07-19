@@ -16,6 +16,7 @@ import {
   buildExamplePackArchive,
   comparePortablePaths,
   getReleaseConfig,
+  listReleaseConfigs,
   listFiles,
   listPublishedReleaseConfigs,
   sha256,
@@ -122,8 +123,10 @@ async function expectFailure(action, expectedPattern, context) {
 }
 
 async function assertReceiptDispatchFailsClosed() {
-  const config = listPublishedReleaseConfigs()[0];
-  assert(config, 'release registry contains no published releases');
+  const configs = listReleaseConfigs();
+  const config = configs.find(({ version }) => version === '0.1.0-alpha.1');
+  assert(config, 'release registry is missing alpha.1');
+  for (const registered of configs) assertDeepFrozen(registered, `${registered.tag} config`);
   let reads = 0;
   const readPackFile = async () => {
     reads += 1;
@@ -139,24 +142,26 @@ async function assertReceiptDispatchFailsClosed() {
         readPackFile,
       }),
     },
-    {
-      context: 'forged pack ID',
-      expected: /pack ID must match trusted release config/,
-      action: () => verifyReceiptForRelease({
-        version: config.version,
-        manifest: { pack: { id: 'forged-pack', version: config.version } },
-        readPackFile,
-      }),
-    },
-    {
-      context: 'forged pack version',
-      expected: /pack version must match trusted release config/,
-      action: () => verifyReceiptForRelease({
-        version: config.version,
-        manifest: { pack: { id: config.release.examplePack.id, version: '9999.0.0' } },
-        readPackFile,
-      }),
-    },
+    ...configs.flatMap((registered) => [
+      {
+        context: `${registered.tag} forged pack ID`,
+        expected: /pack ID must match trusted release config/,
+        action: () => verifyReceiptForRelease({
+          version: registered.version,
+          manifest: { pack: { id: 'forged-pack', version: registered.version } },
+          readPackFile,
+        }),
+      },
+      {
+        context: `${registered.tag} forged pack version`,
+        expected: /pack version must match trusted release config/,
+        action: () => verifyReceiptForRelease({
+          version: registered.version,
+          manifest: { pack: { id: registered.release.examplePack.id, version: '9999.0.0' } },
+          readPackFile,
+        }),
+      },
+    ]),
   ];
   for (const testCase of cases) {
     await expectFailure(testCase.action, testCase.expected, testCase.context);
@@ -202,6 +207,11 @@ async function assertReceiptDispatchFailsClosed() {
     () => assertReceiptVerifierBinding('legacy-alpha1', '0.1.0-alpha.2'),
     /does not authorize/,
     'legacy receipt verifier on a future version',
+  );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('builtin-procedural-alpha2-v0.2', '0.1.0-alpha.1'),
+    /does not authorize/,
+    'alpha2 receipt verifier on alpha1',
   );
 
   for (const action of [

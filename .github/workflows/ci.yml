@@ -12,6 +12,11 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      pack_artifact: ${{ steps.candidate-pack.outputs.artifact }}
+      pack_file: ${{ steps.candidate-pack.outputs.file }}
+      pack_hash: ${{ steps.candidate-pack.outputs.hash }}
+      pack_root: ${{ steps.candidate-pack.outputs.root }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,20 +39,59 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install release-video dependencies
+      - name: Install historical alpha.1 video dependencies
         run: pnpm --dir video install --frozen-lockfile
+
+      - name: Audit high-severity dependency advisories
+        run: pnpm security:audit
 
       - name: Run project checks
         run: pnpm check
 
+      - name: Verify immutable public GitHub release assets
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm release:history:remote
+
+      - name: Verify the real browser exporter matches the registered candidate pack
+        run: pnpm release:browser:verify
+
       - name: Build and verify reproducible release and itch.io operator bundles
         run: pnpm release:itch
 
-      - name: Verify release-video source and committed MP4
+      - name: Verify historical alpha.1 video source and committed MP4
         run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output
+
+      - name: Bind the verified candidate pack for Godot jobs
+        id: candidate-pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+          import { CURRENT_RELEASE_CONFIG } from './scripts/release-config.mjs';
+          const config = CURRENT_RELEASE_CONFIG;
+          const values = {
+            artifact: `mapsoo-example-pack-${config.tag}`,
+            file: config.release.files.examplePack,
+            hash: config.expectedExamplePackSha256,
+            path: `release/itch/${config.tag}/uploads/${config.release.files.examplePack}`,
+            root: config.release.examplePack.archiveRoot,
+          };
+          appendFileSync(process.env.GITHUB_OUTPUT, `${Object.entries(values).map(([key, value]) => `${key}=${value}`).join('\n')}\n`);
+          NODE
+
+      - name: Upload the verified candidate pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.candidate-pack.outputs.artifact }}
+          path: ${{ steps.candidate-pack.outputs.path }}
+          if-no-files-found: error
+          retention-days: 7
 
   godot-smoke:
     name: Godot ${{ matrix.version }} smoke
+    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -68,6 +112,33 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Download the exact verified candidate pack
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.check.outputs.pack_artifact }}
+          path: ${{ runner.temp }}/mapsoo-candidate-pack
+
+      - name: Verify and extract the candidate pack
+        shell: bash
+        env:
+          MAPSOO_PACK_FILE: ${{ needs.check.outputs.pack_file }}
+          MAPSOO_PACK_HASH: ${{ needs.check.outputs.pack_hash }}
+          MAPSOO_PACK_ROOT: ${{ needs.check.outputs.pack_root }}
+        run: |
+          set -euo pipefail
+          pack_path="$RUNNER_TEMP/mapsoo-candidate-pack/$MAPSOO_PACK_FILE"
+          extract_dir="$RUNNER_TEMP/mapsoo-candidate-extracted"
+          test -f "$pack_path"
+          printf '%s  %s\n' "$MAPSOO_PACK_HASH" "$pack_path" | sha256sum --check --strict -
+          mkdir -p "$extract_dir"
+          unzip -q "$pack_path" -d "$extract_dir"
+          test "$(find "$extract_dir" -type f | wc -l)" -eq 12
+          test "$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
+          test "$(find "$extract_dir" -type f ! -path "$extract_dir/$MAPSOO_PACK_ROOT/*" | wc -l)" -eq 0
+          manifest_path="$extract_dir/$MAPSOO_PACK_ROOT/mapsoo.manifest.json"
+          test -f "$manifest_path"
+          printf 'MAPSOO_CANDIDATE_MANIFEST=%s\n' "$manifest_path" >> "$GITHUB_ENV"
 
       - name: Download and verify Godot ${{ matrix.version }}
         shell: bash
@@ -148,3 +219,17 @@ jobs:
             echo "Godot emitted an engine error during the smoke test." >&2
             exit 1
           fi
+
+      - name: Import the exact verified alpha.2 candidate pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          log_file="$RUNNER_TEMP/mapsoo-alpha2-pack-${{ matrix.version }}.log"
+          "$GODOT_BIN" --headless --path godot \
+            --script res://tests/import_pack_cli.gd -- \
+            --manifest="$MAPSOO_CANDIDATE_MANIFEST" 2>&1 | tee "$log_file"
+          if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
+            echo "Godot emitted an engine error while importing the alpha.2 candidate pack." >&2
+            exit 1
+          fi
+          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29' "$log_file"

@@ -11,16 +11,13 @@ import { runGenerationProviderWithEvidence, type GeneratorProvider } from '../co
 import type { PackFileRecord } from '../core/pack-manifest';
 import { DEFAULT_WORLD_SPEC } from '../core/world-spec';
 import { PROCEDURAL_PIXEL_PROVIDER } from '../providers/procedural-pixel-provider';
+import packageJson from '../../package.json';
 import { buildPortablePack } from './export-browser-pack';
 import { buildAlpha2PortablePack } from './export-browser-pack-alpha2';
-
-const PNG_FIXTURE = Uint8Array.from([
-  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82,
-  0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137,
-  0, 0, 0, 13, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 240, 31,
-  0, 5, 0, 1, 255, 137, 153, 61, 29, 0, 0, 0, 0, 73, 69, 78, 68,
-  174, 66, 96, 130,
-]);
+import {
+  CURRENT_PACK_VERSION,
+  buildCurrentPortablePack,
+} from './export-current-pack';
 
 class CanvasStub {
   width = 0;
@@ -32,6 +29,9 @@ class CanvasStub {
     imageSmoothingEnabled: false,
     clearRect: vi.fn(),
     fillRect: vi.fn(),
+    getImageData: vi.fn((_left: number, _top: number, width: number, height: number) => ({
+      data: new Uint8ClampedArray(width * height * 4),
+    })),
   };
 
   getContext(kind: string) {
@@ -39,7 +39,7 @@ class CanvasStub {
   }
 
   toBlob(callback: BlobCallback) {
-    callback(new Blob([PNG_FIXTURE], { type: 'image/png' }));
+    callback(new Blob([Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10])], { type: 'image/png' }));
   }
 }
 
@@ -74,10 +74,11 @@ describe('alpha.2 browser pack foundation', () => {
     const pack = await buildAlpha2PortablePack(run);
     const zip = await JSZip.loadAsync(await pack.blob.arrayBuffer());
     const root = 'mapsoo-sunny-meadow-v0.1.0-alpha.2/';
-    const fileNames = Object.keys(zip.files).filter((path) => !zip.files[path].dir);
+    const fileNames = Object.keys(zip.files);
 
     expect(pack.filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.2.zip');
     expect(fileNames).toHaveLength(12);
+    expect(Object.values(zip.files).every(({ dir }) => !dir)).toBe(true);
     expect(fileNames.every((path) => path.startsWith(root))).toBe(true);
     expect(fileNames).toEqual(expect.arrayContaining([
       `${root}mapsoo.manifest.json`,
@@ -141,10 +142,22 @@ describe('alpha.2 browser pack foundation', () => {
     }
   });
 
-  it('keeps the current public download builder on frozen alpha.1', async () => {
+  it('emits byte-identical ZIPs for the same trusted run', async () => {
     const run = await buildRun();
+    const first = new Uint8Array(await (await buildAlpha2PortablePack(run)).blob.arrayBuffer());
+    const second = new Uint8Array(await (await buildAlpha2PortablePack(run)).blob.arrayBuffer());
+
+    expect(await sha256(first)).toBe(await sha256(second));
+    expect(first).toEqual(second);
+  });
+
+  it('binds the current package and UI export to alpha.2 while preserving the legacy builder', async () => {
+    const run = await buildRun();
+    expect(packageJson.version).toBe('0.1.0-alpha.2');
+    expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
+    expect(buildCurrentPortablePack).toBe(buildAlpha2PortablePack);
     expect((await buildPortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.1.zip');
-    expect((await buildAlpha2PortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.2.zip');
+    expect((await buildCurrentPortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.2.zip');
   });
 
   it('rejects untrusted and AI runs before creating any Canvas or ZIP payload', async () => {

@@ -4,17 +4,21 @@
 
 仓库设为 Public 只是起点。一个可信的开源项目还需要明确许可证、可运行说明、维护轨迹、issue/PR 流程、release、真实用户和可复用价值。
 
-Mapsoo 应以一个核心仓库申请，不需要用两个刚公开的网站凑数量。申请叙事应围绕 Godot 世界资产管线、开放格式、真实 STOYO 使用和对独立开发者的价值。
+Mapsoo 应以一个核心仓库申请，不需要用两个刚公开的网站凑数量。申请叙事应围绕 Godot 世界资产管线、开放格式、计划中的 STOYO 首个消费场景和对独立开发者的价值；在真正接入前不得把 STOYO 写成已采用。
 
-公开 `main` 已达到 Godot-importable alpha：三种世界配方、确定性生成、Canvas 预览、严格校验、不含可执行代码的 PNG + JSON ZIP、独立可信安装的 EditorPlugin、桌面/390px 浏览器视觉验收、可校验的 itch.io 发布视觉套件，以及真实浏览器 ZIP 在 4.3/4.7 中的跨管线 smoke 均已运行。GitHub Pages Demo、公开 CI、`v0.1.0-alpha.1` pre-release 与 75 秒中英双语证据视频已经可匿名访问；itch.io 页面和真实外部使用反馈仍未完成。因此现在适合继续积累公开维护证据，不适合把 alpha 描述成成熟的跨平台一键管线。
+公开 `main` 已达到 Godot-importable alpha：三种世界配方、确定性生成、Canvas 预览、严格校验、不含可执行代码的 PNG + JSON ZIP、独立可信安装的 EditorPlugin、桌面/390px 浏览器视觉验收、可校验的 itch.io 发布视觉套件，以及真实浏览器 ZIP 在 4.3/4.7 中的跨管线 smoke 均已运行。GitHub Pages Demo、公开 CI、`v0.1.0-alpha.1` pre-release 与 75 秒中英双语证据视频已经可匿名访问；itch.io 页面按维护者决定延期，真实外部使用反馈仍未完成。当前继续以 GitHub Release/Pages 积累公开维护证据，不把 alpha 描述成成熟的跨平台一键管线。
 
-当前公开证据：[仓库](https://github.com/babyrush0101-source/mapsoo-kids)、[Demo](https://babyrush0101-source.github.io/mapsoo-kids/)、[GitHub pre-release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1)、[产品提交 `08c5af6` 的 main CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29652421223)、[itch 上传套件 PR #14](https://github.com/babyrush0101-source/mapsoo-kids/pull/14)、[World Spec 安全加固 PR #15](https://github.com/babyrush0101-source/mapsoo-kids/pull/15)、[反馈入口](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)。
+当前公开证据：[仓库](https://github.com/babyrush0101-source/mapsoo-kids)、[Demo](https://babyrush0101-source.github.io/mapsoo-kids/)、[GitHub pre-release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.1)、[当前 main `544e014` 的 CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29658830773)、[Provider contract PR #18](https://github.com/babyrush0101-source/mapsoo-kids/pull/18)、[Workbench PR #19](https://github.com/babyrush0101-source/mapsoo-kids/pull/19)、[receipt PR #20](https://github.com/babyrush0101-source/mapsoo-kids/pull/20)、[runner evidence PR #21](https://github.com/babyrush0101-source/mapsoo-kids/pull/21)、[release architecture PR #22](https://github.com/babyrush0101-source/mapsoo-kids/pull/22)、[alpha.2 foundation Draft PR #23](https://github.com/babyrush0101-source/mapsoo-kids/pull/23)、[alpha.2 candidate Draft PR #24](https://github.com/babyrush0101-source/mapsoo-kids/pull/24)、[100-test implementation commit `242471f` 的公开 CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29664873767)、[反馈入口](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)。
 
-截至 2026-07-18，OpenAI 官方说明允许活跃开源项目的维护者申请；评审关注 meaningful usage、broad adoption、对软件生态的明确重要性，以及 PR review、issue triage、release management 等持续维护证据。项目不完全符合典型规模时仍可申请，但必须解释生态价值。入选者可获得 6 个月 ChatGPT Pro（含 Codex）；Codex Security 与 API credits 还取决于仓库和用途评审，不能在获批前写成既得权益。
+`v0.1.0-alpha.2` 截至 2026-07-19 仍是未发布候选版：实现提交 `242471f` 已完成 100 个测试、真实浏览器 12 文件 fixture、固定 ZIP SHA-256、纯 JavaScript PNG 编码、receipt 0.2、31 个 receipt 篡改拒绝案例、24 个 itch 套件篡改拒绝案例、公开 alpha.1 的 11 个远端附件摘要复核、从两个隔离 Vite 构建得到的 11 附件可重复 release、11 文件 itch 操作员套件，以及全新的 1260×1000 封面和五张 1600×900 说明图。该实现已取得公开 [check](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29664873767/job/88133498251)、[Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29664873767/job/88133585057) 与 [Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29664873767/job/88133585056) 绿灯，三个 job 绑定同一个固定哈希包。它现在可以作为公开维护与候选兼容性证据，但不能冒充已发布版本；仍需人工审查、合并与 tag release。itch.io Draft 已延期，不是当前候选的发布门槛；宣传图继续使用“CI-gated”而非伪造编辑器或静态“passed”徽章，权威结果是对应 job URL。
+
+截至 2026-07-19，OpenAI 官方说明允许活跃开源项目的维护者申请；评审关注 meaningful usage、broad adoption、对软件生态的明确重要性，以及 PR review、issue triage、release management 等持续维护证据。项目不完全符合典型规模时仍可申请，但必须解释生态价值。入选者可获得 6 个月 ChatGPT Pro（含 Codex）；Codex Security 与 API credits 还取决于仓库和用途评审，不能在获批前写成既得权益。
 
 官方条款还要求使用有效 ChatGPT 账号并提供准确、完整的信息；提交不保证入选，OpenAI 可验证维护者身份和仓库控制权。不要在申请材料中提交机密 STOYO 信息，也不要把 Codex Security/API credits 用于无权管理的仓库。福利是个人、有限、不可转让的，并可能因项目或用途而异。
 
 官方来源：[Codex for Open Source 项目页](https://developers.openai.com/community/codex-for-oss)、[当前申请表与评审说明](https://openai.com/form/codex-for-oss/)、[Program Terms](https://developers.openai.com/codex/codex-for-oss-terms)。
+
+**资格与胜算要分开判断：** 当前仓库已经是公开且活跃的 OSS，申请人拥有管理员权限并承担路线、发布、issue 与兼容性维护，因此具备提交资格；但提交不等于通过。截至 2026-07-19，公开 API 仍显示 `0 stars / 0 forks`，11 个 alpha.1 release 附件各有 1 次下载，反馈 issue 尚无评论，且 itch.io 页面未发布。这些数据不能证明外部采用，所以当前申请的主要短板是 meaningful usage，而不是工程完整性。建议先发布 GitHub alpha.2，并取得至少一轮真实外部反馈与公开响应后提交；itch.io 可以增加分发面，但已经延期且不作为申请准备的必需前置。若选择提前申请，也必须如实保留这些限制。
 
 ## 2. 申请前证据清单
 
@@ -85,7 +89,7 @@ Mapsoo Worldsmith is an open-source, local-first pipeline that turns a versioned
 - 提供开放、版本化的 World Spec 与 manifest；
 - AI provider 可替换，离线程序化流程不被单一平台锁定；
 - 把许可和生成来源纳入导出包，而不是事后补记；
-- 由 STOYO 的持续世界生成需求提供真实、大规模使用场景。
+- 以 STOYO 的持续世界生成需求作为计划中的首个真实消费场景；只有完成接入后才提交可公开且不泄密的采用证据。
 
 ### How Codex will be used
 

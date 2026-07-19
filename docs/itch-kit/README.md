@@ -8,7 +8,7 @@ Build and verify everything from source:
 pnpm release:itch
 ```
 
-The final operator directory is written to `release/itch/v0.1.0-alpha.1/`:
+The final operator directory is written to `release/itch/v<package-version>/`; for the current candidate this is `release/itch/v0.1.0-alpha.2/`. The published alpha.1 directory remains historical evidence and is never rebuilt from newer source.
 
 - `uploads/` — the asset ZIP and itch-specific `SHA256SUMS`;
 - `page/` — reviewed operator inputs for page fields and bilingual copy;

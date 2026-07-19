@@ -40,6 +40,7 @@ function verifyConfiguredExampleManifest(manifest) {
 
   switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
+    case 'sunny-meadow-procedural-cc0-v2':
       assert(
         manifest.provenance?.contains_generative_ai === false,
         'Procedural example pack must disclose contains_generative_ai=false',
@@ -50,6 +51,24 @@ function verifyConfiguredExampleManifest(manifest) {
           'https://github.com/babyrush0101-source/mapsoo-kids',
         'Procedural pack importer source must point to the official repository',
       );
+      if (CURRENT_RELEASE_CONFIG.release.verificationPolicy.endsWith('-v2')) {
+        assert(manifest.schema_version === '0.1.0', 'Alpha.2 manifest schema must remain 0.1.0');
+        assert(
+          manifest.pack?.generator?.version === '0.1.0-alpha.2',
+          'Alpha.2 manifest generator version mismatch',
+        );
+        assert(
+          manifest.receipt?.path === 'generation-receipt.json',
+          'Alpha.2 manifest receipt path mismatch',
+        );
+        const alpha2Paths = new Set((manifest.files ?? []).map(({ path }) => path));
+        assert(alpha2Paths.size === 11, 'Alpha.2 manifest must contain 11 unique payload records');
+        assert(alpha2Paths.has('generation-receipt.json'), 'Alpha.2 manifest is missing its receipt record');
+        assert(
+          alpha2Paths.has('schema/mapsoo-generation-receipt.schema.json'),
+          'Alpha.2 manifest is missing its receipt schema record',
+        );
+      }
       return;
     default:
       throw new Error(
@@ -61,6 +80,7 @@ function verifyConfiguredExampleManifest(manifest) {
 function verifyConfiguredWorldSpec(worldSpec) {
   switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
+    case 'sunny-meadow-procedural-cc0-v2':
       assert(worldSpec.schemaVersion === '0.1.0', 'Example World Spec has an unexpected schema version');
       assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
       assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
@@ -75,8 +95,9 @@ function verifyConfiguredWorldSpec(worldSpec) {
 async function loadZip(fileName) {
   const bytes = await readFile(join(DEFAULT_RELEASE_ROOT, fileName));
   const zip = await JSZip.loadAsync(bytes, { checkCRC32: true, createFolders: false });
-  const entries = Object.values(zip.files)
-    .filter((entry) => !entry.dir)
+  const allEntries = Object.values(zip.files);
+  assert(allEntries.every((entry) => !entry.dir), `${fileName} must not contain directory entries`);
+  const entries = allEntries
     .sort((left, right) => comparePortablePaths(left.name, right.name));
 
   for (const entry of entries) {
@@ -246,8 +267,23 @@ async function verify() {
     !webIndexHtml.includes('/mapsoo-kids/assets/'),
     'Release web ZIP must not inherit the GitHub Pages repository base',
   );
+  if (CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2') {
+    const noticeEntry = webEntries.find(
+      (entry) => entry.name === `mapsoo-worldsmith-web-${RELEASE_TAG}/THIRD_PARTY_NOTICES.txt`,
+    );
+    assert(noticeEntry, 'Alpha.2 web ZIP must carry its third-party license notices');
+    const notice = await noticeEntry.async('text');
+    assert(
+      notice.includes('pako 1.0.11')
+        && notice.includes('Copyright (C) 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn'),
+      'Alpha.2 web ZIP pako notice is incomplete',
+    );
+  }
 
   const examplePackEntries = await loadZip(RELEASE_FILES.examplePack);
+  if (CURRENT_RELEASE_CONFIG.release.verificationPolicy === 'sunny-meadow-procedural-cc0-v2') {
+    assert(examplePackEntries.length === 12, 'Alpha.2 Sunny Meadow ZIP must contain exactly 12 files');
+  }
   const examplePackRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   assert(
     examplePackEntries.every((entry) => entry.name.startsWith(`${examplePackRoot}/`)),
@@ -346,10 +382,12 @@ async function verify() {
     RELEASE_FILES.changelog,
     join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.changelog),
   );
-  await verifyCopiedFile(
-    RELEASE_FILES.evidenceVideo,
-    join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.evidenceVideo),
-  );
+  if (RELEASE_FILES.evidenceVideo) {
+    await verifyCopiedFile(
+      RELEASE_FILES.evidenceVideo,
+      join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.evidenceVideo),
+    );
+  }
 
   const worldSpec = JSON.parse(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.exampleWorldSpec), 'utf8'),
@@ -362,6 +400,22 @@ async function verify() {
 
   const manifest = JSON.parse(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.manifest), 'utf8'),
+  );
+  const expectedArtifactKeys = [
+    'changelog',
+    'checksums',
+    'examplePack',
+    'exampleWorldSpec',
+    'godotImporter',
+    'license',
+    'schemas',
+    'web',
+    ...(RELEASE_FILES.evidenceVideo ? ['evidenceVideo'] : []),
+  ].sort(comparePortablePaths);
+  assert(
+    JSON.stringify(Object.keys(manifest.artifacts ?? {}).sort(comparePortablePaths))
+      === JSON.stringify(expectedArtifactKeys),
+    'Release manifest artifact keys do not match the configured release files',
   );
   assert(manifest.version === VERSION, 'Release manifest version differs from package.json');
   assert(manifest.releaseTag === RELEASE_TAG, 'Release manifest tag differs from package.json');
@@ -382,10 +436,17 @@ async function verify() {
     ),
     'Release manifest schema artifacts mismatch',
   );
-  assert(
-    manifest.artifacts?.evidenceVideo?.file === RELEASE_FILES.evidenceVideo,
-    'Release manifest evidence video artifact mismatch',
-  );
+  if (RELEASE_FILES.evidenceVideo) {
+    assert(
+      manifest.artifacts?.evidenceVideo?.file === RELEASE_FILES.evidenceVideo,
+      'Release manifest evidence video artifact mismatch',
+    );
+  } else {
+    assert(
+      !Object.hasOwn(manifest.artifacts ?? {}, 'evidenceVideo'),
+      'Release manifest must not claim an unconfigured evidence video',
+    );
+  }
   assertNoLocalAbsolutePath(JSON.stringify(manifest), RELEASE_FILES.manifest);
 
   console.log(

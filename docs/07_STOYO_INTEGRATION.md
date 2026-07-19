@@ -21,25 +21,29 @@ Mapsoo Worldsmith
 
 ## 2. 共享信息
 
-World Spec 的通用字段：
+当前 World Spec `0.1.0` 已实现的核心通用字段：
 
-- world ID、标题、版本和 seed；
-- biome、地点、道路与区域；
-- 角色/伙伴视觉引用；
-- 年龄和内容分级；
-- 风格、调色板、Tile 尺寸；
-- 任务需要的场景标签；
-- 资产许可和来源；
-- 当前世界版本与兼容范围。
+- pack/world ID、标题、描述和 seed；
+- meadow、desert 或 snow biome，以及地图宽高；
+- pixel-art 风格、五色调色板和 Tile 尺寸；
+- `common / godot / itch` 输出目标；
+- CC0-1.0 资产许可；
+- 严格、namespaced `extensions` 扩展入口。
+
+STOYO world version、scene ID、公共场景标签和年龄分类并不是核心 World Spec 的原生字段。它们由独立的 `StoyoAssetRequest` 白名单投影后写入 `dev.stoyo.assetrequest.v1`；地点锚点、道路语义、角色视觉引用和任务交互仍是后续契约，不能写成当前生成器已理解的能力。
 
 STOYO 私有字段不要强行进入 Mapsoo 核心字段。v0.1 使用严格 schema，并已为集成方显式声明 `extensions` 对象；扩展必须使用 reverse-DNS namespaced key，例如：
 
 ```json
 {
   "extensions": {
-    "dev.stoyo.world.v1": {
-      "learningGoals": ["ecosystem-observation"],
-      "companionRoles": ["guide", "builder"],
+    "dev.stoyo.assetrequest.v1": {
+      "schemaVersion": "dev.stoyo.asset-request/1.0.0",
+      "assetRequestSha256": "<canonical request SHA-256>",
+      "stoyoWorldId": "river-valley",
+      "stoyoWorldVersion": "1.0.0",
+      "sceneId": "riverbank-observation",
+      "requiredSceneTags": ["riverbank", "old-bridge", "observation-point"],
       "contentRating": "ages-7-plus"
     }
   }
@@ -54,12 +58,29 @@ STOYO 不应把完整 World State 直接传给 Mapsoo。两者之间增加一个
 
 | 方向 | 允许传递 | 不允许跨界 |
 | --- | --- | --- |
-| STOYO → Mapsoo | 脱敏 world/scene/location ID、版本、biome、视觉约束、公共场景标签、资产许可选择 | 儿童身份、语音/聊天、个人学习目标与进度、家长资料、伙伴关系、家庭设置、私有服务地址、商业密钥 |
-| Mapsoo → STOYO | pack ID/version/hash、稳定资产与地点 ID、atlas 坐标、地图图层、预览、validation、license/provenance | Mapsoo 不生成或推断儿童画像、家庭结论、内容安全结论和打印履约数据 |
+| STOYO → Mapsoo | 脱敏 world/scene ID、world version、biome、视觉约束、公共场景标签、资产许可选择 | 儿童身份、语音/聊天、个人学习目标与进度、家长资料、伙伴关系、家庭设置、私有服务地址、商业密钥 |
+| Mapsoo → STOYO | pack ID/version、Asset Request hash、manifest 逐文件 hash、当前 tile/prop ID、atlas 坐标、地图图层、预览与 license/provenance；尚不包含整体 ZIP hash、独立 validation sidecar 或稳定地点锚点 | Mapsoo 不生成或推断儿童画像、家庭结论、内容安全结论和打印履约数据 |
 
-`learningGoals` 只有在表达非个人化的公共分类 ID 时才允许进入 Asset Request；默认应传 `requiredSceneTags`，例如 `riverbank`、`observation-point`，而不是某个孩子的目标或完成状态。当前 `extensions` 是格式扩展口，不是隐私沙箱；进入其中的内容也会随 World Spec 导出。
+`learningGoals` 不属于 `StoyoAssetRequest 1.0.0`，即使是非个人化分类也必须先由 STOYO 投影成公共 `requiredSceneTags`，例如 `riverbank`、`observation-point`；某个孩子的目标或完成状态永远不跨界。当前 `extensions` 是格式扩展口，不是隐私沙箱；进入其中的内容也会随 World Spec 导出。
 
-### 2.2 版本与稳定引用
+### 2.2 已实现的可执行对接契约
+
+公开集成层已经提供：
+
+- [`integrations/stoyo/stoyo-asset-request.schema.json`](../integrations/stoyo/stoyo-asset-request.schema.json)：严格 Draft 2020-12 schema，所有层级 `additionalProperties: false`；
+- [`examples/integrations/stoyo/river-valley-asset-request.json`](../examples/integrations/stoyo/river-valley-asset-request.json)：不含真实儿童、家庭或商业数据的合成请求；
+- [`src/integrations/stoyo/asset-request.ts`](../src/integrations/stoyo/asset-request.ts)：字段白名单、规范化 JSON、SHA-256 与 World Spec 投影；
+- [`src/integrations/stoyo/asset-request.test.ts`](../src/integrations/stoyo/asset-request.test.ts)：确定性、版本、标签、尺寸、风格、许可和隐私字段拒绝测试；
+- [`src/adapters/import-stoyo-asset-request.ts`](../src/adapters/import-stoyo-asset-request.ts)：复用 World Spec 读取边界的严格本地文件导入；
+- Workbench 中的 **Load STOYO Asset Request**：投影成功后进入同一个 Provider runner、预览、validation 与 portable ZIP 流程。
+
+```bash
+pnpm exec vitest run src/integrations/stoyo/asset-request.test.ts src/adapters/import-stoyo-asset-request.test.ts
+```
+
+`packId` 必须标识一个可独立共存的 scene/variant；同一 world 的不同场景不要复用同一个 `packId`。对象键顺序不影响 `assetRequestSha256`，而有序数组内容或顺序变化会改变 hash。适配器只把白名单字段投影到 Mapsoo；`childId`、`parentEmail`、`learningProgress`、私有服务 URL 和 API key 等未知字段会被拒绝。该适配器不是 PII 内容识别器：ID、标签、content rating、seed、标题和描述等所有允许字符串的值，都必须由 STOYO 投影层预先保证为合成或明确公开安全的数据。
+
+### 2.3 版本与稳定引用
 
 Mapsoo pack 不与 STOYO world 版本一一绑定。一个世界版本可能生成多个 scene、主题、语言或分辨率包，因此集成记录至少拆分：
 
@@ -105,9 +126,12 @@ STOYO 文档的核心主张可以转换为 Mapsoo 的开发者表达：
 
 portable alpha 已完成确定性 terrain/props 占位素材、地图预览、manifest、validation 和 ZIP。以下能力仍是路线图，不应在演示中描述为已交付：
 
+- `requiredSceneTags` 当前随 World Spec/pack 保存，但生成器尚未把它们变成稳定的地点、碰撞、导航或交互锚点；
+- Godot importer 仍以 `packId` 作为派生目录；相同 `packId` 的重新导入会替换派生资源，因此多场景/多变体必须使用不同 `packId`；
+- importer 尚未生成供 STOYO 运行时直接读取的版本化 integration sidecar；
 - 直接读取未解压、不可信 ZIP（当前流程先解压，再由插件校验 manifest、hash 并生成 `TileSet`/scene）；
 - buildings、角色、动画和授权 IP 视觉适配；
 - 正式印刷版式；
 - STOYO 内容安全、隐私或家长控制判断。
 
-Mapsoo 对 STOYO 最准确的定位是：**STOYO 持续儿童世界背后的可复现视觉资产管线，同时对所有 Godot 创作者开放。**
+Mapsoo 对 STOYO 最准确的定位是：**计划成为 STOYO 持续儿童世界背后的可复现视觉资产管线，同时对所有 Godot 创作者开放。**

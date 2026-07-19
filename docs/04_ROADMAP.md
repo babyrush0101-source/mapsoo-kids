@@ -60,7 +60,7 @@
 - [x] runner-owned 原子 evidence envelope、Provider claims 校验、深冻结 world/spec snapshot 与 legacy exporter 信任边界；
 - [x] 可信版本 registry、按版本选择的 release/itch 输入、receipt verifier 分派、已发布 pack 重建门禁与完整 GitHub 附件 digest 固定；
 - [x] 可信 runner evidence → `0.2.0` receipt → alpha.2 manifest/export 投影，以及最终 ZIP 字节/hash/文件集合一致性测试；
-- [ ] 原子启用 alpha.2 package/UI，提交新版本 fixture、固定 hash，并接入 release/itch/Godot 门禁；
+- [x] 原子启用 alpha.2 package/UI，提交 12 文件浏览器 fixture、固定 hash，并接入 release/itch/Godot 4.3/4.7 门禁；
 - [ ] 内容安全和许可提醒。
 
 ## v0.3 — Godot-native Workflow
@@ -82,15 +82,16 @@
 - [ ] 建筑和内部场景；
 - [ ] 角色 sprite/动画合同；
 - [ ] 世界版本和增量更新；
-- [ ] STOYO World Spec 扩展字段。
+- [x] 可执行、隐私最小化的 `StoyoAssetRequest` → World Spec namespaced extension 契约与 Workbench 本地导入；
+- [ ] STOYO 稳定地点/交互锚点与版本化运行时 sidecar。
 
 ## v0.5 — Community Beta
 
 - [ ] 3–5 个高质量示例包；
-- [ ] 贡献指南、issue/PR 模板；
+- [x] 贡献指南、行为准则、issue/PR 模板；
 - [ ] 文档站或完整示例页；
 - [ ] 外部试玩与可复现反馈；
-- [ ] itch.io 免费素材页；
+- [ ] itch.io 免费素材页（维护者决定延期；保留已验证上传套件，但不作为当前 alpha.2 gate）；
 - [ ] beta release 与 changelog。
 
 ## v1.0 — Stable

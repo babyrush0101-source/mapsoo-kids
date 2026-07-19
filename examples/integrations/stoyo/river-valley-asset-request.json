@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "dev.stoyo.asset-request/1.0.0",
+  "packId": "river-valley-observation",
+  "world": {
+    "id": "river-valley",
+    "version": "1.0.0",
+    "title": "River Valley Observation",
+    "description": "A public-safe ecology scene with a riverbank, an old bridge, and an observation point."
+  },
+  "scene": {
+    "id": "riverbank-observation",
+    "requiredSceneTags": ["riverbank", "old-bridge", "observation-point"],
+    "contentRating": "ages-7-plus"
+  },
+  "seed": "stoyo-river-valley-public-001",
+  "visual": {
+    "style": "pixel-art",
+    "tileSize": 32,
+    "palette": ["#2F5D3A", "#76A950", "#B8D978", "#4F91AD", "#D6C18B"]
+  },
+  "map": {
+    "width": 24,
+    "height": 16,
+    "biome": "meadow"
+  },
+  "output": {
+    "targets": ["common", "godot", "itch"],
+    "assetLicense": "CC0-1.0"
+  }
+}
