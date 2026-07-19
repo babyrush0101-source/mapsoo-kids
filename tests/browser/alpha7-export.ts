@@ -19,18 +19,17 @@ async function exportThreeWorlds(): Promise<void> {
   const error = document.querySelector<HTMLPreElement>('#error');
   if (!result || !error) throw new Error('Browser export harness markup is incomplete.');
   try {
-    const exports = [];
-    for (const example of WORLD_EXAMPLES) {
+    const exports = await Promise.all(WORLD_EXAMPLES.map(async (example) => {
       const run = await runGenerationProviderWithEvidence(PROCEDURAL_TERRAIN_PROVIDER, example.spec, {
         now: () => new Date(FIXED_COMPLETION_TIME),
       });
       const pack = await buildAlpha7PortablePack(run);
-      exports.push({
+      return {
         id: example.id,
         filename: pack.filename,
         bytes: base64(new Uint8Array(await pack.blob.arrayBuffer())),
-      });
-    }
+      };
+    }));
     result.dataset.version = ALPHA7_PACK_VERSION;
     result.dataset.count = String(exports.length);
     result.textContent = JSON.stringify(exports);
