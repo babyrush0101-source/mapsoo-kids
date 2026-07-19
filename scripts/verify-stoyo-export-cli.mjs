@@ -114,11 +114,12 @@ try {
   const concurrent = await Promise.allSettled([run(fixture, concurrentDir), run(fixture, concurrentDir)]);
   const fulfilled = concurrent.filter((entry) => entry.status === 'fulfilled').map((entry) => entry.value.status);
   const rejected = concurrent.filter((entry) => entry.status === 'rejected');
+  const rejectedMessages = rejected.map((entry) => String(entry.reason.stderr ?? entry.reason.message));
   assert(fulfilled.includes('created'), 'Concurrent STOYO exports did not create one complete output pair.');
   assert(
     (fulfilled.length === 2 && fulfilled.includes('unchanged'))
-      || (fulfilled.length === 1 && rejected.length === 1 && /Output conflict/.test(String(rejected[0].reason.stderr ?? rejected[0].reason.message))),
-    'Concurrent STOYO export did not resolve as unchanged or fail-closed conflict.',
+      || (fulfilled.length === 1 && rejected.length === 1 && /Output conflict/.test(rejectedMessages[0])),
+    `Concurrent STOYO export did not resolve as unchanged or fail-closed conflict: fulfilled=${JSON.stringify(fulfilled)} rejected=${JSON.stringify(rejectedMessages)}.`,
   );
   assert(validateReceipt(JSON.parse(await readFile(join(concurrentDir, receiptName), 'utf8'))), 'Concurrent STOYO export left an invalid receipt.');
 

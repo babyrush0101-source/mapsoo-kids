@@ -259,6 +259,9 @@ async function exportPack(options) {
   try {
     server = await createViteServer({
       root: REPOSITORY_ROOT,
+      // Concurrent CLI processes must not share Vite's dependency optimizer
+      // cache. The profile is unique per export and removed on exit.
+      cacheDir: join(profile, 'vite-cache'),
       appType: 'spa',
       logLevel: 'error',
       server: { middlewareMode: true },
