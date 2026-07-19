@@ -69,7 +69,7 @@ function decodeDom(dom) {
 }
 
 async function verify() {
-  assert(CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.7', 'Alpha.7 must be the current candidate.');
+  assert(CURRENT_RELEASE_CONFIG.packVersion === '0.1.0-alpha.7', 'The current release must retain the Alpha.7 pack contract.');
   const packs = examplePacksForConfig();
   assert(packs.length === 3, 'Alpha.7 release registry must contain exactly three example packs.');
   const port = await freePort();
@@ -88,7 +88,7 @@ async function verify() {
       `--user-data-dir=${profile}`, '--virtual-time-budget=120000', '--dump-dom', url,
     ], { maxBuffer: 32 * 1024 * 1024, timeout: 90_000, windowsHide: true });
     const result = decodeDom(stdout);
-    assert(result.version === CURRENT_RELEASE_CONFIG.version && result.count === 3, 'Alpha.7 browser envelope differs from the registry.');
+    assert(result.version === CURRENT_RELEASE_CONFIG.packVersion && result.count === 3, 'Alpha.7 browser envelope differs from the registered pack contract.');
     assert(Array.isArray(result.exports) && result.exports.length === 3, 'Alpha.7 browser result must contain three exports.');
     const hashes = [];
     for (const [index, descriptor] of packs.entries()) {

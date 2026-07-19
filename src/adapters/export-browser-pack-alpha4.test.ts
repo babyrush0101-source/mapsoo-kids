@@ -165,7 +165,7 @@ describe('alpha.4 playable terrain browser pack', () => {
   });
 
   it('preserves alpha.4 while the workbench advances to the alpha.7 candidate', () => {
-    expect(packageJson.version).toBe('0.1.0-alpha.7');
+    expect(packageJson.version).toBe('0.1.0-alpha.8');
     expect(CURRENT_PACK_VERSION).toBe('0.1.0-alpha.7');
     expect(buildCurrentPortablePack).not.toBe(buildAlpha4PortablePack);
   });

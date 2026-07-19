@@ -25,6 +25,7 @@ function releaseFiles(tag, {
   placesSchema = false,
   structuresSchema = false,
   worldGallery = false,
+  stoyoBridge = false,
 } = {}) {
   const files = {
     web: `mapsoo-worldsmith-web-${tag}.zip`,
@@ -50,6 +51,11 @@ function releaseFiles(tag, {
     files.dustwindWorldSpec = `dustwind-outpost-${tag}.world.json`;
     files.frostwatchWorldSpec = `frostwatch-vale-${tag}.world.json`;
   }
+  if (stoyoBridge) {
+    files.stoyoRequestSchema = `stoyo-asset-request.schema-${tag}.json`;
+    files.stoyoExportReceiptSchema = `stoyo-mapsoo-export-receipt.schema-${tag}.json`;
+    files.stoyoExampleRequest = `river-valley-asset-request-${tag}.json`;
+  }
   return files;
 }
 
@@ -74,7 +80,7 @@ const receiptVerifierVersions = Object.freeze({
   'builtin-playable-terrain-alpha4-v0.2': Object.freeze(['0.1.0-alpha.4']),
   'builtin-semantic-places-alpha5-v0.2': Object.freeze(['0.1.0-alpha.5']),
   'builtin-semantic-structures-alpha6-v0.2': Object.freeze(['0.1.0-alpha.6']),
-  'builtin-world-gallery-alpha7-v0.2': Object.freeze(['0.1.0-alpha.7']),
+  'builtin-world-gallery-alpha7-v0.2': Object.freeze(['0.1.0-alpha.7', '0.1.0-alpha.8']),
 });
 const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
@@ -107,7 +113,12 @@ export function assertReceiptVerifierBinding(receiptVerifier, version) {
 }
 
 function validateReleaseConfig(config) {
+  config.packVersion ??= config.version;
   assertConfig(config.tag === `v${config.version}`, `${config.version} tag is inconsistent`);
+  assertConfig(
+    typeof config.packVersion === 'string' && /^0\.1\.0-alpha\.[1-9][0-9]*$/.test(config.packVersion),
+    `${config.tag} packVersion is invalid`,
+  );
   assertConfig(
     ['candidate', 'published'].includes(config.lifecycle),
     `${config.tag} lifecycle must be candidate or published`,
@@ -217,6 +228,12 @@ function validateReleaseConfig(config) {
   );
   for (const [key, path] of Object.entries(config.release.inputs)) {
     assertRelativeConfigPath(path, `${config.tag} release.inputs.${key}`);
+  }
+
+  for (const extra of config.release.extraFiles ?? []) {
+    assertConfig(typeof extra.releaseFileKey === 'string' && extra.releaseFileKey, `${config.tag} extra release key is missing`);
+    assertConfig(typeof config.release.files[extra.releaseFileKey] === 'string', `${config.tag} extra release file is not declared`);
+    assertRelativeConfigPath(extra.source, `${config.tag} extra release source`);
   }
 
   const schemaKeys = new Set();
@@ -827,6 +844,90 @@ const alpha7 = deepFreeze(validateReleaseConfig({
   },
 }));
 
+const ALPHA_8_VERSION = '0.1.0-alpha.8';
+const ALPHA_8_TAG = `v${ALPHA_8_VERSION}`;
+const alpha8ReleaseFiles = {
+  ...releaseFiles(ALPHA_8_TAG, {
+    receiptSchema: true,
+    placesSchema: true,
+    structuresSchema: true,
+    worldGallery: true,
+    stoyoBridge: true,
+  }),
+  // Alpha.8 is a toolchain/bridge release. Its audited compatibility assets
+  // remain the byte-identical, explicitly named Alpha.7 packs.
+  examplePack: alpha7ReleaseFiles.examplePack,
+  dustwindPack: alpha7ReleaseFiles.dustwindPack,
+  frostwatchPack: alpha7ReleaseFiles.frostwatchPack,
+};
+
+const alpha8 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_8_VERSION,
+  tag: ALPHA_8_TAG,
+  packVersion: ALPHA_7_VERSION,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-world-gallery-alpha7-v0.2',
+  expectedExamplePackSha256: '6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'world-gallery-semantic-structures-cc0-v7',
+    files: alpha8ReleaseFiles,
+    notes: `docs/releases/${ALPHA_8_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_7_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_7_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    additionalExamplePacks: [
+      {
+        id: 'dustwind-outpost', releaseFileKey: 'dustwindPack', worldSpecReleaseFileKey: 'dustwindWorldSpec',
+        sourceDirectory: `examples/packs/dustwind-outpost-${ALPHA_7_TAG}`,
+        archiveRoot: `mapsoo-dustwind-outpost-${ALPHA_7_TAG}`,
+        worldSpecPackPath: 'worlds/dustwind-outpost.world.json',
+        worldSpecInput: 'examples/dustwind-outpost-v0.3.world.json',
+        expectedSha256: 'd6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502',
+      },
+      {
+        id: 'frostwatch-vale', releaseFileKey: 'frostwatchPack', worldSpecReleaseFileKey: 'frostwatchWorldSpec',
+        sourceDirectory: `examples/packs/frostwatch-vale-${ALPHA_7_TAG}`,
+        archiveRoot: `mapsoo-frostwatch-vale-${ALPHA_7_TAG}`,
+        worldSpecPackPath: 'worlds/frostwatch-vale.world.json',
+        worldSpecInput: 'examples/frostwatch-vale-v0.3.world.json',
+        expectedSha256: '35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12',
+      },
+    ],
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow-v0.3.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      { releaseFileKey: 'worldSchema', source: 'schemas/mapsoo-world-0.3.schema.json', packPath: 'schema/mapsoo-world-0.3.schema.json' },
+      { releaseFileKey: 'packSchema', source: 'schemas/mapsoo-pack-0.5.schema.json', packPath: 'schema/mapsoo-pack-0.5.schema.json' },
+      { releaseFileKey: 'placesSchema', source: 'schemas/mapsoo-places-0.3.schema.json', packPath: 'schema/mapsoo-places-0.3.schema.json' },
+      { releaseFileKey: 'structuresSchema', source: 'schemas/mapsoo-structures-0.2.schema.json', packPath: 'schema/mapsoo-structures-0.2.schema.json' },
+      { releaseFileKey: 'receiptSchema', source: 'schemas/mapsoo-generation-receipt.schema.json', packPath: 'schema/mapsoo-generation-receipt.schema.json' },
+    ],
+    extraFiles: [
+      { releaseFileKey: 'stoyoRequestSchema', source: 'integrations/stoyo/stoyo-asset-request.schema.json' },
+      { releaseFileKey: 'stoyoExportReceiptSchema', source: 'integrations/stoyo/stoyo-mapsoo-export-receipt.schema.json' },
+      { releaseFileKey: 'stoyoExampleRequest', source: 'examples/integrations/stoyo/river-valley-asset-request.json' },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'world-gallery-semantic-structures-cc0-v7',
+    sourceKitStatus: 'postponed',
+    shortDescription: 'Local-first STOYO request bridge for reproducible Alpha.7-compatible Godot world packs.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_8_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_8_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_8_TAG}.html`,
+    rendererFrames: [], requiredRendererFacts: [], supportingFiles: [], visuals: [],
+  },
+}));
+
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
   [alpha2.version]: alpha2,
@@ -835,6 +936,7 @@ const releaseConfigs = Object.freeze({
   [alpha5.version]: alpha5,
   [alpha6.version]: alpha6,
   [alpha7.version]: alpha7,
+  [alpha8.version]: alpha8,
 });
 
 export function getReleaseConfig(version) {

@@ -4,6 +4,21 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2026-07-19
+
+### Added
+
+- A no-UI `StoyoAssetRequest 1.0` export CLI that produces a reproducible Alpha.7-compatible Godot pack and a strict external request-to-pack receipt.
+- Canonical request hashing, lossless World Spec 0.2 → 0.3 migration, full extension/receipt cross-checks, CRC and per-file digest verification, and JSON Schema positive/negative gates.
+- Conflict-safe exclusive output publication with byte-identical `unchanged`, partial-output rejection, concurrent-writer coverage, and no overwrite option.
+- Exact STOYO bridge-pack import gates on Linux/Windows with Godot 4.3/4.7.
+
+### Changed
+
+- Decoupled the Alpha.8 toolchain version from the immutable Alpha.7 Pack Schema 0.5 contract; Alpha.8 intentionally reuses and re-verifies the three published Alpha.7 compatibility packs.
+- Added a required example-world field to first-import feedback and refreshed STOYO, roadmap, and Codex for OSS evidence documentation.
+- Kept itch.io publication postponed and made no STOYO production-adoption or independent-user claim.
+
 ## [0.1.0-alpha.7] - 2026-07-19
 
 ### Added

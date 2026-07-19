@@ -118,18 +118,30 @@
 
 本版本只覆盖地点关联的四类建筑外观及可安装采用入口，不包含内部、门、碰撞、导航、玩法、STOYO 专用映射/采用、itch.io 上传或 Godot Asset Library 上架声明。完整范围、门禁与停止条件见 [`15_ALPHA6_EXTERIOR_STRUCTURES.md`](15_ALPHA6_EXTERIOR_STRUCTURES.md)。
 
-### alpha.7 — Multi-world Gallery（候选）
+### alpha.7 — Multi-world Gallery（已发布）
 
 - [x] Sunny Meadow、Dustwind Outpost、Frostwatch Vale 三个受信 World Spec 0.3 示例；
 - [x] 统一、深冻结的 example registry 与 Workbench 三卡片资产画廊；
-- [ ] 三个独立、确定性、可逐包核验的 portable ZIP；
-- [ ] 三世界真实预览、版本绑定下载和桌面/390px 浏览器验收；
-- [ ] Linux/Windows × Godot 4.3/4.7 对三个 exact pack 的导入矩阵；
-- [ ] 首次导入指南和反馈模板支持明确选择示例世界；
-- [x] 第一切片保持 Alpha.1–Alpha.6 fixture、hash、tag、附件与合同不可变；完整发布前仍须再次复核；
-- [ ] 公开 PR、prerelease 与发布后远端摘要门禁。
+- [x] 三个独立、确定性、可逐包核验的 portable ZIP；
+- [x] 三世界真实预览、版本绑定下载和桌面/390px 浏览器验收；
+- [x] Linux/Windows × Godot 4.3/4.7 对三个 exact pack 的导入矩阵；
+- [x] 首次导入指南和反馈模板支持明确选择示例世界；
+- [x] 保持 Alpha.1–Alpha.6 fixture、hash、tag、附件与合同不可变；
+- [x] 公开 PR、prerelease 与发布后 17 附件远端摘要门禁。
 
 本版本是在三个独立单-biome 世界之间提供可验证选择，不实现单个世界内部的多 biome transition。完整范围、门禁与停止条件见 [`17_ALPHA7_MULTI_WORLD_GALLERY.md`](17_ALPHA7_MULTI_WORLD_GALLERY.md)。
+
+### alpha.8 — Reproducible STOYO Pack Export CLI（候选）
+
+- [x] 严格解析公开安全的 `StoyoAssetRequest 1.0`，绑定 canonical SHA-256；
+- [x] 无损迁移到 World Spec 0.3，不推断或虚构地点与建筑；
+- [x] 通过 loopback-only headless Chrome 复用已审核的 Alpha.7 浏览器导出器；
+- [x] 输出 executable-free Alpha.7 兼容 ZIP 与 `dev.stoyo.mapsoo-export-receipt/1.0.0` 外部回执；
+- [x] 显式 UTC 时间、跨运行字节复现、`created / unchanged / conflict` 与原子独占写入；
+- [ ] Linux/Windows × Godot 4.3/4.7 exact-pack CI 全绿；
+- [ ] 公开 PR、Alpha.8 prerelease 与发布后远端证据回写。
+
+本切片提供公开可执行的生产边界，不代表 STOYO 已有运行时消费者或生产采用。完整范围见 [`18_ALPHA8_STOYO_EXPORT_CLI.md`](18_ALPHA8_STOYO_EXPORT_CLI.md)。
 
 ## v0.4 — World System
 
@@ -139,6 +151,7 @@
 - [ ] 角色 sprite/动画合同；
 - [ ] 世界版本和增量更新；
 - [x] 可执行、隐私最小化的 `StoyoAssetRequest` → World Spec namespaced extension 契约与 Workbench 本地导入；
+- [x] 可复现、无 UI 的 STOYO 请求 → portable Godot pack + 外部 hash 回执桥接；
 - [ ] 在公开中立合同稳定后评估 STOYO 专用运行时映射；未接入前不声明采用。
 
 ## v0.5 — Community Beta

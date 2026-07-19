@@ -1,6 +1,6 @@
 {
   "name": "mapsoo-worldsmith",
-  "version": "0.1.0-alpha.7",
+  "version": "0.1.0-alpha.8",
   "private": false,
   "description": "Open-source world asset generator and Godot export pipeline.",
   "type": "module",
@@ -14,10 +14,13 @@
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
+    "stoyo:export": "node scripts/export-stoyo-pack.mjs",
+    "stoyo:export:verify": "node scripts/verify-stoyo-export-cli.mjs",
+    "workflow:verify": "node scripts/verify-workflow-yaml.mjs",
     "security:audit": "pnpm audit --audit-level high && pnpm --dir video audit --audit-level high",
     "third-party:write": "node scripts/verify-third-party-notices.mjs --write",
     "third-party:verify": "node scripts/verify-third-party-notices.mjs",
-    "check": "pnpm release:version:verify && pnpm typecheck && pnpm test && pnpm release:history:verify && pnpm release:receipt:negative && pnpm release:visuals:verify && pnpm third-party:verify && pnpm build",
+    "check": "pnpm release:version:verify && pnpm workflow:verify && pnpm typecheck && pnpm test && pnpm release:history:verify && pnpm release:receipt:negative && pnpm release:visuals:verify && pnpm third-party:verify && pnpm build",
     "release:version:verify": "node scripts/verify-release-version.mjs",
     "release:build": "node scripts/verify-release-version.mjs build && pnpm typecheck && pnpm third-party:verify && vite build --base / && node scripts/build-release.mjs",
     "release:verify": "node scripts/verify-release.mjs",
@@ -32,7 +35,7 @@
     "release:history:verify": "node scripts/verify-release-history.mjs",
     "release:history:remote": "node scripts/verify-public-release-assets.mjs",
     "release:receipt:negative": "node scripts/test-receipt-verifier-negative.mjs",
-    "release:browser:verify": "node scripts/verify-browser-alpha2-export.mjs && node scripts/verify-browser-alpha3-export.mjs && node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.4 && node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.5 && node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.6 && node scripts/verify-browser-alpha7-export.mjs",
+    "release:browser:verify": "node scripts/verify-browser-alpha2-export.mjs && node scripts/verify-browser-alpha3-export.mjs && node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.4 && node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.5 && node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.6 && node scripts/verify-browser-alpha7-export.mjs && pnpm stoyo:export:verify",
     "fixture:browser:alpha2": "node scripts/verify-browser-alpha2-export.mjs --capture=release/browser-captures/mapsoo-sunny-meadow-v0.1.0-alpha.2.zip",
     "fixture:browser:alpha3": "node scripts/verify-browser-alpha3-export.mjs --capture=release/browser-captures/mapsoo-sunny-meadow-v0.1.0-alpha.3.zip",
     "fixture:browser:alpha4": "node scripts/verify-browser-alpha3-export.mjs --version=0.1.0-alpha.4 --capture=release/browser-captures/mapsoo-sunny-meadow-v0.1.0-alpha.4.zip",
@@ -48,6 +51,8 @@
     "release:itch": "pnpm release:history:verify && pnpm release:receipt:negative && pnpm release:itch:source:verify && pnpm release:itch:build && pnpm release:itch:verify && pnpm release:itch:repro && pnpm release:itch:negative"
   },
   "dependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
     "jszip": "3.10.1",
     "pako": "1.0.11",
     "react": "^18.3.1",
@@ -59,6 +64,7 @@
     "@vitejs/plugin-react-swc": "^3.10.2",
     "typescript": "^5.8.3",
     "vite": "6.4.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "yaml": "2.8.1"
   }
 }

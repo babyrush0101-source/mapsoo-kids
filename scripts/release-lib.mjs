@@ -382,6 +382,10 @@ export async function buildRelease(outputRoot, version = VERSION, options = {}) 
       join(REPOSITORY_ROOT, source),
       releaseFiles[releaseFileKey],
     ]),
+    ...(config.release.extraFiles ?? []).map(({ releaseFileKey, source }) => [
+      join(REPOSITORY_ROOT, source),
+      releaseFiles[releaseFileKey],
+    ]),
     [join(REPOSITORY_ROOT, config.release.inputs.license), releaseFiles.license],
     [join(REPOSITORY_ROOT, config.release.inputs.changelog), releaseFiles.changelog],
   ];
@@ -431,6 +435,12 @@ export async function buildRelease(outputRoot, version = VERSION, options = {}) 
         purpose: `Versioned ${pack.id} input example`,
       })),
       schemas: config.release.schemas.map(({ releaseFileKey }) => releaseFiles[releaseFileKey]),
+      ...((config.release.extraFiles?.length ?? 0) > 0 ? {
+        integrationContracts: config.release.extraFiles.map(({ releaseFileKey, source }) => ({
+          file: releaseFiles[releaseFileKey],
+          source,
+        })),
+      } : {}),
       license: releaseFiles.license,
       changelog: releaseFiles.changelog,
       checksums: releaseFiles.checksums,

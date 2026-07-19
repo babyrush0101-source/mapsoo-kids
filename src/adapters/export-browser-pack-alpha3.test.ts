@@ -153,7 +153,7 @@ describe('alpha.3 browser pack foundation', () => {
 
   it('preserves alpha.3 after the current package advances to alpha.7', async () => {
     const run = await buildRun();
-    expect(packageJson.version).toBe('0.1.0-alpha.7');
+    expect(packageJson.version).toBe('0.1.0-alpha.8');
     expect(CURRENT_PACK_VERSION).toBe('0.1.0-alpha.7');
     expect(buildCurrentPortablePack).not.toBe(buildAlpha3PortablePack);
     expect((await buildPortablePack(run)).filename).toBe('mapsoo-sunny-meadow-v0.1.0-alpha.1.zip');

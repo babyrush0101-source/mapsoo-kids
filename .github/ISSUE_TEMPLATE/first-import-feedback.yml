@@ -42,6 +42,18 @@ body:
       placeholder: v0.x.y-alpha.n
     validations:
       required: true
+  - type: dropdown
+    id: world
+    attributes:
+      label: Example world
+      description: Select the published world you imported, or choose a custom pack.
+      options:
+        - Sunny Meadow
+        - Dustwind Outpost
+        - Frostwatch Vale
+        - Custom or integration-generated pack
+    validations:
+      required: true
   - type: input
     id: pack
     attributes:

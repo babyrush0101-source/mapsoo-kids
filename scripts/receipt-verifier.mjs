@@ -1115,8 +1115,9 @@ export async function verifyReceiptForRelease({
       break;
     case 'builtin-world-gallery-alpha7-v0.2':
       assert(
-        config.version === '0.1.0-alpha.7',
-        'The builtin-world-gallery-alpha7-v0.2 receipt policy only authorizes release 0.1.0-alpha.7',
+        config.packVersion === '0.1.0-alpha.7'
+          && ['0.1.0-alpha.7', '0.1.0-alpha.8'].includes(config.version),
+        'The builtin-world-gallery-alpha7-v0.2 receipt policy requires the trusted Alpha.7 pack contract',
       );
       verifier = verifyAlpha7WorldGalleryReceipt;
       break;
@@ -1133,8 +1134,8 @@ export async function verifyReceiptForRelease({
     `${context} pack ID must match trusted release config`,
   );
   assert(
-    manifest.pack?.version === config.version,
-    `${context} pack version must match trusted release config`,
+    manifest.pack?.version === config.packVersion,
+    `${context} pack version must match trusted release config pack contract`,
   );
   return verifier({ manifest, readPackFile, context, expectedPackIds: trustedPackIds });
 }
