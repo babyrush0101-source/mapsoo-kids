@@ -101,7 +101,7 @@ function capturePath() {
 }
 
 async function verify() {
-  assert(CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2', 'Browser gate is bound to the alpha.2 candidate policy.');
+  assert(CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2', 'Browser gate is bound to the alpha.2 release policy.');
   const port = await freePort();
   assert(Number.isSafeInteger(port), 'Unable to allocate a local browser-harness port.');
   const harnessUrl = `http://127.0.0.1:${port}/tests/browser/alpha2-export.html`;
