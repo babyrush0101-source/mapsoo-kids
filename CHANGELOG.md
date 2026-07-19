@@ -4,7 +4,7 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
-## [0.1.0-alpha.5] — Candidate, not yet published
+## [0.1.0-alpha.5] - 2026-07-19
 
 ### Added
 
@@ -16,7 +16,7 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ### Changed
 
-- Advanced the Workbench exporter and official importer candidate to Alpha.5 while keeping the published Alpha.1–Alpha.4 fixtures immutable.
+- Advanced the Workbench exporter and official importer to the published Alpha.5 while keeping the published Alpha.1–Alpha.4 fixtures immutable.
 - Kept itch.io publication postponed; Alpha.5 includes only an offline Draft metadata source and does not claim an uploaded itch.io page.
 
 ## [0.1.0-alpha.4] - 2026-07-19

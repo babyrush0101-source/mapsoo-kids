@@ -21,7 +21,7 @@ Mapsoo Worldsmith
 
 ## 2. 共享信息
 
-公开 Alpha.4 使用 World Spec `0.1.0`；Alpha.5 候选使用 `0.2.0` 并保持旧版显式迁移。两者共有的核心通用字段：
+公开 Alpha.4 使用 World Spec `0.1.0`；当前公开 Alpha.5 使用 `0.2.0` 并保持旧版显式迁移。两者共有的核心通用字段：
 
 - pack/world ID、标题、描述和 seed；
 - meadow、desert 或 snow biome，以及地图宽高；

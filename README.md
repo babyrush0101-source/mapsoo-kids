@@ -5,33 +5,33 @@
 [![CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml)
 
-[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.4 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
+[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.5 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
 
 Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a local-first tool that turns a compact world specification into a previewable, versioned game-art asset pack. The first target is a complete path from world settings to a Godot-friendly ZIP that can also be published on itch.io.
 
 ## Project status
 
-The public `main` branch and **v0.1.0-alpha.4 pre-release** provide the current immutable public baseline. Alpha.4 keeps the account-free, backend-free, API-key-free loop and adds actual layered terrain content:
+The public `main` branch and **v0.1.0-alpha.5 pre-release** provide the current immutable public baseline. Alpha.5 keeps the account-free, backend-free, API-key-free loop and extends the layered terrain pack with deterministic semantic places:
 
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same 3 ground variants, 16 water masks, 16 road masks, 6 prop sprites, and map again from the same seed.
 3. Preview the layered pixel-art result in the browser and review validation issues.
 4. Download/load a World Spec JSON, or load the strict synthetic STOYO Asset Request example and project it locally.
-5. Export an executable-free 12-file ZIP containing PNG atlases, Ground/Water/Roads/Props data, a map preview, three schemas, manifest, receipt 0.2, and asset license.
+5. Export an executable-free 15-file ZIP containing PNG atlases, Ground/Water/Roads/Props data, semantic-place metadata, a map preview, four schemas, manifest, receipt 0.2, and asset license.
 
-The current development candidate is **v0.1.0-alpha.5**. It adds World Spec 0.2 semantic places, a canonical `runtime/places.json` sidecar, six reusable place markers, a browser overlay/list, and Godot `Marker2D` anchors. Its real-browser ZIP has 15 files, four schemas, and SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`; it imports as `created → unchanged` in local Godot 4.3/4.7 exact-pack checks. These are candidate facts, not a claim that Alpha.5 is already published; the public download cards remain on audited Alpha.4 until the PR, cross-platform CI, tag workflow, and public digest ledger complete.
+Alpha.5 adds World Spec 0.2 semantic places, a canonical `runtime/places.json` sidecar, six reusable place markers, a browser overlay/list, and Godot `Marker2D` anchors. Its real-browser ZIP has 15 files, four schemas, and SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`; the exact published pack imports as `created → unchanged` in the Linux/Windows Godot 4.3/4.7 release matrix. All 12 public attachment digests are pinned in the immutable release registry.
 
-The public Alpha.4 starter input is [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json); the Alpha.5 candidate input is [`examples/sunny-meadow-v0.2.world.json`](examples/sunny-meadow-v0.2.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
+The current public starter input is [`examples/sunny-meadow-v0.2.world.json`](examples/sunny-meadow-v0.2.world.json); the previous Alpha.4 input remains at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
 Local World Spec and STOYO Asset Request imports share the same 128 KiB cap, strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema/runtime validation. A STOYO request is first projected to a World Spec with a canonical SHA-256 binding; initial generation, editor generation, and both import paths then run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
-![Actual Sunny Meadow alpha.4 preview](examples/packs/sunny-meadow-v0.1.0-alpha.4/previews/map-preview.png)
+![Actual Sunny Meadow alpha.5 preview](examples/packs/sunny-meadow-v0.1.0-alpha.5/previews/map-preview.png)
 
-The committed [Sunny Meadow alpha.4 fixture](examples/packs/sunny-meadow-v0.1.0-alpha.4/) was captured from the real browser exporter after the strict pack-schema 0.2 contract was finalized. It has 12 files, 11 manifest payload records, 35 terrain tiles, 6 prop sprites, and fixed SHA-256 `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`. The exact published pack imports as `created → unchanged` in the required Linux/Windows Godot 4.3/4.7 release matrix.
+The committed [Sunny Meadow alpha.5 fixture](examples/packs/sunny-meadow-v0.1.0-alpha.5/) was captured from the real browser exporter after the strict pack-schema 0.3 contract was finalized. It has 15 files, 14 manifest payload records, 35 terrain tiles, 6 prop sprites, 4 semantic places, and fixed SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`.
 
-The older published Alpha.1–Alpha.3 fixtures and hashes remain immutable. A pinned pure-JavaScript PNG encoder removes browser-native PNG compression drift, and CI runs the real browser exporter before passing the byte-identical canonical ZIP to the Godot matrix.
+The older published Alpha.1–Alpha.4 fixtures and hashes remain immutable. A pinned pure-JavaScript PNG encoder removes browser-native PNG compression drift, and CI runs the real browser exporter before passing the byte-identical canonical ZIP to the Godot matrix.
 
-The published [v0.1.0-alpha.4 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4) is tagged at commit `87b9758`. Its [release workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29680728876) rebuilt the fixed pack, passed the exact 11-attachment audit, and imported that same pack in [Linux Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29680728876/job/88176402206), [Linux Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29680728876/job/88176402200), [Windows Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29680728876/job/88176402211), and [Windows Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29680728876/job/88176402235). All 11 public attachment digests are pinned in the immutable release registry.
+The published [v0.1.0-alpha.5 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) is tagged at commit `b67e7f4`. Its [release workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903) rebuilt the fixed pack, passed the exact 12-attachment audit, and imported that same pack in [Linux Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583761), [Linux Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583744), [Windows Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583748), and [Windows Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583768).
 
 The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; schema 0.2 derives Ground, Water, and Roads `TileMapLayer` nodes, Props, two TerrainSets, and basic Water collision under `res://mapsoo_imports/`. Managed-resource ownership remains in `mapsoo.import-state.json`: identical clean input is `unchanged`, a clean source update is `updated`, and manual edits or legacy output without state fail closed as `conflict`. This is a terrain asset and import contract, not a complete game, navigation system, or production-readiness claim. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
@@ -39,8 +39,8 @@ The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionall
 
 The public first-user path is intentionally short and version-bound:
 
-1. Download the audited [Sunny Meadow asset ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.4/mapsoo-sunny-meadow-v0.1.0-alpha.4.zip).
-2. Download the separate [Godot importer ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.4/mapsoo-godot-importer-v0.1.0-alpha.4.zip) from the same release.
+1. Download the audited [Sunny Meadow asset ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-sunny-meadow-v0.1.0-alpha.5.zip).
+2. Download the separate [Godot importer ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-godot-importer-v0.1.0-alpha.5.zip) from the same release.
 3. Follow the bilingual [10-minute first-import guide](docs/10_FIRST_GODOT_IMPORT.md).
 4. Submit either success or failure through the [structured feedback form](https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml).
 

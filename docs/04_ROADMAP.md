@@ -92,16 +92,16 @@
 
 详细合同与停止条件见 [`12_ALPHA4_PLAYABLE_TERRAIN.md`](12_ALPHA4_PLAYABLE_TERRAIN.md)。
 
-### alpha.5 — Semantic Places（候选范围）
+### alpha.5 — Semantic Places（已发布）
 
-- [x] 新 candidate schema 中的稳定、唯一、路径安全地点 ID 与受限语义字段；
+- [x] 新 schema 中的稳定、唯一、路径安全地点 ID 与受限语义字段；
 - [x] 地点坐标、标签与引用的严格 schema/runtime 校验及负向案例；
 - [x] receipt 绑定含地点声明的 World Spec；manifest/verifier 绑定派生地点 JSON、算法、schema、atlas、大小与 SHA-256；
 - [x] Godot importer 派生按 ID 可查询的地点节点/sidecar，并保留安全重导入边界；
 - [x] 最小 Godot 消费 fixture 不依赖随机坐标、节点顺序或 atlas 索引；
-- [ ] 真实浏览器确定性 ZIP 与 Linux/Windows Godot 4.3/4.7 exact-pack 门禁；
+- [x] 真实浏览器确定性 ZIP 与 Linux/Windows Godot 4.3/4.7 exact-pack 门禁；
 - [x] Alpha.1–Alpha.4 fixture、hash、tag 与合同保持不可变；
-- [ ] 公开 PR、候选 release 审核与发布后 digest ledger（只有实际发布后才勾选）。
+- [x] 公开 PR、release 审核、GitHub prerelease 与发布后 12-attachment digest ledger。
 
 详细范围、验收、不做项与停止条件见 [`13_ALPHA5_SEMANTIC_PLACES.md`](13_ALPHA5_SEMANTIC_PLACES.md)。
 
