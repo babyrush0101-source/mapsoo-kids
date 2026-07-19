@@ -1,6 +1,6 @@
 # alpha.4 Playable Terrain Pack 设计与验收
 
-状态：本地候选门禁通过，待 GitHub PR/CI 与 prerelease 发布
+状态：已发布；公开 PR/CI、GitHub prerelease 与 11 附件摘要账本均完成
 
 目标版本：`v0.1.0-alpha.4`
 
