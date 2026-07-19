@@ -8,12 +8,14 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 
 import {
-  CURRENT_RELEASE_CONFIG,
   REPOSITORY_ROOT,
   assertSafeOutputPath,
   buildExamplePackArchive,
   sha256,
 } from './release-lib.mjs';
+import { getReleaseConfig } from './release-config.mjs';
+
+const ALPHA2_RELEASE_CONFIG = getReleaseConfig('0.1.0-alpha.2');
 
 const execFileAsync = promisify(execFile);
 const captureArgument = process.argv.find((argument) => argument.startsWith('--capture='));
@@ -101,7 +103,7 @@ function capturePath() {
 }
 
 async function verify() {
-  assert(CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2', 'Browser gate is bound to the alpha.2 release policy.');
+  assert(ALPHA2_RELEASE_CONFIG.version === '0.1.0-alpha.2', 'Browser gate is bound to the alpha.2 release policy.');
   const port = await freePort();
   assert(Number.isSafeInteger(port), 'Unable to allocate a local browser-harness port.');
   const harnessUrl = `http://127.0.0.1:${port}/tests/browser/alpha2-export.html`;
@@ -131,8 +133,8 @@ async function verify() {
       harnessUrl,
     ], { maxBuffer: 8 * 1024 * 1024, timeout: 60_000, windowsHide: true });
     const exported = decodeHarnessDom(stdout);
-    assert(exported.filename === CURRENT_RELEASE_CONFIG.release.files.examplePack, 'Browser export filename differs from the release registry.');
-    assert(exported.version === CURRENT_RELEASE_CONFIG.version, 'Browser export version differs from the release registry.');
+    assert(exported.filename === ALPHA2_RELEASE_CONFIG.release.files.examplePack, 'Browser export filename differs from the alpha.2 registry.');
+    assert(exported.version === ALPHA2_RELEASE_CONFIG.version, 'Browser export version differs from the alpha.2 registry.');
     assert(
       exported.stoyoRequestSha256 === 'ea279ebbfd3c12693469472fbca6bbc1286e07515632bd5e34b7bf698602a144',
       'Real browser STOYO request hash differs from the registered integration fixture.',
@@ -154,9 +156,9 @@ async function verify() {
       return;
     }
 
-    const canonical = await buildExamplePackArchive(CURRENT_RELEASE_CONFIG.version);
+    const canonical = await buildExamplePackArchive(ALPHA2_RELEASE_CONFIG.version);
     assert(exported.bytes.equals(canonical), 'Real browser export bytes differ from the registered canonical alpha.2 pack.');
-    assert(hash === CURRENT_RELEASE_CONFIG.expectedExamplePackSha256, 'Real browser export hash differs from the registered alpha.2 hash.');
+    assert(hash === ALPHA2_RELEASE_CONFIG.expectedExamplePackSha256, 'Real browser export hash differs from the registered alpha.2 hash.');
     console.log(
       `MAPSOO_BROWSER_ALPHA2_OK bytes=${exported.bytes.length} sha256=${hash}`
       + ` stoyo_request_sha256=${exported.stoyoRequestSha256} stoyo_world=${exported.stoyoWorldId}`,

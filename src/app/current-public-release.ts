@@ -1,11 +1,10 @@
-import { CURRENT_PACK_VERSION } from '../adapters/export-current-pack';
-
 const REPOSITORY_URL = 'https://github.com/babyrush0101-source/mapsoo-kids';
-const tag = `v${CURRENT_PACK_VERSION}`;
+export const CURRENT_PUBLIC_RELEASE_VERSION = '0.1.0-alpha.2' as const;
+const tag = `v${CURRENT_PUBLIC_RELEASE_VERSION}`;
 const releaseDownloadUrl = `${REPOSITORY_URL}/releases/download/${tag}`;
 
 export const CURRENT_PUBLIC_RELEASE = Object.freeze({
-  version: CURRENT_PACK_VERSION,
+  version: CURRENT_PUBLIC_RELEASE_VERSION,
   tag,
   releaseUrl: `${REPOSITORY_URL}/releases/tag/${tag}`,
   assetPack: Object.freeze({

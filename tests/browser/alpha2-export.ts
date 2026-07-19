@@ -1,4 +1,5 @@
-import { buildCurrentPortablePack, CURRENT_PACK_VERSION } from '../../src/adapters/export-current-pack';
+import { buildAlpha2PortablePack } from '../../src/adapters/export-browser-pack-alpha2';
+import { ALPHA2_PACK_VERSION } from '../../src/core/pack-manifest-alpha2';
 import { parseStoyoAssetRequestJson } from '../../src/adapters/import-stoyo-asset-request';
 import { runGenerationProviderWithEvidence } from '../../src/core/generation-provider';
 import { DEFAULT_WORLD_SPEC } from '../../src/core/world-spec';
@@ -26,12 +27,12 @@ async function exportDefaultPack(): Promise<void> {
       DEFAULT_WORLD_SPEC,
       { now: () => new Date(FIXED_COMPLETION_TIME) },
     );
-    const pack = await buildCurrentPortablePack(run);
+    const pack = await buildAlpha2PortablePack(run);
     const stoyoImport = await parseStoyoAssetRequestJson(JSON.stringify(stoyoExampleRequest));
     if (!stoyoImport.ok) throw new Error(`STOYO browser import failed: ${stoyoImport.code}`);
     const bytes = new Uint8Array(await pack.blob.arrayBuffer());
     result.dataset.filename = pack.filename;
-    result.dataset.version = CURRENT_PACK_VERSION;
+    result.dataset.version = ALPHA2_PACK_VERSION;
     result.dataset.stoyoRequestSha256 = stoyoImport.projection.assetRequestSha256;
     result.dataset.stoyoWorldId = stoyoImport.projection.worldSpec.id;
     result.textContent = base64(bytes);

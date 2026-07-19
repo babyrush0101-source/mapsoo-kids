@@ -469,6 +469,39 @@ export async function verifyAlpha2BuiltinReceipt({ manifest, readPackFile, conte
 }
 
 /**
+ * Verifies the alpha.3 release envelope while reusing the unchanged, exact
+ * receipt-0.2 payload contract from alpha.2. The wrapper narrows authority to
+ * alpha.3 before delegating; the historical alpha.2 verifier remains intact.
+ */
+export async function verifyAlpha3BuiltinReceipt({ manifest, readPackFile, context = 'alpha3 pack' }) {
+  assertPlainObject(manifest, `${context} manifest`);
+  assertExactKeys(manifest.pack, ['created_at', 'generator', 'id', 'title', 'version'], `${context} manifest.pack`);
+  assert(manifest.pack.version === '0.1.0-alpha.3', `${context} pack version mismatch`);
+  assertExactKeys(manifest.pack.generator, ['name', 'version'], `${context} manifest.pack.generator`);
+  assert(
+    manifest.pack.generator.name === 'Mapsoo Worldsmith'
+      && manifest.pack.generator.version === '0.1.0-alpha.3',
+    `${context} pack generator mismatch`,
+  );
+
+  return verifyAlpha2BuiltinReceipt({
+    manifest: {
+      ...manifest,
+      pack: {
+        ...manifest.pack,
+        version: '0.1.0-alpha.2',
+        generator: {
+          ...manifest.pack.generator,
+          version: '0.1.0-alpha.2',
+        },
+      },
+    },
+    readPackFile,
+    context,
+  });
+}
+
+/**
  * Selects a receipt policy from the trusted release registry. The manifest and
  * receipt never choose their own verifier; unknown versions and policies fail closed.
  */
@@ -495,6 +528,13 @@ export async function verifyReceiptForRelease({
         'The builtin-procedural-alpha2-v0.2 receipt policy only authorizes release 0.1.0-alpha.2',
       );
       verifier = verifyAlpha2BuiltinReceipt;
+      break;
+    case 'builtin-procedural-alpha3-v0.2':
+      assert(
+        config.version === '0.1.0-alpha.3',
+        'The builtin-procedural-alpha3-v0.2 receipt policy only authorizes release 0.1.0-alpha.3',
+      );
+      verifier = verifyAlpha3BuiltinReceipt;
       break;
     default:
       throw new Error(

@@ -96,7 +96,7 @@ async function runAlpha1(config) {
   for (const [name, mutate, expected] of cases) await expectFailure(config, name, mutate, expected);
 }
 
-async function runAlpha2(config) {
+async function runReceiptV02(config) {
   const cases = [
     ['extra receipt field', ({ receipt }) => { receipt.extra = true; }, /unexpected or missing fields/],
     ['receipt schema downgrade', ({ receipt }) => { receipt.schema_version = '0.1.0'; }, /schema must be 0\.2\.0/],
@@ -154,15 +154,22 @@ async function runAlpha2(config) {
 
 try {
   const configs = listReleaseConfigs();
-  assert(configs.length >= 2, 'receipt negative gate requires both alpha.1 and alpha.2 configs');
+  assert(configs.length >= 3, 'receipt negative gate requires alpha.1, alpha.2, and alpha.3 configs');
   for (const config of configs) {
     if (config.receiptVerifier === 'legacy-alpha1') await runAlpha1(config);
-    else if (config.receiptVerifier === 'builtin-procedural-alpha2-v0.2') await runAlpha2(config);
+    else if (
+      config.receiptVerifier === 'builtin-procedural-alpha2-v0.2'
+      || config.receiptVerifier === 'builtin-procedural-alpha3-v0.2'
+    ) await runReceiptV02(config);
     else throw new Error(`No negative suite for ${config.receiptVerifier}`);
   }
   for (const [policy, version] of [
     ['legacy-alpha1', '0.1.0-alpha.2'],
+    ['legacy-alpha1', '0.1.0-alpha.3'],
     ['builtin-procedural-alpha2-v0.2', '0.1.0-alpha.1'],
+    ['builtin-procedural-alpha2-v0.2', '0.1.0-alpha.3'],
+    ['builtin-procedural-alpha3-v0.2', '0.1.0-alpha.1'],
+    ['builtin-procedural-alpha3-v0.2', '0.1.0-alpha.2'],
     ['unknown-policy', '0.1.0-alpha.2'],
   ]) {
     try {

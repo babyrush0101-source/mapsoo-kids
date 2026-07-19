@@ -41,6 +41,7 @@ function verifyConfiguredExampleManifest(manifest) {
   switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
+    case 'sunny-meadow-procedural-cc0-v3':
       assert(
         manifest.provenance?.contains_generative_ai === false,
         'Procedural example pack must disclose contains_generative_ai=false',
@@ -51,22 +52,22 @@ function verifyConfiguredExampleManifest(manifest) {
           'https://github.com/babyrush0101-source/mapsoo-kids',
         'Procedural pack importer source must point to the official repository',
       );
-      if (CURRENT_RELEASE_CONFIG.release.verificationPolicy.endsWith('-v2')) {
-        assert(manifest.schema_version === '0.1.0', 'Alpha.2 manifest schema must remain 0.1.0');
+      if (!CURRENT_RELEASE_CONFIG.release.verificationPolicy.endsWith('-v1')) {
+        assert(manifest.schema_version === '0.1.0', 'Receipt-bearing manifest schema must remain 0.1.0');
         assert(
-          manifest.pack?.generator?.version === '0.1.0-alpha.2',
-          'Alpha.2 manifest generator version mismatch',
+          manifest.pack?.generator?.version === VERSION,
+          'Receipt-bearing manifest generator version mismatch',
         );
         assert(
           manifest.receipt?.path === 'generation-receipt.json',
-          'Alpha.2 manifest receipt path mismatch',
+          'Receipt-bearing manifest receipt path mismatch',
         );
-        const alpha2Paths = new Set((manifest.files ?? []).map(({ path }) => path));
-        assert(alpha2Paths.size === 11, 'Alpha.2 manifest must contain 11 unique payload records');
-        assert(alpha2Paths.has('generation-receipt.json'), 'Alpha.2 manifest is missing its receipt record');
+        const receiptPaths = new Set((manifest.files ?? []).map(({ path }) => path));
+        assert(receiptPaths.size === 11, 'Receipt-bearing manifest must contain 11 unique payload records');
+        assert(receiptPaths.has('generation-receipt.json'), 'Receipt-bearing manifest is missing its receipt record');
         assert(
-          alpha2Paths.has('schema/mapsoo-generation-receipt.schema.json'),
-          'Alpha.2 manifest is missing its receipt schema record',
+          receiptPaths.has('schema/mapsoo-generation-receipt.schema.json'),
+          'Receipt-bearing manifest is missing its receipt schema record',
         );
       }
       return;
@@ -81,6 +82,7 @@ function verifyConfiguredWorldSpec(worldSpec) {
   switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
+    case 'sunny-meadow-procedural-cc0-v3':
       assert(worldSpec.schemaVersion === '0.1.0', 'Example World Spec has an unexpected schema version');
       assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
       assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
@@ -244,9 +246,21 @@ async function verify() {
   await assertZipMatches(RELEASE_FILES.examplePack, await expectedExamplePackEntries());
 
   const importerEntries = await loadZip(RELEASE_FILES.godotImporter);
+  const pluginEntry = importerEntries.find((entry) => entry.name === 'addons/mapsoo_importer/plugin.cfg');
+  assert(pluginEntry, 'Godot importer ZIP does not contain plugin.cfg at its installable path');
+  const importerScriptEntry = importerEntries.find(
+    (entry) => entry.name === 'addons/mapsoo_importer/mapsoo_pack_importer.gd',
+  );
+  assert(importerScriptEntry, 'Godot importer ZIP does not contain mapsoo_pack_importer.gd');
+  const pluginText = await pluginEntry.async('text');
+  const importerScriptText = await importerScriptEntry.async('text');
   assert(
-    importerEntries.some((entry) => entry.name === 'addons/mapsoo_importer/plugin.cfg'),
-    'Godot importer ZIP does not contain plugin.cfg at its installable path',
+    pluginText.match(/^version="([^"]+)"$/m)?.[1] === VERSION,
+    'Godot importer plugin.cfg version differs from the release version',
+  );
+  assert(
+    importerScriptText.match(/^const IMPORTER_VERSION := "([^"]+)"$/m)?.[1] === VERSION,
+    'Godot importer runtime version differs from the release version',
   );
   assert(
     importerEntries.some((entry) => entry.name === 'addons/mapsoo_importer/LICENSE.txt'),
@@ -267,7 +281,7 @@ async function verify() {
     !webIndexHtml.includes('/mapsoo-kids/assets/'),
     'Release web ZIP must not inherit the GitHub Pages repository base',
   );
-  if (CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2') {
+  if (CURRENT_RELEASE_CONFIG.version !== '0.1.0-alpha.1') {
     const noticeEntry = webEntries.find(
       (entry) => entry.name === `mapsoo-worldsmith-web-${RELEASE_TAG}/THIRD_PARTY_NOTICES.txt`,
     );
@@ -276,13 +290,13 @@ async function verify() {
     assert(
       notice.includes('pako 1.0.11')
         && notice.includes('Copyright (C) 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn'),
-      'Alpha.2 web ZIP pako notice is incomplete',
+      'Receipt-era web ZIP pako notice is incomplete',
     );
   }
 
   const examplePackEntries = await loadZip(RELEASE_FILES.examplePack);
-  if (CURRENT_RELEASE_CONFIG.release.verificationPolicy === 'sunny-meadow-procedural-cc0-v2') {
-    assert(examplePackEntries.length === 12, 'Alpha.2 Sunny Meadow ZIP must contain exactly 12 files');
+  if (CURRENT_RELEASE_CONFIG.release.verificationPolicy !== 'sunny-meadow-procedural-cc0-v1') {
+    assert(examplePackEntries.length === 12, 'Receipt-bearing Sunny Meadow ZIP must contain exactly 12 files');
   }
   const examplePackRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   assert(

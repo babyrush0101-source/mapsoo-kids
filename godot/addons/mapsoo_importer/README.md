@@ -15,7 +15,7 @@ The importer validates paths, declared byte sizes, SHA-256 hashes, map dimension
 
 Mapsoo data packs intentionally contain no executable addon. Never enable GDScript copied from a third-party asset pack: manifest hashes prove internal consistency, not publisher identity.
 
-## Safe re-import contract (`alpha.3-dev` source)
+## Safe re-import contract (`alpha.3` candidate)
 
 Each managed output directory contains exactly three files:
 

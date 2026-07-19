@@ -213,6 +213,26 @@ async function assertReceiptDispatchFailsClosed() {
     /does not authorize/,
     'alpha2 receipt verifier on alpha1',
   );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('legacy-alpha1', '0.1.0-alpha.3'),
+    /does not authorize/,
+    'legacy receipt verifier on alpha3',
+  );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('builtin-procedural-alpha2-v0.2', '0.1.0-alpha.3'),
+    /does not authorize/,
+    'alpha2 receipt verifier on alpha3',
+  );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('builtin-procedural-alpha3-v0.2', '0.1.0-alpha.1'),
+    /does not authorize/,
+    'alpha3 receipt verifier on alpha1',
+  );
+  await expectFailure(
+    () => assertReceiptVerifierBinding('builtin-procedural-alpha3-v0.2', '0.1.0-alpha.2'),
+    /does not authorize/,
+    'alpha3 receipt verifier on alpha2',
+  );
 
   for (const action of [
     () => getReleaseConfig('9999.0.0-unknown'),

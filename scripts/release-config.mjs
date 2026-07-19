@@ -56,14 +56,17 @@ function assertRelativeConfigPath(path, context) {
 const receiptVerifierVersions = Object.freeze({
   'legacy-alpha1': Object.freeze(['0.1.0-alpha.1']),
   'builtin-procedural-alpha2-v0.2': Object.freeze(['0.1.0-alpha.2']),
+  'builtin-procedural-alpha3-v0.2': Object.freeze(['0.1.0-alpha.3']),
 });
 const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
   'sunny-meadow-procedural-cc0-v2',
+  'sunny-meadow-procedural-cc0-v3',
 ]);
 const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
   'sunny-meadow-procedural-cc0-v2',
+  'sunny-meadow-procedural-cc0-v3',
 ]);
 
 export function assertReceiptVerifierBinding(receiptVerifier, version) {
@@ -381,9 +384,90 @@ const alpha2 = deepFreeze(validateReleaseConfig({
   },
 }));
 
+const ALPHA_3_VERSION = '0.1.0-alpha.3';
+const ALPHA_3_TAG = `v${ALPHA_3_VERSION}`;
+const alpha3ReleaseFiles = releaseFiles(ALPHA_3_TAG, { receiptSchema: true });
+
+const alpha3 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_3_VERSION,
+  tag: ALPHA_3_TAG,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-procedural-alpha3-v0.2',
+  expectedExamplePackSha256: 'af95a4e57187fb85d06e34ccb0e1a1b1dba9b91e8989debf4c30a93108589696',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'sunny-meadow-procedural-cc0-v3',
+    files: alpha3ReleaseFiles,
+    notes: `docs/releases/${ALPHA_3_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_3_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_3_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      {
+        releaseFileKey: 'worldSchema',
+        source: 'schemas/mapsoo-world.schema.json',
+        packPath: 'schema/mapsoo-world.schema.json',
+      },
+      {
+        releaseFileKey: 'packSchema',
+        source: 'schemas/mapsoo-pack.schema.json',
+        packPath: 'schema/mapsoo-pack.schema.json',
+      },
+      {
+        releaseFileKey: 'receiptSchema',
+        source: 'schemas/mapsoo-generation-receipt.schema.json',
+        packPath: 'schema/mapsoo-generation-receipt.schema.json',
+      },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'sunny-meadow-procedural-cc0-v3',
+    shortDescription: 'Free CC0 pixel-art world pack with transactional Godot re-import tested on 4.3 and 4.7.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_3_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_3_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_3_TAG}.html`,
+    rendererFrames: ['cover', 'hero', 'workbench', 'contents', 'godot', 'contract'],
+    requiredRendererFacts: [
+      ALPHA_3_TAG,
+      'af95a4e57187fb85d06e34ccb0e1a1b1dba9b91e8989debf4c30a93108589696',
+      'mapsoo.import-state.json',
+      'created / unchanged / updated / conflict',
+      'Process-level rollback',
+      'Generation receipt 0.2.0',
+      '12 files',
+      '11 payload records',
+      'CC0-1.0',
+      'Godot 4.3',
+      'Godot 4.7',
+      'contains_generative_ai',
+      'Executable-free asset ZIP',
+    ],
+    supportingFiles: [],
+    visuals: [
+      { name: 'cover-1260x1000.png', width: 1260, height: 1000, minBytes: 100_000, role: 'cover' },
+      { name: '01-generated-pack-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '02-workbench-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '03-pack-contents-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '04-godot-verification-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+      { name: '05-open-contract-1600x900.png', width: 1600, height: 900, minBytes: 100_000, role: 'screenshot' },
+    ],
+  },
+}));
+
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
   [alpha2.version]: alpha2,
+  [alpha3.version]: alpha3,
 });
 
 export function getReleaseConfig(version) {

@@ -220,6 +220,7 @@ function verifyMetadata(metadata) {
   switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
+    case 'sunny-meadow-procedural-cc0-v3':
       return verifyProceduralMetadata(metadata);
     default:
       throw new Error(
@@ -233,6 +234,7 @@ function verifyPageMarkdown(page) {
     case 'sunny-meadow-procedural-cc0-v1':
       return verifyProceduralPageMarkdown(page);
     case 'sunny-meadow-procedural-cc0-v2':
+    case 'sunny-meadow-procedural-cc0-v3':
       verifyProceduralPageMarkdown(page);
       for (const requiredText of [
         'generation-receipt.json',
@@ -242,7 +244,7 @@ function verifyPageMarkdown(page) {
         '11 payload records',
         'Executable-free asset ZIP',
       ]) {
-        assert(page.includes(requiredText), `alpha.2 itch page is missing required fact: ${requiredText}`);
+        assert(page.includes(requiredText), `receipt-era itch page is missing required fact: ${requiredText}`);
       }
       return;
     default:
@@ -256,19 +258,20 @@ function verifyConfiguredItchPackManifest(manifest) {
   switch (CURRENT_RELEASE_CONFIG.itch.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
     case 'sunny-meadow-procedural-cc0-v2':
+    case 'sunny-meadow-procedural-cc0-v3':
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
       assert(
         manifest.provenance?.contains_generative_ai === false,
         'itch asset manifest AI provenance mismatch',
       );
-      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v2')) {
-        assert(manifest.receipt?.path === 'generation-receipt.json', 'alpha.2 itch receipt path mismatch');
-        const alpha2Paths = new Set((manifest.files ?? []).map(({ path }) => path));
-        assert(alpha2Paths.size === 11, 'alpha.2 itch manifest must contain 11 payload records');
-        assert(alpha2Paths.has('generation-receipt.json'), 'alpha.2 itch manifest is missing its receipt');
+      if (!CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v1')) {
+        assert(manifest.receipt?.path === 'generation-receipt.json', 'receipt-era itch receipt path mismatch');
+        const receiptPaths = new Set((manifest.files ?? []).map(({ path }) => path));
+        assert(receiptPaths.size === 11, 'receipt-era itch manifest must contain 11 payload records');
+        assert(receiptPaths.has('generation-receipt.json'), 'receipt-era itch manifest is missing its receipt');
         assert(
-          alpha2Paths.has('schema/mapsoo-generation-receipt.schema.json'),
-          'alpha.2 itch manifest is missing its receipt schema',
+          receiptPaths.has('schema/mapsoo-generation-receipt.schema.json'),
+          'receipt-era itch manifest is missing its receipt schema',
         );
       }
       return;
@@ -468,9 +471,9 @@ export async function verifyPackZip(packPath, authoritativeHash) {
     }
   }
 
-  if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy === 'sunny-meadow-procedural-cc0-v2') {
-    assert(allEntries.length === 12, 'alpha.2 itch asset ZIP must contain exactly 12 entries');
-    assert(allEntries.every(({ dir }) => !dir), 'alpha.2 itch asset ZIP must not contain directory entries');
+  if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy !== 'sunny-meadow-procedural-cc0-v1') {
+    assert(allEntries.length === 12, 'receipt-era itch asset ZIP must contain exactly 12 entries');
+    assert(allEntries.every(({ dir }) => !dir), 'receipt-era itch asset ZIP must not contain directory entries');
   }
 
   const manifestBytes = entryBytes.get('mapsoo.manifest.json');

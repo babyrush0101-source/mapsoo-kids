@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
 import packageJson from '../../package.json';
-import { CURRENT_PUBLIC_RELEASE } from './current-public-release';
+import { CURRENT_PACK_VERSION } from '../adapters/export-current-pack';
+import {
+  CURRENT_PUBLIC_RELEASE,
+  CURRENT_PUBLIC_RELEASE_VERSION,
+} from './current-public-release';
 
 describe('current public release links', () => {
-  it('binds every public link to the selected package version', () => {
-    expect(CURRENT_PUBLIC_RELEASE.version).toBe(packageJson.version);
-    expect(CURRENT_PUBLIC_RELEASE.tag).toBe(`v${packageJson.version}`);
-    expect(CURRENT_PUBLIC_RELEASE.releaseUrl).toContain(`/releases/tag/v${packageJson.version}`);
-    expect(CURRENT_PUBLIC_RELEASE.assetPack.filename).toContain(`v${packageJson.version}`);
-    expect(CURRENT_PUBLIC_RELEASE.godotImporter.filename).toContain(`v${packageJson.version}`);
+  it('keeps public links on published alpha.2 while alpha.3 remains a candidate', () => {
+    expect(packageJson.version).toBe('0.1.0-alpha.3');
+    expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
+    expect(CURRENT_PUBLIC_RELEASE_VERSION).toBe('0.1.0-alpha.2');
+    expect(CURRENT_PUBLIC_RELEASE.version).toBe(CURRENT_PUBLIC_RELEASE_VERSION);
+    expect(CURRENT_PUBLIC_RELEASE.tag).toBe(`v${CURRENT_PUBLIC_RELEASE_VERSION}`);
+    expect(CURRENT_PUBLIC_RELEASE.releaseUrl).toContain('/releases/tag/v0.1.0-alpha.2');
+    expect(CURRENT_PUBLIC_RELEASE.assetPack.filename).toContain('v0.1.0-alpha.2');
+    expect(CURRENT_PUBLIC_RELEASE.godotImporter.filename).toContain('v0.1.0-alpha.2');
   });
 
   it('uses only the official HTTPS repository for downloads and community links', () => {

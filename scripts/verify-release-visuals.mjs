@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { readFile, stat } from 'node:fs/promises';
+import { lstat, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
   CURRENT_RELEASE_CONFIG,
   REPOSITORY_ROOT,
-  getReleaseConfig,
+  listReleaseConfigs,
   sha256,
 } from './release-lib.mjs';
 
@@ -30,8 +30,9 @@ function assert(condition, message) {
 
 async function verifyPng(fileName, { width: expectedWidth, height: expectedHeight, minBytes }) {
   const path = join(visualRoot, fileName);
-  const fileStat = await stat(path);
+  const fileStat = await lstat(path);
   assert(fileStat.isFile(), `Release visual is not a file: ${fileName}`);
+  assert(!fileStat.isSymbolicLink(), `Release visual must not be a symbolic link: ${fileName}`);
   assert(
     fileStat.size >= minBytes,
     `Release visual is unexpectedly small: ${fileName} (${fileStat.size} < ${minBytes})`,
@@ -50,27 +51,36 @@ async function verifyPng(fileName, { width: expectedWidth, height: expectedHeigh
 }
 
 async function verify() {
+  const visualDirectoryStat = await lstat(visualRoot);
+  assert(visualDirectoryStat.isDirectory() && !visualDirectoryStat.isSymbolicLink(), 'Release visual root must be a real directory');
+  const actualVisualNames = (await readdir(visualRoot)).sort();
+  const configuredVisualNames = [...expectedVisuals.keys()].sort();
+  assert(
+    JSON.stringify(actualVisualNames) === JSON.stringify(configuredVisualNames),
+    'Release visual directory must contain exactly the configured PNG files',
+  );
   for (const [fileName, visual] of expectedVisuals) {
     await verifyPng(fileName, visual);
   }
 
-  if (CURRENT_RELEASE_CONFIG.version === '0.1.0-alpha.2') {
-    const alpha1VisualRoot = join(
-      REPOSITORY_ROOT,
-      getReleaseConfig('0.1.0-alpha.1').itch.visualDirectory,
-    );
+  for (const historicalConfig of listReleaseConfigs().filter(
+    ({ version }) => version !== CURRENT_RELEASE_CONFIG.version,
+  )) {
+    const historicalVisualRoot = join(REPOSITORY_ROOT, historicalConfig.itch.visualDirectory);
     for (const fileName of expectedVisuals.keys()) {
-      const [alpha1Bytes, alpha2Bytes] = await Promise.all([
-        readFile(join(alpha1VisualRoot, fileName)),
+      const [historicalBytes, currentBytes] = await Promise.all([
+        readFile(join(historicalVisualRoot, fileName)),
         readFile(join(visualRoot, fileName)),
       ]);
       assert(
-        sha256(alpha1Bytes) !== sha256(alpha2Bytes),
-        `alpha.2 release visual must not reuse alpha.1 bytes: ${fileName}`,
+        sha256(historicalBytes) !== sha256(currentBytes),
+        `${CURRENT_RELEASE_CONFIG.tag} release visual must not reuse ${historicalConfig.tag} bytes: ${fileName}`,
       );
     }
   }
 
+  const rendererStat = await lstat(rendererPath);
+  assert(rendererStat.isFile() && !rendererStat.isSymbolicLink(), 'Release visual renderer must be a real file');
   const renderer = await readFile(rendererPath, 'utf8');
   assert(
     !/(?:src|href)=["']https?:\/\//i.test(renderer),
