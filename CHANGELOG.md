@@ -4,7 +4,21 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
-### Candidate: 0.1.0-alpha.2
+### In development: 0.1.0-alpha.3
+
+### Added
+
+- Import ownership state with pinned manifest and generated-resource SHA-256 values.
+- Transactional Godot re-import outcomes: `created`, `unchanged`, `updated`, and fail-closed `conflict`.
+- Same-parent staging, parsed-byte/source snapshot validation, a post-backup baseline check, directory-swap commit, and deterministic rollback/race coverage.
+- Windows Godot 4.3/4.7 CI for the synthetic transaction contract and the exact published alpha.2 pack.
+
+### Changed
+
+- The importer now returns a true no-op for the same clean manifest instead of rewriting `.tres` and `.tscn`.
+- Editor results distinguish created, unchanged, updated, conflict, and other failures.
+
+## [0.1.0-alpha.2] - 2026-07-19
 
 ### Added
 

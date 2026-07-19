@@ -71,7 +71,8 @@
 - [x] manifest importer alpha；
 - [x] TileSetAtlasSource 创建；
 - [x] `TileMapLayer` 地图 scene 创建；
-- [ ] 重新导入和冲突策略；
+- [x] ownership state、`created/unchanged/updated/conflict`、输入快照复核、同父 staging、backup 后 baseline 复核与进程内回滚；
+- [ ] 崩溃 journal/recovery 与同一 pack 并发锁；
 - [x] importer 基线 headless smoke test；
 - [x] 版本绑定的公开 10 分钟首次导入指南、Pages 下载入口与结构化反馈表单；
 - [ ] Godot Asset Library 发布准备。
