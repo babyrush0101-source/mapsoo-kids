@@ -5,7 +5,7 @@ import { cloneWorldSpec, type BiomeId, type WorldSpec, type WorldSpecV030 } from
 import { validateWorldSpec } from '../core/validate-world';
 
 export type WorldExampleId = 'sunny-meadow' | 'dustwind-outpost' | 'frostwatch-vale';
-export type WorldExampleStatus = 'candidate';
+export type WorldExampleStatus = 'published';
 
 export interface WorldExample {
   id: WorldExampleId;
@@ -24,7 +24,7 @@ const RAW_EXAMPLES: WorldExample[] = [
     biome: 'meadow',
     summary: 'River meadow · cottage · shrine',
     worldSpecPath: 'examples/sunny-meadow-v0.3.world.json',
-    status: 'candidate',
+    status: 'published',
     spec: sunnyMeadowJson as WorldSpecV030,
   },
   {
@@ -33,7 +33,7 @@ const RAW_EXAMPLES: WorldExample[] = [
     biome: 'desert',
     summary: 'Guarded oasis · workshop · tower',
     worldSpecPath: 'examples/dustwind-outpost-v0.3.world.json',
-    status: 'candidate',
+    status: 'published',
     spec: dustwindOutpostJson as WorldSpecV030,
   },
   {
@@ -42,7 +42,7 @@ const RAW_EXAMPLES: WorldExample[] = [
     biome: 'snow',
     summary: 'Snowbound vale · shrine · tower',
     worldSpecPath: 'examples/frostwatch-vale-v0.3.world.json',
-    status: 'candidate',
+    status: 'published',
     spec: frostwatchValeJson as WorldSpecV030,
   },
 ];
@@ -76,7 +76,7 @@ function validateRegistry(examples: readonly WorldExample[]): void {
   }
 
   if (examples.length !== 3 || biomes.size !== 3) {
-    throw new Error('Alpha.7 candidate registry must contain exactly one meadow, desert, and snow example.');
+    throw new Error('Alpha.7 public registry must contain exactly one meadow, desert, and snow example.');
   }
 }
 

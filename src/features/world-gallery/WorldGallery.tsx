@@ -20,10 +20,10 @@ export function WorldGallery({
     <section className="world-gallery" aria-labelledby="world-gallery-title">
       <div className="world-gallery-heading">
         <div>
-          <p className="eyebrow">Alpha.7 candidate gallery</p>
+          <p className="eyebrow">Alpha.7 public world gallery</p>
           <h2 id="world-gallery-title">Start from a complete world recipe.</h2>
         </div>
-        <p>Three deterministic World Spec 0.3 examples. Candidate status is not a published Alpha.7 release.</p>
+        <p>Three deterministic World Spec 0.3 examples, published as independently verified Godot asset packs.</p>
       </div>
 
       <div className="world-gallery-grid">

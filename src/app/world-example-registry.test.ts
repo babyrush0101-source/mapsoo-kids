@@ -9,11 +9,11 @@ import {
 } from './world-example-registry';
 
 describe('Alpha.7 world example registry', () => {
-  it('registers one deeply frozen candidate for every supported biome', () => {
+  it('registers one deeply frozen published example for every supported biome', () => {
     expect(WORLD_EXAMPLES.map((example) => [example.id, example.biome, example.status])).toEqual([
-      ['sunny-meadow', 'meadow', 'candidate'],
-      ['dustwind-outpost', 'desert', 'candidate'],
-      ['frostwatch-vale', 'snow', 'candidate'],
+      ['sunny-meadow', 'meadow', 'published'],
+      ['dustwind-outpost', 'desert', 'published'],
+      ['frostwatch-vale', 'snow', 'published'],
     ]);
     expect(Object.isFrozen(WORLD_EXAMPLES)).toBe(true);
     for (const example of WORLD_EXAMPLES) {
@@ -36,7 +36,7 @@ describe('Alpha.7 world example registry', () => {
     expect(getWorldExample('unknown')).toBeUndefined();
   });
 
-  it('generates every candidate deterministically and without validation errors', () => {
+  it('generates every published example deterministically and without validation errors', () => {
     for (const example of WORLD_EXAMPLES) {
       const first = generateWorld(example.spec);
       const second = generateWorld(example.spec);
