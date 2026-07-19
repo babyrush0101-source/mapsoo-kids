@@ -517,13 +517,13 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 | 公开维护活动 | Provider contract、Workbench、receipt、runner evidence、release architecture 与 alpha.2 foundation/candidate PR 已连续合并 | [PR #18](https://github.com/babyrush0101-source/mapsoo-kids/pull/18)、[PR #19](https://github.com/babyrush0101-source/mapsoo-kids/pull/19)、[PR #20](https://github.com/babyrush0101-source/mapsoo-kids/pull/20)、[PR #21](https://github.com/babyrush0101-source/mapsoo-kids/pull/21)、[PR #22](https://github.com/babyrush0101-source/mapsoo-kids/pull/22)、[PR #23](https://github.com/babyrush0101-source/mapsoo-kids/pull/23)、[PR #24](https://github.com/babyrush0101-source/mapsoo-kids/pull/24) |
 | GitHub alpha release | 两个不可变 prerelease 已公开；当前版本为 alpha.2 | [`v0.1.0-alpha.2`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2) |
 | 在线 Demo | 已部署并匿名访问验证 | [GitHub Pages](https://babyrush0101-source.github.io/mapsoo-kids/) |
-| itch.io 免费包 | 未发布 | `[REPLACE: ITCH_URL]` |
+| itch.io 免费包 | 延期、可选；不作为当前申请准备前置 | 当前无 URL，申请材料不填写或引用此项 |
 | 演示视频 | 已作为版本化 release asset 公开 | [75 秒 H.264 MP4](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) |
-| 外部反馈与维护响应 | 统一入口已创建；截至 2026-07-19 仍无评论或外部反馈 | [feedback issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) |
+| 外部反馈与维护响应 | 版本绑定的 10 分钟指南、结构化表单和统一索引已创建；截至 2026-07-19 仍无独立用户结果或外部反馈 | [first-import guide](10_FIRST_GODOT_IMPORT.md)、[feedback form](https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml)、[feedback issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) |
 | downloads / stars / forks | 2026-07-19：0 stars，0 forks；附件下载包含维护者发布审计且下载者身份不可见，因此计数不能证明外部采用 | [alpha.2 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
 | STOYO 使用 | 计划中的首个真实消费者 | 只有真正接入后才附公开且不泄密的案例；否则明确写 planned |
 
-推荐申请门槛：release、公开 CI、itch 页面、Demo/视频至少三者完成，并且有至少一轮真实外部反馈与维护响应。star 不是唯一标准，但不能用愿景替代活跃维护证据。
+推荐申请门槛：版本化 release、公开 CI、Demo/首次导入路径已经可验证，并且有至少一轮真实外部反馈与维护响应。itch.io 是可选分发面，不是官方资格条件；star 也不是唯一标准，但不能用愿景替代活跃维护证据。
 
 ### 6.3 当前可用申请文案
 

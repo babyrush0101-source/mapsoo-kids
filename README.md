@@ -31,6 +31,17 @@ The published [v0.1.0-alpha.2 release](https://github.com/babyrush0101-source/ma
 
 The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; it derives a `TileSet`, `TileMapLayer` scene, and prop sprites under `res://mapsoo_imports/`. The importer and example project have headless smoke coverage on Godot 4.3 and 4.7; alpha.2 additionally makes import of the exact fixed-hash release pack a required matrix gate. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
+## First Godot import
+
+The public first-user path is intentionally short and version-bound:
+
+1. Download the audited [Sunny Meadow asset ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.2/mapsoo-sunny-meadow-v0.1.0-alpha.2.zip).
+2. Download the separate [Godot importer ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.2/mapsoo-godot-importer-v0.1.0-alpha.2.zip) from the same release.
+3. Follow the bilingual [10-minute first-import guide](docs/10_FIRST_GODOT_IMPORT.md).
+4. Submit either success or failure through the [structured feedback form](https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml).
+
+The expected generated scene is `res://mapsoo_imports/sunny-meadow/sunny-meadow.world.tscn`. The guide pins both download hashes and explains the current derived-output/re-import boundary.
+
 ## Why this order
 
 Image generation alone does not make a usable game-asset pipeline. Mapsoo first makes the asset contract, validation, reproducibility, preview, and export reliable. The Workbench now routes its initial, edited, imported World Specs, and projected STOYO requests through the provider SDK, atomically stores a deeply frozen runner-owned world/evidence result, exposes the Provider snapshot that produced it, and keeps only the latest request eligible to update the preview. The legacy exporter rejects bare worlds and optional AI providers; full receipt/manifest projection enters a new versioned pack rather than rewriting the published alpha.
@@ -52,6 +63,7 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [Executable STOYO Asset Request contract](integrations/stoyo/README.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
 - [Generation Provider SDK](docs/09_PROVIDER_SDK.md)
+- [10-minute first Godot import](docs/10_FIRST_GODOT_IMPORT.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
 - [Verified itch.io operator upload kit](docs/itch-kit/README.md)
 - [75-second evidence video source and verification](video/README.md)

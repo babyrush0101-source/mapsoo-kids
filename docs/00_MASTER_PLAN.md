@@ -134,6 +134,6 @@
 
 ## 9. 当前下一步
 
-1. 通过 GitHub Release 与 Pages 邀请第一轮外部用户完成下载 → Godot 导入，并在统一反馈 issue 公开响应；
+1. 通过 Pages 的版本绑定下载入口与 [`10 分钟首次导入指南`](10_FIRST_GODOT_IMPORT.md) 邀请第一轮外部用户完成下载 → Godot 导入，并在结构化表单/统一反馈 issue 公开响应；
 2. 用真实 release、反馈与精确指标更新 Codex for OSS 证据台账，再决定申请时机；
 3. 保留已验证的 itch.io 上传套件，但页面创建和公开发布延期；以后能通过人工验证时再恢复，不阻塞 GitHub 路线。
