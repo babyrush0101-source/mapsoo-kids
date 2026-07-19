@@ -520,7 +520,7 @@ OpenAI 当前说明：活跃开源项目的 primary/core maintainer 可以申请
 | itch.io 免费包 | 未发布 | `[REPLACE: ITCH_URL]` |
 | 演示视频 | 已作为版本化 release asset 公开 | [75 秒 H.264 MP4](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) |
 | 外部反馈与维护响应 | 统一入口已创建；截至 2026-07-19 仍无评论或外部反馈 | [feedback issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12) |
-| downloads / stars / forks | 2026-07-19 alpha.2 发布后：alpha.1 的 11 个附件各 1 次下载，alpha.2 的 11 个附件暂为 0 次下载，0 stars，0 forks；外部采用仍未得到证明 | [alpha.2 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
+| downloads / stars / forks | 2026-07-19：0 stars，0 forks；附件下载包含维护者发布审计且下载者身份不可见，因此计数不能证明外部采用 | [alpha.2 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2)、[repository](https://github.com/babyrush0101-source/mapsoo-kids) |
 | STOYO 使用 | 计划中的首个真实消费者 | 只有真正接入后才附公开且不泄密的案例；否则明确写 planned |
 
 推荐申请门槛：release、公开 CI、itch 页面、Demo/视频至少三者完成，并且有至少一轮真实外部反馈与维护响应。star 不是唯一标准，但不能用愿景替代活跃维护证据。
