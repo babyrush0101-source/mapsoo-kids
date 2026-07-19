@@ -1,14 +1,14 @@
 # First Godot import in 10 minutes / 10 分钟首次导入 Godot
 
-This is the public acceptance path for Mapsoo Worldsmith `v0.1.0-alpha.2`. It uses the same Sunny Meadow pack imported by the release workflow on Godot 4.3 and 4.7.
+This is the public acceptance path for Mapsoo Worldsmith `v0.1.0-alpha.3`. It uses the same Sunny Meadow pack imported by the release workflow on Linux and Windows with Godot 4.3 and 4.7.
 
-这是 Mapsoo Worldsmith `v0.1.0-alpha.2` 的公开验收路径，使用发布工作流在 Godot 4.3 与 4.7 中验证过的同一个 Sunny Meadow 素材包。
+这是 Mapsoo Worldsmith `v0.1.0-alpha.3` 的公开验收路径，使用发布工作流在 Linux 与 Windows 的 Godot 4.3、4.7 中验证过的同一个 Sunny Meadow 素材包。
 
 ## What you need / 准备
 
 - Godot 4.3 or newer；
 - a new or existing Godot project you can modify；
-- the [audited alpha.2 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2)；
+- the [audited alpha.3 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.3)；
 - about 10 minutes. No account, backend, or API key is required.
 
 需要 Godot 4.3 或更高版本、一个可修改的 Godot 项目，以及约 10 分钟。无需账号、后端或 API Key。
@@ -17,35 +17,35 @@ This is the public acceptance path for Mapsoo Worldsmith `v0.1.0-alpha.2`. It us
 
 Download both official attachments:
 
-1. [Sunny Meadow asset pack](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.2/mapsoo-sunny-meadow-v0.1.0-alpha.2.zip)
-2. [Mapsoo Godot importer](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.2/mapsoo-godot-importer-v0.1.0-alpha.2.zip)
+1. [Sunny Meadow asset pack](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.3/mapsoo-sunny-meadow-v0.1.0-alpha.3.zip)
+2. [Mapsoo Godot importer](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.3/mapsoo-godot-importer-v0.1.0-alpha.3.zip)
 
 Expected SHA-256:
 
 | File | SHA-256 |
 | --- | --- |
-| `mapsoo-sunny-meadow-v0.1.0-alpha.2.zip` | `8c7720a8578cdc276ff69677ed0d64d8a1524d32fd00da0ffb8035b5a52bfcb6` |
-| `mapsoo-godot-importer-v0.1.0-alpha.2.zip` | `c5d27f6df15026006c1bec7d8086569de1527da5091a87a7f941102dd34fc726` |
+| `mapsoo-sunny-meadow-v0.1.0-alpha.3.zip` | `af95a4e57187fb85d06e34ccb0e1a1b1dba9b91e8989debf4c30a93108589696` |
+| `mapsoo-godot-importer-v0.1.0-alpha.3.zip` | `49a2c30b0df50cff46c4a2acaa5c093d0eb58733387472ab27e6e7f2dfaabd86` |
 
 PowerShell:
 
 ```powershell
-(Get-FileHash .\mapsoo-sunny-meadow-v0.1.0-alpha.2.zip -Algorithm SHA256).Hash.ToLower()
-(Get-FileHash .\mapsoo-godot-importer-v0.1.0-alpha.2.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\mapsoo-sunny-meadow-v0.1.0-alpha.3.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\mapsoo-godot-importer-v0.1.0-alpha.3.zip -Algorithm SHA256).Hash.ToLower()
 ```
 
 macOS:
 
 ```bash
-shasum -a 256 mapsoo-sunny-meadow-v0.1.0-alpha.2.zip
-shasum -a 256 mapsoo-godot-importer-v0.1.0-alpha.2.zip
+shasum -a 256 mapsoo-sunny-meadow-v0.1.0-alpha.3.zip
+shasum -a 256 mapsoo-godot-importer-v0.1.0-alpha.3.zip
 ```
 
 Linux:
 
 ```bash
-sha256sum mapsoo-sunny-meadow-v0.1.0-alpha.2.zip
-sha256sum mapsoo-godot-importer-v0.1.0-alpha.2.zip
+sha256sum mapsoo-sunny-meadow-v0.1.0-alpha.3.zip
+sha256sum mapsoo-godot-importer-v0.1.0-alpha.3.zip
 ```
 
 The complete attachment list is recorded in the release `SHA256SUMS`. Stop if a digest differs and download the file again from the official release.
@@ -55,7 +55,7 @@ The complete attachment list is recorded in the release `SHA256SUMS`. Stop if a 
 ## 2–5 min — Install the importer / 安装导入器
 
 1. Close the Godot editor for the target project if it is already open.
-2. Extract `mapsoo-godot-importer-v0.1.0-alpha.2.zip` into the project root.
+2. Extract `mapsoo-godot-importer-v0.1.0-alpha.3.zip` into the project root.
 3. Confirm this exact path exists:
 
    ```text
@@ -70,12 +70,12 @@ The complete attachment list is recorded in the release `SHA256SUMS`. Stop if a 
 
 ## 5–8 min — Import the pack / 导入素材包
 
-1. Extract `mapsoo-sunny-meadow-v0.1.0-alpha.2.zip` to any local folder.
+1. Extract `mapsoo-sunny-meadow-v0.1.0-alpha.3.zip` to any local folder.
 2. In Godot choose **Project → Tools → Import Mapsoo Pack...**.
 3. Select the extracted file:
 
    ```text
-   mapsoo-sunny-meadow-v0.1.0-alpha.2/mapsoo.manifest.json
+   mapsoo-sunny-meadow-v0.1.0-alpha.3/mapsoo.manifest.json
    ```
 
 4. Wait for **Import complete**. The public fixture should report `384 cells` and `29 props`.
@@ -128,4 +128,13 @@ Select the extracted root `mapsoo.manifest.json`, not a schema or world JSON fil
 
 ### Re-importing an existing pack / 重复导入
 
-The current alpha replaces derived `.tres` and `.tscn` files for the same pack ID. Keep hand-authored scenes and scripts elsewhere. Safe conflict detection and atomic re-import remain a tracked roadmap item.
+Alpha.3 owns only the generated files recorded in `res://mapsoo_imports/<pack-id>/mapsoo.import-state.json`:
+
+- the first clean import returns `created`;
+- repeating the same clean input returns `unchanged` and does not rewrite generated files;
+- importing changed source over clean managed output returns `updated`;
+- manual edits, missing/extra managed files, a damaged state file, or legacy alpha.1/alpha.2 output without state return `conflict` and are not overwritten.
+
+Keep hand-authored scenes and scripts outside the managed directory. For legacy output, save your changes, then move the old derived directory aside before importing alpha.3. The transaction protects normal in-process commit and rollback; it does not claim power-loss/crash atomicity or concurrent-writer safety. Keep the source pack and managed output still during import. See the full [safe re-import contract](11_SAFE_GODOT_REIMPORT.md).
+
+Alpha.3 只管理 `res://mapsoo_imports/<pack-id>/mapsoo.import-state.json` 中登记的生成文件。首次导入为 `created`；相同干净输入为不改写文件的 `unchanged`；干净的源变化为 `updated`；手工修改、文件缺失/新增、状态损坏或没有状态文件的 alpha.1/alpha.2 旧目录都会返回 `conflict`，不会被静默覆盖。请把手工作品放在管理目录之外；迁移旧输出时先保存修改并把旧派生目录移开。当前事务保证正常进程内提交与回滚，不承诺断电/硬崩溃原子性或并发写入安全。

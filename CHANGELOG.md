@@ -4,14 +4,14 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
-### Candidate: 0.1.0-alpha.3
+## [0.1.0-alpha.3] - 2026-07-19
 
 ### Added
 
 - Import ownership state with pinned manifest and generated-resource SHA-256 values.
 - Transactional Godot re-import outcomes: `created`, `unchanged`, `updated`, and fail-closed `conflict`.
 - Same-parent staging, parsed-byte/source snapshot validation, a post-backup baseline check, directory-swap commit, and deterministic rollback/race coverage.
-- Windows Godot 4.3/4.7 CI for the synthetic transaction contract and the exact candidate pack.
+- Windows Godot 4.3/4.7 CI for the synthetic transaction contract and the exact published pack.
 - A real-browser alpha.3 Sunny Meadow fixture pinned to SHA-256 `af95a4e57187fb85d06e34ccb0e1a1b1dba9b91e8989debf4c30a93108589696`.
 - Independent alpha.3 receipt, release, itch, browser, and visual policies that leave alpha.1/alpha.2 history immutable.
 - A fresh versioned cover and five evidence-based release visuals for the offline itch.io operator kit.
@@ -20,7 +20,7 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 - The importer now returns a true no-op for the same clean manifest instead of rewriting `.tres` and `.tscn`.
 - Editor results distinguish created, unchanged, updated, conflict, and other failures.
-- The current workbench export advances to alpha.3 while public download links remain on published alpha.2 until the post-release digest ledger lands.
+- Advanced the current workbench export and public download links to the audited alpha.3 release.
 
 ## [0.1.0-alpha.2] - 2026-07-19
 

@@ -2,7 +2,7 @@
 
 状态：执行中
 
-当前阶段：`v0.1.0-alpha.2` 是当前公开下载；alpha.3 已形成固定哈希候选，包含安全重导入合同、独立 fixture/receipt/release/itch 策略和 Linux/Windows Godot 4.3/4.7 发布门禁，正在完成公开 CI 与 tag 草稿审计。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
+当前阶段：[`v0.1.0-alpha.3`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.3) 已作为当前公开 prerelease 发布，包含安全重导入合同、独立 fixture/receipt/release/itch 策略，以及已通过的 Linux/Windows Godot 4.3/4.7 发布门禁。11 个远端附件摘要已锁定，公开下载入口已切换。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
 
 主分支：`main`
 
@@ -90,7 +90,7 @@
 | v0.5 Community Beta | 示例、文档、贡献流程、预发布 | 至少 3 个示例包、外部 issue/反馈、首个 beta release |
 | v1.0 Stable | 稳定 schema 和兼容策略 | schema 版本化、迁移策略、跨平台测试和正式 release |
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Godot 4.3/4.7 中的跨管线验收。公开 `v0.1.0-alpha.1` 与 [`v0.1.0-alpha.2`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2) prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.2 同时包含 STOYO 请求导入契约。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1`、[`v0.1.0-alpha.2`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.2) 与 [`v0.1.0-alpha.3`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.3) 三个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.2 引入 STOYO 请求导入契约，alpha.3 增加冲突保护的 Godot 重导入。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
 
 ## 6. 总控节奏
 
@@ -119,7 +119,7 @@
 | D-009 | Provider SDK 先包装程序化基线；在 provider receipt、许可和 AI disclosure 完成前，v0.1 exporter 拒绝其他 Provider | 防止未来模型输出被错误标记为非生成式 AI 或沿用 CC0 程序化许可 | 已采纳 |
 | D-010 | 已公开 alpha.1 receipt/fixture/hash 永不原位改写；完整 receipt 使用 `0.2.0` 合同并进入新版本 release | 保留可验证的公开证据，避免同一 tag 对应多组来源与许可语义 | 已采纳 |
 | D-011 | Provider runner 原子返回深冻结的 `world + evidence`；Provider claims 不能覆盖 identity、execution、provenance、AI flag、human curation 或时间 | 消除 UI/导出错配和 Provider 返回引用的 TOCTOU，给下一版本 receipt/export 建立可信调用边界 | 已采纳 |
-| D-012 | package version 只能选择 registry 中深冻结的 release 配置；receipt verifier 由可信配置分派，已发布 fixture 每次重建都必须匹配不可变公开 hash | 允许后续版本原子加入新 schema、fixture 与 itch 素材，同时防止未知版本、伪造 manifest 或新代码改写 alpha.1/alpha.2 历史证据 | 已采纳 |
+| D-012 | package version 只能选择 registry 中深冻结的 release 配置；receipt verifier 由可信配置分派，已发布 fixture 每次重建都必须匹配不可变公开 hash | 允许后续版本原子加入新 schema、fixture 与 itch 素材，同时防止未知版本、伪造 manifest 或新代码改写 alpha.1/alpha.2/alpha.3 历史证据 | 已采纳 |
 
 ## 8. 当前风险
 
