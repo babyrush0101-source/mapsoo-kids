@@ -57,6 +57,7 @@ try {
     Invoke-Godot "Fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_fixture.gd")
     Invoke-Godot "Alpha.4 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha4_fixture.gd")
     Invoke-Godot "Alpha.5 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha5_fixture.gd")
+    Invoke-Godot "Alpha.6 fixture generation" @("--headless", "--path", $godotRoot, "--script", "res://tests/generate_alpha6_fixture.gd")
 
     # A separate editor pass imports the freshly generated PNGs before the importer loads them.
     Invoke-Godot "Godot resource import" @("--headless", "--editor", "--path", $godotRoot, "--import")
@@ -64,6 +65,7 @@ try {
     Invoke-Godot "Importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_smoke.gd")
     Invoke-Godot "Alpha.4 importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_alpha4_smoke.gd")
     Invoke-Godot "Alpha.5 importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_alpha5_smoke.gd")
+    Invoke-Godot "Alpha.6 importer smoke test" @("--headless", "--path", $godotRoot, "--script", "res://tests/import_alpha6_smoke.gd")
 }
 finally {
     if (-not $KeepGenerated) {

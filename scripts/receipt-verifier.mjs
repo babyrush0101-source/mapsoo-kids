@@ -106,6 +106,31 @@ const ALPHA5_PAYLOAD_PATHS = Object.freeze([
   'worlds/demo-world.json',
   'worlds/sunny-meadow.world.json',
 ]);
+const ALPHA6_PACK_SCHEMA_PATH = 'schema/mapsoo-pack-0.4.schema.json';
+const ALPHA6_WORLD_SCHEMA_PATH = 'schema/mapsoo-world-0.3.schema.json';
+const ALPHA6_PLACES_SCHEMA_PATH = 'schema/mapsoo-places-0.2.schema.json';
+const ALPHA6_STRUCTURES_SCHEMA_PATH = 'schema/mapsoo-structures-0.1.schema.json';
+const ALPHA6_STRUCTURES_PATH = 'runtime/structures.json';
+const ALPHA6_STRUCTURES_ATLAS_PATH = 'atlases/structures.png';
+const ALPHA6_PAYLOAD_PATHS = Object.freeze([
+  'atlases/props.png',
+  ALPHA5_PLACES_ATLAS_PATH,
+  ALPHA6_STRUCTURES_ATLAS_PATH,
+  'atlases/terrain.png',
+  'generation-receipt.json',
+  'license-assets.md',
+  'previews/map-preview.png',
+  'readme.md',
+  ALPHA5_PLACES_PATH,
+  ALPHA6_STRUCTURES_PATH,
+  'schema/mapsoo-generation-receipt.schema.json',
+  ALPHA6_PACK_SCHEMA_PATH,
+  ALPHA6_PLACES_SCHEMA_PATH,
+  ALPHA6_STRUCTURES_SCHEMA_PATH,
+  ALPHA6_WORLD_SCHEMA_PATH,
+  'worlds/demo-world.json',
+  'worlds/sunny-meadow.world.json',
+]);
 const EXPECTED_ALPHA2_RECEIPT_SCHEMA_SOURCE = JSON.parse(await readFile(
   join(REPOSITORY_ROOT, 'schemas', 'mapsoo-generation-receipt.schema.json'),
   'utf8',
@@ -792,6 +817,168 @@ export async function verifyAlpha5SemanticPlacesReceipt({
   });
 }
 
+/** Verifies Alpha.6's place-linked structures envelope, then reuses the unchanged Alpha.5 receipt proof. */
+export async function verifyAlpha6SemanticStructuresReceipt({
+  manifest,
+  readPackFile,
+  context = 'alpha6 pack',
+}) {
+  assertPlainObject(manifest, `${context} manifest`);
+  assert(typeof readPackFile === 'function', `${context} readPackFile must be a function`);
+  assert(manifest.schema_version === '0.4.0', `${context} manifest schema must be 0.4.0`);
+  assert(manifest.pack?.id === 'sunny-meadow', `${context} pack ID must be sunny-meadow`);
+  assert(manifest.pack?.version === '0.1.0-alpha.6', `${context} pack version mismatch`);
+  assert(
+    JSON.stringify(manifest.pack?.generator) === JSON.stringify({ name: 'Mapsoo Worldsmith', version: '0.1.0-alpha.6' }),
+    `${context} pack generator mismatch`,
+  );
+  assert(manifest.compatibility?.importer?.min_version === '0.1.0-alpha.6', `${context} importer minimum mismatch`);
+
+  const records = indexManifestFiles(manifest, context);
+  assert(records.size === 17, `${context} alpha.6 manifest must contain 17 payload records`);
+  assert(
+    JSON.stringify([...records.keys()].sort()) === JSON.stringify([...ALPHA6_PAYLOAD_PATHS].sort()),
+    `${context} alpha.6 payload path set mismatch`,
+  );
+  for (const [path, mediaType] of [
+    [ALPHA6_STRUCTURES_ATLAS_PATH, 'image/png'],
+    [ALPHA6_STRUCTURES_PATH, 'application/json'],
+    [ALPHA6_STRUCTURES_SCHEMA_PATH, 'application/json'],
+    [ALPHA6_PLACES_SCHEMA_PATH, 'application/json'],
+    [ALPHA6_PACK_SCHEMA_PATH, 'application/json'],
+    [ALPHA6_WORLD_SCHEMA_PATH, 'application/json'],
+  ]) assert(records.get(path)?.media_type === mediaType, `${context} media type mismatch: ${path}`);
+
+  const placesRecord = records.get(ALPHA5_PLACES_PATH);
+  const placesBytes = await requireVerifiedFile(ALPHA5_PLACES_PATH, records, readPackFile, `${context} places`);
+  const places = decodeCanonicalJson(placesBytes, `${context} places`);
+  assert(places.schema_version === '0.2.0', `${context} places schema must be 0.2.0`);
+  assert(
+    JSON.stringify(places.pack) === JSON.stringify({ id: 'sunny-meadow', version: '0.1.0-alpha.6' }),
+    `${context} places pack binding mismatch`,
+  );
+  assert(JSON.stringify(places.world_spec) === JSON.stringify(manifest.world_spec), `${context} places World Spec binding mismatch`);
+
+  const structuresRecord = records.get(ALPHA6_STRUCTURES_PATH);
+  const structuresBytes = await requireVerifiedFile(ALPHA6_STRUCTURES_PATH, records, readPackFile, `${context} structures`);
+  const structures = decodeCanonicalJson(structuresBytes, `${context} structures`);
+  assertExactKeys(
+    structures,
+    ['schema_version', 'pack', 'world_spec', 'places', 'coordinate_space', 'resolution_algorithm', 'atlas', 'structures'],
+    `${context} structures sidecar`,
+  );
+  assert(structures.schema_version === '0.1.0', `${context} structures schema must be 0.1.0`);
+  assert(
+    JSON.stringify(structures.pack) === JSON.stringify({ id: 'sunny-meadow', version: '0.1.0-alpha.6' }),
+    `${context} structures pack binding mismatch`,
+  );
+  assert(JSON.stringify(structures.world_spec) === JSON.stringify(manifest.world_spec), `${context} structures World Spec binding mismatch`);
+  assert(
+    JSON.stringify(structures.places) === JSON.stringify({ path: ALPHA5_PLACES_PATH, sha256: placesRecord.sha256 }),
+    `${context} structures places binding mismatch`,
+  );
+  assert(
+    JSON.stringify(structures.resolution_algorithm) === JSON.stringify({ id: 'mapsoo-semantic-structure-resolver', version: '0.1.0' }),
+    `${context} structure resolution algorithm mismatch`,
+  );
+  assert(
+    structures.atlas?.path === ALPHA6_STRUCTURES_ATLAS_PATH
+      && Array.isArray(structures.atlas.sprite_size_px)
+      && Array.isArray(structures.atlas.pivot_px),
+    `${context} structures atlas contract mismatch`,
+  );
+  assert(Array.isArray(structures.structures) && structures.structures.length <= 8, `${context} structures count is invalid`);
+
+  const worldBytes = await requireVerifiedFile(manifest.world_spec.path, records, readPackFile, `${context} World Spec`);
+  const world = decodeCanonicalJson(worldBytes, `${context} World Spec`);
+  const authored = world.structures ?? [];
+  assert(world.schemaVersion === '0.3.0' && Array.isArray(authored), `${context} World Spec 0.3 structures are invalid`);
+  assert(authored.length === structures.structures.length, `${context} authored/resolved structure count mismatch`);
+  const structureIds = new Set();
+  const placeIds = new Set();
+  for (const [index, structure] of structures.structures.entries()) {
+    assertPlainObject(structure, `${context} structures[${index}]`);
+    const declaration = authored[index];
+    assertPlainObject(declaration, `${context} World Spec structures[${index}]`);
+    assert(structure.order === index, `${context} structure order must be contiguous`);
+    assert(typeof structure.id === 'string' && structure.id && !structureIds.has(structure.id), `${context} structure ID is invalid or duplicated`);
+    assert(typeof structure.place_id === 'string' && structure.place_id && !placeIds.has(structure.place_id), `${context} structure place is invalid or duplicated`);
+    structureIds.add(structure.id);
+    placeIds.add(structure.place_id);
+    assert(
+      declaration.id === structure.id
+        && declaration.placeId === structure.place_id
+        && declaration.archetype === structure.archetype,
+      `${context} structure is not an ordered projection of the World Spec`,
+    );
+    assert(structure.sprite_id === `structure-${structure.archetype}-01`, `${context} structure sprite binding mismatch`);
+    assert(Array.isArray(structure.region_px) && structure.region_px.length === 4, `${context} structure region is invalid`);
+    assert(Array.isArray(structure.pivot_px) && structure.pivot_px.length === 2, `${context} structure pivot is invalid`);
+  }
+  assert(
+    manifest.runtime?.structures?.path === ALPHA6_STRUCTURES_PATH
+      && manifest.runtime.structures.sha256 === structuresRecord.sha256
+      && manifest.runtime.structures.schema?.path === ALPHA6_STRUCTURES_SCHEMA_PATH
+      && manifest.runtime.structures.schema.sha256 === records.get(ALPHA6_STRUCTURES_SCHEMA_PATH)?.sha256,
+    `${context} runtime structures binding mismatch`,
+  );
+  assert(
+    manifest.runtime?.places?.path === ALPHA5_PLACES_PATH
+      && manifest.runtime.places.sha256 === placesRecord.sha256
+      && manifest.runtime.places.schema?.path === ALPHA6_PLACES_SCHEMA_PATH
+      && manifest.runtime.places.schema.sha256 === records.get(ALPHA6_PLACES_SCHEMA_PATH)?.sha256,
+    `${context} runtime places binding mismatch`,
+  );
+
+  const actualLicenseBytes = await requireVerifiedFile('license-assets.md', records, readPackFile, `${context} asset license`);
+  const actualLicense = new TextDecoder('utf-8', { fatal: true }).decode(actualLicenseBytes);
+  const alpha6LicensePhrase = 'procedural PNG, map, semantic-place, and semantic-structure assets';
+  assert(actualLicense.includes(alpha6LicensePhrase) && actualLicense.includes('CC0 1.0'), `${context} asset license must scope CC0 to semantic structures`);
+  const alpha5LicenseBytes = Buffer.from(
+    actualLicense.replace(alpha6LicensePhrase, 'procedural PNG, map, and semantic-place assets'),
+    'utf8',
+  );
+  const alpha5Places = { ...places, schema_version: '0.1.0', pack: { ...places.pack, version: '0.1.0-alpha.5' } };
+  const alpha5PlacesBytes = Buffer.from(`${JSON.stringify(alpha5Places, null, 2)}\n`, 'utf8');
+  const commonFiles = manifest.files
+    .filter(({ path }) => ![ALPHA6_STRUCTURES_PATH, ALPHA6_STRUCTURES_SCHEMA_PATH, ALPHA6_STRUCTURES_ATLAS_PATH].includes(path))
+    .map((record) => {
+      if (record.path === ALPHA6_PACK_SCHEMA_PATH) return { ...record, path: ALPHA5_PACK_SCHEMA_PATH };
+      if (record.path === ALPHA6_WORLD_SCHEMA_PATH) return { ...record, path: ALPHA5_WORLD_SCHEMA_PATH };
+      if (record.path === ALPHA6_PLACES_SCHEMA_PATH) return { ...record, path: ALPHA5_PLACES_SCHEMA_PATH };
+      if (record.path === ALPHA5_PLACES_PATH) return { ...record, bytes: alpha5PlacesBytes.length, sha256: sha256(alpha5PlacesBytes) };
+      if (record.path === 'license-assets.md') return { ...record, bytes: alpha5LicenseBytes.length, sha256: sha256(alpha5LicenseBytes) };
+      return record;
+    });
+  const commonManifest = {
+    ...manifest,
+    schema_version: '0.3.0',
+    pack: { ...manifest.pack, version: '0.1.0-alpha.5', generator: { ...manifest.pack.generator, version: '0.1.0-alpha.5' } },
+    compatibility: { ...manifest.compatibility, importer: { ...manifest.compatibility.importer, min_version: '0.1.0-alpha.5' } },
+    runtime: {
+      places: {
+        path: ALPHA5_PLACES_PATH,
+        sha256: sha256(alpha5PlacesBytes),
+        schema: { path: ALPHA5_PLACES_SCHEMA_PATH, sha256: records.get(ALPHA6_PLACES_SCHEMA_PATH).sha256 },
+      },
+    },
+    sprites: manifest.sprites.filter((sprite) => !Array.isArray(sprite.tags) || sprite.tags[0] !== 'structure'),
+    files: commonFiles,
+  };
+  return verifyAlpha5SemanticPlacesReceipt({
+    manifest: commonManifest,
+    readPackFile: async (path) => {
+      if (path === ALPHA5_PACK_SCHEMA_PATH) return readPackFile(ALPHA6_PACK_SCHEMA_PATH);
+      if (path === ALPHA5_WORLD_SCHEMA_PATH) return readPackFile(ALPHA6_WORLD_SCHEMA_PATH);
+      if (path === ALPHA5_PLACES_SCHEMA_PATH) return readPackFile(ALPHA6_PLACES_SCHEMA_PATH);
+      if (path === ALPHA5_PLACES_PATH) return alpha5PlacesBytes;
+      if (path === 'license-assets.md') return alpha5LicenseBytes;
+      return readPackFile(path);
+    },
+    context,
+  });
+}
+
 /**
  * Selects a receipt policy from the trusted release registry. The manifest and
  * receipt never choose their own verifier; unknown versions and policies fail closed.
@@ -840,6 +1027,13 @@ export async function verifyReceiptForRelease({
         'The builtin-semantic-places-alpha5-v0.2 receipt policy only authorizes release 0.1.0-alpha.5',
       );
       verifier = verifyAlpha5SemanticPlacesReceipt;
+      break;
+    case 'builtin-semantic-structures-alpha6-v0.2':
+      assert(
+        config.version === '0.1.0-alpha.6',
+        'The builtin-semantic-structures-alpha6-v0.2 receipt policy only authorizes release 0.1.0-alpha.6',
+      );
+      verifier = verifyAlpha6SemanticStructuresReceipt;
       break;
     default:
       throw new Error(

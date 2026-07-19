@@ -1,0 +1,87 @@
+{
+  "schema_version": "0.1.0",
+  "pack": {
+    "id": "sunny-meadow",
+    "version": "0.1.0-alpha.6"
+  },
+  "world_spec": {
+    "path": "worlds/sunny-meadow.world.json",
+    "sha256": "81036423a66f83823eecca6c0907e3fe06d56dd0092d31b7bd6dd3b9f2204082"
+  },
+  "places": {
+    "path": "runtime/places.json",
+    "sha256": "bf2b3de2eb88232ab3b263851fa6474ff2a1e4d9ce7046b209f0081041d45471"
+  },
+  "coordinate_space": {
+    "origin": "top-left",
+    "unit": "cell",
+    "tile_size": 32
+  },
+  "resolution_algorithm": {
+    "id": "mapsoo-semantic-structure-resolver",
+    "version": "0.1.0"
+  },
+  "atlas": {
+    "path": "atlases/structures.png",
+    "sprite_size_px": [
+      64,
+      64
+    ],
+    "pivot_px": [
+      32,
+      64
+    ]
+  },
+  "structures": [
+    {
+      "id": "spawn-cottage",
+      "order": 0,
+      "place_id": "spawn",
+      "archetype": "cottage",
+      "sprite_id": "structure-cottage-01",
+      "cell": {
+        "x": 11,
+        "y": 7
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 240
+      },
+      "region_px": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ]
+    },
+    {
+      "id": "landmark-shrine",
+      "order": 1,
+      "place_id": "landmark",
+      "archetype": "shrine",
+      "sprite_id": "structure-shrine-01",
+      "cell": {
+        "x": 8,
+        "y": 7
+      },
+      "pixel_center": {
+        "x": 272,
+        "y": 240
+      },
+      "region_px": [
+        192,
+        0,
+        64,
+        64
+      ],
+      "pivot_px": [
+        32,
+        64
+      ]
+    }
+  ]
+}

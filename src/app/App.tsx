@@ -3,6 +3,7 @@ import {
   CURRENT_PACK_VERSION,
   downloadCurrentPortablePack,
 } from '../adapters/export-current-pack';
+import { downloadAlpha5PortablePack } from '../adapters/export-browser-pack-alpha5';
 import { readStoyoAssetRequestFile } from '../adapters/import-stoyo-asset-request';
 import { readWorldSpecFile } from '../adapters/import-world-spec';
 import type { GenerationRunResult } from '../core/generation-evidence';
@@ -11,7 +12,10 @@ import { PLAYABLE_PROP_KINDS } from '../core/generate-playable-world';
 import { PLAYABLE_TERRAIN_TILE_DEFINITIONS } from '../core/playable-terrain';
 import {
   BIOME_PALETTES,
+  ALPHA6_DEFAULT_WORLD_SPEC,
+  ALPHA6_WORLD_SCHEMA_VERSION,
   DEFAULT_WORLD_SPEC,
+  WORLD_SCHEMA_VERSION,
   cloneWorldSpec,
   type BiomeId,
   type GeneratedWorld,
@@ -52,7 +56,7 @@ export function App() {
   const generationSessionRef = useRef<GenerationSession | null>(null);
   if (generationSessionRef.current === null) generationSessionRef.current = new GenerationSession();
   const generationSession = generationSessionRef.current;
-  const [draft, setDraft] = useState<WorldSpec>(() => cloneWorldSpec(DEFAULT_WORLD_SPEC));
+  const [draft, setDraft] = useState<WorldSpec>(() => cloneWorldSpec(ALPHA6_DEFAULT_WORLD_SPEC));
   const [generationRun, setGenerationRun] = useState<GenerationRunResult | null>(null);
   const world: GeneratedWorld | null = generationRun?.world ?? null;
   const [exportState, setExportState] = useState<'idle' | 'building' | 'failed'>('idle');
@@ -68,6 +72,8 @@ export function App() {
   const packIssues = useMemo(() => (world ? validateGeneratedWorld(world) : []), [world]);
   const hasDraftErrors = draftIssues.some((issue) => issue.severity === 'error');
   const hasPackErrors = !world || packIssues.some((issue) => issue.severity === 'error');
+  const currentPackExportCompatible = world?.spec.schemaVersion === WORLD_SCHEMA_VERSION
+    || world?.spec.schemaVersion === ALPHA6_WORLD_SCHEMA_VERSION;
   const hasChanges = !world || JSON.stringify(draft) !== JSON.stringify(world.spec);
   const operationBusy = generationState === 'generating'
     || importState !== 'idle'
@@ -80,7 +86,7 @@ export function App() {
     setGenerationState('generating');
     setGenerationNotice(null);
 
-    void runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, DEFAULT_WORLD_SPEC, { signal: request.signal })
+    void runGenerationProviderWithEvidence(DEFAULT_GENERATION_PROVIDER, ALPHA6_DEFAULT_WORLD_SPEC, { signal: request.signal })
       .then((result) => {
         if (!generationSession.isCurrent(request)) return;
         setGenerationRun(result);
@@ -157,7 +163,11 @@ export function App() {
       if (errors.length > 0) {
         throw new Error(`Invalid generated world: ${errors.map((issue) => issue.code).join(', ')}`);
       }
-      await downloadCurrentPortablePack(generationRun);
+      if (generationRun.world.spec.schemaVersion === ALPHA6_WORLD_SCHEMA_VERSION) {
+        await downloadCurrentPortablePack(generationRun);
+      } else {
+        await downloadAlpha5PortablePack(generationRun);
+      }
       setExportState('idle');
     } catch {
       console.error('Mapsoo portable export failed after local validation.');
@@ -628,9 +638,15 @@ export function App() {
                 className="primary-action"
                 type="button"
                 onClick={exportPack}
-                disabled={exportState === 'building' || hasPackErrors || operationBusy}
+                disabled={exportState === 'building' || hasPackErrors || !currentPackExportCompatible || operationBusy}
               >
-                {exportState === 'building' ? 'Building ZIP…' : 'Assemble Godot-compatible ZIP'}
+                {exportState === 'building'
+                  ? 'Building ZIP…'
+                  : world?.spec.schemaVersion === ALPHA6_WORLD_SCHEMA_VERSION
+                    ? 'Assemble Alpha.6 preview ZIP'
+                    : currentPackExportCompatible
+                      ? 'Assemble Godot-compatible ZIP'
+                      : 'Unsupported World Spec version'}
                 <span>↓</span>
               </button>
             </div>

@@ -19,7 +19,12 @@ function deepFreeze(value) {
   return value;
 }
 
-function releaseFiles(tag, { evidenceVideo = false, receiptSchema = false, placesSchema = false } = {}) {
+function releaseFiles(tag, {
+  evidenceVideo = false,
+  receiptSchema = false,
+  placesSchema = false,
+  structuresSchema = false,
+} = {}) {
   const files = {
     web: `mapsoo-worldsmith-web-${tag}.zip`,
     godotImporter: `mapsoo-godot-importer-${tag}.zip`,
@@ -37,6 +42,7 @@ function releaseFiles(tag, { evidenceVideo = false, receiptSchema = false, place
     files.receiptSchema = `mapsoo-generation-receipt.schema-${tag}.json`;
   }
   if (placesSchema) files.placesSchema = `mapsoo-places.schema-${tag}.json`;
+  if (structuresSchema) files.structuresSchema = `mapsoo-structures.schema-${tag}.json`;
   return files;
 }
 
@@ -60,6 +66,7 @@ const receiptVerifierVersions = Object.freeze({
   'builtin-procedural-alpha3-v0.2': Object.freeze(['0.1.0-alpha.3']),
   'builtin-playable-terrain-alpha4-v0.2': Object.freeze(['0.1.0-alpha.4']),
   'builtin-semantic-places-alpha5-v0.2': Object.freeze(['0.1.0-alpha.5']),
+  'builtin-semantic-structures-alpha6-v0.2': Object.freeze(['0.1.0-alpha.6']),
 });
 const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
@@ -67,6 +74,7 @@ const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v3',
   'sunny-meadow-playable-terrain-cc0-v4',
   'sunny-meadow-semantic-places-cc0-v5',
+  'sunny-meadow-semantic-structures-cc0-v6',
 ]);
 const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
@@ -74,6 +82,7 @@ const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v3',
   'sunny-meadow-playable-terrain-cc0-v4',
   'sunny-meadow-semantic-places-cc0-v5',
+  'sunny-meadow-semantic-structures-cc0-v6',
 ]);
 
 export function assertReceiptVerifierBinding(receiptVerifier, version) {
@@ -633,12 +642,66 @@ const alpha5 = deepFreeze(validateReleaseConfig({
   },
 }));
 
+const ALPHA_6_VERSION = '0.1.0-alpha.6';
+const ALPHA_6_TAG = `v${ALPHA_6_VERSION}`;
+const alpha6ReleaseFiles = releaseFiles(ALPHA_6_TAG, {
+  receiptSchema: true,
+  placesSchema: true,
+  structuresSchema: true,
+});
+
+const alpha6 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_6_VERSION,
+  tag: ALPHA_6_TAG,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-semantic-structures-alpha6-v0.2',
+  expectedExamplePackSha256: '4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'sunny-meadow-semantic-structures-cc0-v6',
+    files: alpha6ReleaseFiles,
+    notes: `docs/releases/${ALPHA_6_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_6_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_6_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow-v0.3.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      { releaseFileKey: 'worldSchema', source: 'schemas/mapsoo-world-0.3.schema.json', packPath: 'schema/mapsoo-world-0.3.schema.json' },
+      { releaseFileKey: 'packSchema', source: 'schemas/mapsoo-pack-0.4.schema.json', packPath: 'schema/mapsoo-pack-0.4.schema.json' },
+      { releaseFileKey: 'placesSchema', source: 'schemas/mapsoo-places-0.2.schema.json', packPath: 'schema/mapsoo-places-0.2.schema.json' },
+      { releaseFileKey: 'structuresSchema', source: 'schemas/mapsoo-structures-0.1.schema.json', packPath: 'schema/mapsoo-structures-0.1.schema.json' },
+      { releaseFileKey: 'receiptSchema', source: 'schemas/mapsoo-generation-receipt.schema.json', packPath: 'schema/mapsoo-generation-receipt.schema.json' },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'sunny-meadow-semantic-structures-cc0-v6',
+    shortDescription: 'Free CC0 Godot world pack with deterministic place-linked exterior structures.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_6_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_6_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_6_TAG}.html`,
+    rendererFrames: [],
+    requiredRendererFacts: [],
+    supportingFiles: [],
+    visuals: [],
+  },
+}));
+
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
   [alpha2.version]: alpha2,
   [alpha3.version]: alpha3,
   [alpha4.version]: alpha4,
   [alpha5.version]: alpha5,
+  [alpha6.version]: alpha6,
 });
 
 export function getReleaseConfig(version) {

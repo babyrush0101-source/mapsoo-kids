@@ -66,7 +66,7 @@ func _init() -> void:
 		_fail("Validated manifest could not be re-read for the CLI scene contract.")
 		return
 	var schema_version := str((manifest_parser.data as Dictionary).get("schema_version", ""))
-	if schema_version in ["0.2.0", "0.3.0"]:
+	if schema_version in ["0.2.0", "0.3.0", "0.4.0"]:
 		if water == null or roads == null:
 			world.free()
 			_fail("Playable-terrain scene is missing Water or Roads: TileMapLayer.")
@@ -80,7 +80,7 @@ func _init() -> void:
 			world.free()
 			_fail("Playable-terrain scene layer z-order differs from the portable contract.")
 			return
-	if schema_version == "0.3.0":
+	if schema_version in ["0.3.0", "0.4.0"]:
 		var manifest: Dictionary = manifest_parser.data
 		var runtime: Dictionary = manifest.get("runtime", {})
 		var places_ref: Dictionary = runtime.get("places", {})
@@ -88,20 +88,59 @@ func _init() -> void:
 		var sidecar_parser := JSON.new()
 		if sidecar_parser.parse(FileAccess.get_file_as_string(places_path)) != OK or typeof(sidecar_parser.data) != TYPE_DICTIONARY:
 			world.free()
-			_fail("Schema 0.3.0 places sidecar could not be re-read for the CLI scene contract.")
+			_fail("Schema %s places sidecar could not be re-read for the CLI scene contract." % schema_version)
 			return
 		var expected_places: Array = (sidecar_parser.data as Dictionary).get("places", [])
 		var places_root := world.get_node_or_null("Places") as Node2D
 		if (places_root == null and not expected_places.is_empty()) or (places_root != null and places_root.get_child_count() != expected_places.size()):
 			world.free()
-			_fail("Schema 0.3.0 scene Places count differs from the validated sidecar.")
+			_fail("Schema %s scene Places count differs from the validated sidecar." % schema_version)
 			return
 		for index: int in expected_places.size():
 			var marker := places_root.get_node_or_null("Place_%04d" % index) as Marker2D
 			var expected_place: Dictionary = expected_places[index]
 			if marker == null or marker.get_meta("mapsoo_id", "") != expected_place.get("id") or marker.get_child_count() != 1 or not (marker.get_child(0) is Sprite2D):
 				world.free()
-				_fail("Schema 0.3.0 scene marker %d differs from the validated sidecar." % index)
+				_fail("Schema %s scene marker %d differs from the validated sidecar." % [schema_version, index])
+				return
+	if schema_version == "0.4.0":
+		var manifest: Dictionary = manifest_parser.data
+		var structures_ref: Dictionary = (manifest.get("runtime", {}) as Dictionary).get("structures", {})
+		var structures_path := manifest_path.get_base_dir().path_join(str(structures_ref.get("path", "")))
+		var structures_parser := JSON.new()
+		if structures_parser.parse(FileAccess.get_file_as_string(structures_path)) != OK or typeof(structures_parser.data) != TYPE_DICTIONARY:
+			world.free()
+			_fail("Schema 0.4.0 structures sidecar could not be re-read for the CLI scene contract.")
+			return
+		var expected_structures: Array = (structures_parser.data as Dictionary).get("structures", [])
+		var structures_root := world.get_node_or_null("Structures") as Node2D
+		var places_root := world.get_node_or_null("Places") as Node2D
+		if (structures_root == null and not expected_structures.is_empty()) or (structures_root != null and structures_root.get_child_count() != expected_structures.size()):
+			world.free()
+			_fail("Schema 0.4.0 scene Structures count differs from the validated sidecar.")
+			return
+		for index: int in expected_structures.size():
+			var expected: Dictionary = expected_structures[index]
+			var sprite := structures_root.get_node_or_null("Structure_%04d" % index) as Sprite2D
+			var marker: Marker2D = null
+			if places_root != null:
+				for candidate: Node in places_root.get_children():
+					if candidate.get_meta("mapsoo_id", "") == expected.get("place_id"):
+						marker = candidate as Marker2D
+						break
+			var expected_region: Array = expected.get("region_px", [])
+			var atlas_texture := sprite.texture as AtlasTexture if sprite != null else null
+			if (
+				sprite == null or marker == null or sprite.position != marker.position
+				or sprite.get_meta("mapsoo_id", "") != expected.get("id")
+				or sprite.get_meta("mapsoo_place_id", "") != expected.get("place_id")
+				or sprite.get_meta("mapsoo_archetype", "") != expected.get("archetype")
+				or sprite.get_meta("mapsoo_order", -1) != index or not sprite.has_meta("mapsoo_cell")
+				or atlas_texture == null or expected_region.size() != 4
+				or atlas_texture.region != Rect2(expected_region[0], expected_region[1], expected_region[2], expected_region[3])
+			):
+				world.free()
+				_fail("Schema 0.4.0 scene structure %d differs from the validated sidecar/place linkage." % index)
 				return
 
 	var pack_id := str(result.get("pack_id", ""))

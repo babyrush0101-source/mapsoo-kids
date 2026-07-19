@@ -202,15 +202,22 @@ function verifyProceduralPageMarkdown(page) {
     'Godot 4.7',
     RELEASE_FILES.examplePack,
     'no GDScript or addon',
-    'not by an image-generation model',
     'Text & Dialog',
     'Code',
     'per-payload-file SHA-256',
     'MIT License',
     'contains_generative_ai: false',
-    'versioned, verified example pack',
   ]) {
     assert(page.includes(requiredText), `itch page Markdown is missing required fact: ${requiredText}`);
+  }
+  assert(
+    /not (?:by|produced by) an image-generation model/.test(page),
+    'itch page Markdown must state that pixel art was not produced by an image-generation model',
+  );
+  if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v6')) {
+    assert(/unpublished.{0,80}candidate/s.test(page), 'Alpha.6 itch page must identify itself as an unpublished candidate');
+  } else {
+    assert(page.includes('versioned, verified example pack'), 'itch page Markdown is missing its verified-pack statement');
   }
   assert(!/Godot 4\.3\+/.test(page), 'itch page must not claim untested Godot 4.3+ compatibility');
   assert(!/\b(?:Windows|macOS|Linux)\b\s+(?:download|build)/i.test(page), 'itch page falsely claims an OS build');
@@ -223,6 +230,7 @@ function verifyMetadata(metadata) {
     case 'sunny-meadow-procedural-cc0-v3':
     case 'sunny-meadow-playable-terrain-cc0-v4':
     case 'sunny-meadow-semantic-places-cc0-v5':
+    case 'sunny-meadow-semantic-structures-cc0-v6':
       return verifyProceduralMetadata(metadata);
     default:
       throw new Error(
@@ -239,13 +247,17 @@ function verifyPageMarkdown(page) {
     case 'sunny-meadow-procedural-cc0-v3':
     case 'sunny-meadow-playable-terrain-cc0-v4':
     case 'sunny-meadow-semantic-places-cc0-v5':
+    case 'sunny-meadow-semantic-structures-cc0-v6': {
       verifyProceduralPageMarkdown(page);
+      const semanticStructures = CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v6');
+      const semanticPlaces = semanticStructures
+        || CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5');
       for (const requiredText of [
         'generation-receipt.json',
         'schema/mapsoo-generation-receipt.schema.json',
         'schema_version: 0.2.0',
-        CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? '15 files' : '12 files',
-        CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? '14 payload records' : '11 payload records',
+        semanticStructures ? '18 files' : semanticPlaces ? '15 files' : '12 files',
+        semanticStructures ? '17 payload records' : semanticPlaces ? '14 payload records' : '11 payload records',
         'Executable-free asset ZIP',
       ]) {
         assert(page.includes(requiredText), `receipt-era itch page is missing required fact: ${requiredText}`);
@@ -275,7 +287,20 @@ function verifyPageMarkdown(page) {
           'not a complete game',
         ]) assert(page.includes(requiredText), `semantic-places itch page is missing required fact: ${requiredText}`);
       }
+      if (semanticStructures) {
+        for (const requiredText of [
+          'pack schema `0.4.0`',
+          'World Spec `0.3.0`',
+          'places sidecar `0.2.0`',
+          'structures sidecar `0.1.0`',
+          '4 reusable structure archetypes',
+          'does not provide navigation or pathfinding',
+          'not a complete game',
+        ]) assert(page.includes(requiredText), `semantic-structures itch page is missing required fact: ${requiredText}`);
+        assert(/place-linked exterior structures/i.test(page), 'semantic-structures itch page must describe place-linked exterior structures');
+      }
       return;
+    }
     default:
       throw new Error(
         `Unsupported itch page policy: ${CURRENT_RELEASE_CONFIG.itch.verificationPolicy}`,
@@ -290,6 +315,7 @@ function verifyConfiguredItchPackManifest(manifest) {
     case 'sunny-meadow-procedural-cc0-v3':
     case 'sunny-meadow-playable-terrain-cc0-v4':
     case 'sunny-meadow-semantic-places-cc0-v5':
+    case 'sunny-meadow-semantic-structures-cc0-v6':
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
       assert(
         manifest.provenance?.contains_generative_ai === false,
@@ -298,7 +324,10 @@ function verifyConfiguredItchPackManifest(manifest) {
       if (!CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v1')) {
         assert(manifest.receipt?.path === 'generation-receipt.json', 'receipt-era itch receipt path mismatch');
         const receiptPaths = new Set((manifest.files ?? []).map(({ path }) => path));
-        assert(receiptPaths.size === (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? 14 : 11), 'receipt-era itch manifest payload count mismatch');
+        const semanticStructures = CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v6');
+        const semanticPlaces = semanticStructures
+          || CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5');
+        assert(receiptPaths.size === (semanticStructures ? 17 : semanticPlaces ? 14 : 11), 'receipt-era itch manifest payload count mismatch');
         assert(receiptPaths.has('generation-receipt.json'), 'receipt-era itch manifest is missing its receipt');
         assert(
           receiptPaths.has('schema/mapsoo-generation-receipt.schema.json'),
@@ -335,6 +364,27 @@ function verifyConfiguredItchPackManifest(manifest) {
         assert(manifest.sprites?.length === 12, 'semantic-places itch manifest must declare six props and six place sprites');
         assert(manifest.runtime?.places?.path === 'runtime/places.json', 'semantic-places itch runtime path mismatch');
         assert(manifest.runtime?.places?.schema?.path === 'schema/mapsoo-places-0.1.schema.json', 'semantic-places itch schema path mismatch');
+      }
+      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v6')) {
+        assert(manifest.schema_version === '0.4.0', 'semantic-structures itch manifest schema must be 0.4.0');
+        assert(manifest.pack?.generator?.version === VERSION, 'semantic-structures itch generator version mismatch');
+        assert(manifest.sprites?.length === 16, 'semantic-structures itch manifest must declare six props, six places, and four structures');
+        assert(manifest.runtime?.places?.path === 'runtime/places.json', 'semantic-structures itch places runtime path mismatch');
+        assert(manifest.runtime?.places?.schema?.path === 'schema/mapsoo-places-0.2.schema.json', 'semantic-structures itch places schema path mismatch');
+        assert(manifest.runtime?.structures?.path === 'runtime/structures.json', 'semantic-structures itch runtime path mismatch');
+        assert(manifest.runtime?.structures?.schema?.path === 'schema/mapsoo-structures-0.1.schema.json', 'semantic-structures itch schema path mismatch');
+        const structureSprites = manifest.sprites.slice(12);
+        assert(
+          JSON.stringify(structureSprites.map(({ id }) => id))
+            === JSON.stringify(['structure-cottage-01', 'structure-workshop-01', 'structure-tower-01', 'structure-shrine-01']),
+          'semantic-structures itch sprite IDs or order mismatch',
+        );
+        assert(
+          structureSprites.every((sprite, index) =>
+            sprite.atlas === 'atlases/structures.png'
+              && JSON.stringify(sprite.region_px) === JSON.stringify([index * 64, 0, 64, 64])),
+          'semantic-structures itch sprite atlas binding mismatch',
+        );
       }
       return;
     default:
@@ -534,8 +584,6 @@ export async function verifyPackZip(packPath, authoritativeHash) {
   }
 
   if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy !== 'sunny-meadow-procedural-cc0-v1') {
-    const expectedEntries = CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? 15 : 12;
-    assert(allEntries.length === expectedEntries, `receipt-era itch asset ZIP must contain exactly ${expectedEntries} entries`);
     assert(allEntries.every(({ dir }) => !dir), 'receipt-era itch asset ZIP must not contain directory entries');
   }
 

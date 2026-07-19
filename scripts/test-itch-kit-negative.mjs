@@ -169,6 +169,7 @@ async function runReceiptPolicyNegativeCases() {
     case 'builtin-procedural-alpha3-v0.2':
     case 'builtin-playable-terrain-alpha4-v0.2':
     case 'builtin-semantic-places-alpha5-v0.2':
+    case 'builtin-semantic-structures-alpha6-v0.2':
       await expectPackFailure(
         'receipt-0.2 AI disclosure conflict with recomputed inner integrity',
         () => rewriteCurrentReceipt(({ receipt }) => {

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import exampleWorldSpec from '../../examples/sunny-meadow-v0.2.world.json';
+import alpha6ExampleWorldSpec from '../../examples/sunny-meadow-v0.3.world.json';
 import { generateWorld } from './generate-world';
 import { buildPackManifest, isSafePackPath } from './pack-manifest';
-import { DEFAULT_WORLD_SPEC, cloneWorldSpec } from './world-spec';
+import { ALPHA6_DEFAULT_WORLD_SPEC, DEFAULT_WORLD_SPEC, cloneWorldSpec } from './world-spec';
 import { validateGeneratedWorld, validateWorldSpec } from './validate-world';
 
 const HASH = 'a'.repeat(64);
@@ -23,6 +24,7 @@ function manifestFiles(worldId = DEFAULT_WORLD_SPEC.id) {
 describe('world generation', () => {
   it('keeps the versioned example aligned with the built-in default', () => {
     expect(exampleWorldSpec).toEqual(DEFAULT_WORLD_SPEC);
+    expect(alpha6ExampleWorldSpec).toEqual(ALPHA6_DEFAULT_WORLD_SPEC);
   });
 
   it('is deterministic for the same spec and seed', () => {

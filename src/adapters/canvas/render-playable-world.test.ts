@@ -1,11 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generateWorld } from '../../core/generate-world';
 import type { ResolvedWorldPlace } from '../../core/semantic-places';
-import { DEFAULT_WORLD_SPEC, PLACE_KINDS } from '../../core/world-spec';
+import type { ResolvedWorldStructure } from '../../core/semantic-structures';
+import {
+  ALPHA6_DEFAULT_WORLD_SPEC,
+  DEFAULT_WORLD_SPEC,
+  PLACE_KINDS,
+  STRUCTURE_ARCHETYPES,
+} from '../../core/world-spec';
 import {
   drawSemanticPlaceMarker,
+  drawSemanticStructure,
   renderSemanticPlacesAtlas,
   renderSemanticPlacesOverlay,
+  renderSemanticStructuresAtlas,
+  renderSemanticStructuresOverlay,
 } from './render-playable-world';
 
 function place(overrides: Partial<ResolvedWorldPlace> = {}): ResolvedWorldPlace {
@@ -120,5 +129,61 @@ describe('semantic place marker atlas', () => {
         DEFAULT_WORLD_SPEC.visual.tileSize - 8,
       );
     });
+  });
+});
+
+describe('semantic structure art', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('draws every archetype procedurally without font rasterization', () => {
+    const world = generateWorld(ALPHA6_DEFAULT_WORLD_SPEC);
+    for (const archetype of STRUCTURE_ARCHETYPES) {
+      const context = mockContext();
+      drawSemanticStructure(context, world, archetype, 0, 0, 32);
+      expect(context.fillRect).toHaveBeenCalled();
+      expect(context.fillText).not.toHaveBeenCalled();
+    }
+  });
+
+  it('clears transparency and renders a stable one-row 2x2-tile atlas in contract order', () => {
+    const context = mockContext();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn(() => context),
+    };
+    vi.stubGlobal('document', { createElement: vi.fn(() => canvas) });
+
+    const result = renderSemanticStructuresAtlas(generateWorld(ALPHA6_DEFAULT_WORLD_SPEC));
+
+    expect(result).toBe(canvas);
+    expect(canvas.width).toBe(STRUCTURE_ARCHETYPES.length * ALPHA6_DEFAULT_WORLD_SPEC.visual.tileSize * 2);
+    expect(canvas.height).toBe(ALPHA6_DEFAULT_WORLD_SPEC.visual.tileSize * 2);
+    expect(context.clearRect).toHaveBeenCalledWith(0, 0, canvas.width, canvas.height);
+    expect(context.fillRect).toHaveBeenCalledWith(8, 28, 48, 32); // cottage
+    expect(context.fillRect).toHaveBeenCalledWith(72, 24, 48, 36); // workshop
+    expect(context.fillRect).toHaveBeenCalledWith(144, 8, 32, 52); // tower
+    expect(context.fillRect).toHaveBeenCalledWith(204, 20, 40, 40); // shrine
+  });
+
+  it('uses the resolved cell as a bottom-center foot point and ignores pixelCenter', () => {
+    const context = mockContext();
+    const world = generateWorld(ALPHA6_DEFAULT_WORLD_SPEC);
+    const structure: ResolvedWorldStructure = {
+      id: 'edge-cottage',
+      order: 0,
+      placeId: 'spawn',
+      archetype: 'cottage',
+      cell: { x: 0, y: 0 },
+      pixelCenter: { x: 999, y: 999 },
+    };
+
+    renderSemanticStructuresOverlay(context, world, [structure], 16);
+
+    // Sprite starts above/left of the surface; the Canvas itself clips it.
+    expect(context.fillRect).toHaveBeenCalledWith(-4, -2, 24, 16);
+    expect(context.fillRect).not.toHaveBeenCalledWith(999, 999, expect.any(Number), expect.any(Number));
   });
 });

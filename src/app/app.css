@@ -132,6 +132,33 @@ textarea { resize: vertical; line-height: 1.45; }
 .preview-placeholder.is-error { border-color: rgba(255, 143, 135, .45); }
 .preview-placeholder.is-error strong { color: #ff8f87; }
 .world-canvas { display: block; max-width: 100%; height: auto; image-rendering: pixelated; box-shadow: 0 20px 45px rgba(0,0,0,.4); }
+.structures-panel { margin-top: 10px; border: 1px solid var(--line); border-radius: 7px; background: #0b1310; }
+.structures-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; }
+.structures-heading-row > div { min-width: 0; }
+.structures-heading-row h3 { margin: 0; color: var(--ink); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+.structures-heading-row p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+.structures-toggle { flex: 0 0 auto; border: 1px solid rgba(121, 215, 255, .35); border-radius: 5px; padding: 7px 9px; background: rgba(121, 215, 255, .06); color: #79d7ff; font-size: 10px; font-weight: 750; }
+.structures-toggle:hover { border-color: #79d7ff; }
+.structures-toggle:focus-visible { outline: 2px solid #79d7ff; outline-offset: 2px; }
+.structures-toggle:disabled { cursor: not-allowed; opacity: .45; }
+.structures-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; margin: 0; padding: 1px 0 0; border-top: 1px solid var(--line); background: var(--line); list-style: none; }
+.structures-list li { display: flex; min-width: 0; gap: 9px; align-items: center; padding: 10px 12px; background: #0d1613; }
+.structures-list li > span:last-child { min-width: 0; }
+.structures-list strong, .structures-list small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.structures-list strong { color: var(--ink); font-size: 10px; }
+.structures-list small { margin-top: 3px; color: var(--muted); font-size: 8px; text-transform: capitalize; }
+.structure-kind { position: relative; flex: 0 0 24px; height: 22px; border: 2px solid #101712; background: #d6c18b; box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
+.structure-kind::before { content: ''; position: absolute; left: 3px; right: 3px; top: -5px; height: 7px; border: 2px solid #101712; background: #76a950; }
+.structure-kind-workshop { background: #b8d978; }
+.structure-kind-workshop::before { left: 1px; right: 5px; }
+.structure-kind-tower { flex-basis: 17px; height: 26px; }
+.structure-kind-tower::before { left: -3px; right: -3px; top: -4px; height: 5px; }
+.structure-kind-shrine { background: transparent; border-width: 0 3px 3px; }
+.structure-kind-shrine::before { left: -5px; right: -5px; top: -2px; height: 5px; }
+.structures-error { margin: 0; padding: 12px 14px; border-top: 1px solid rgba(255, 143, 135, .35); background: rgba(255, 100, 100, .06); }
+.structures-error strong { color: #ff8f87; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.structures-error p { margin: 4px 0 0; color: var(--ink); font-size: 10px; line-height: 1.45; }
+.structures-empty { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; line-height: 1.45; }
 .places-panel { margin-top: 10px; border: 1px solid var(--line); border-radius: 7px; background: #0b1310; }
 .places-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; }
 .places-heading-row h3 { margin: 0; color: var(--ink); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
@@ -223,6 +250,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1
   .workbench { display: block; background: transparent; border: 0; }
   .panel { border: 1px solid var(--line); margin-bottom: 12px; }
   .preview-panel { min-height: 560px; }
+  .structures-list { grid-template-columns: 1fr; }
   .places-list { grid-template-columns: 1fr; }
   .first-import-heading { align-items: flex-start; flex-direction: column; }
   .first-import-grid { grid-template-columns: 1fr; }
@@ -238,6 +266,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1
   .panel { padding: 17px; }
   .biome-grid { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: 1fr 1fr; }
+  .structures-heading-row { align-items: flex-start; flex-direction: column; }
   .build-note { grid-template-columns: auto 1fr; }
   .integrity-note { grid-template-columns: 1fr; }
   .integrity-note small { grid-column: auto; }

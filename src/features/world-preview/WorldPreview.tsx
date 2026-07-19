@@ -5,6 +5,11 @@ import {
   resolveSemanticPlaces,
   type ResolvedWorldPlace,
 } from '../../core/semantic-places';
+import {
+  StructureResolutionError,
+  resolveSemanticStructures,
+  type ResolvedWorldStructure,
+} from '../../core/semantic-structures';
 import type { GeneratedWorld } from '../../core/world-spec';
 
 interface WorldPreviewProps {
@@ -39,10 +44,31 @@ export function resolveWorldPreviewPlaces(world: GeneratedWorld): WorldPreviewPl
   }
 }
 
+export type WorldPreviewStructuresState =
+  | Readonly<{ status: 'ready'; structures: readonly ResolvedWorldStructure[] }>
+  | Readonly<{ status: 'error'; code: string; message: string }>;
+
+export function resolveWorldPreviewStructures(world: GeneratedWorld): WorldPreviewStructuresState {
+  try {
+    return { status: 'ready', structures: resolveSemanticStructures(world) };
+  } catch (error) {
+    if (error instanceof StructureResolutionError || error instanceof PlaceResolutionError) {
+      return { status: 'error', code: error.code, message: error.message };
+    }
+    return {
+      status: 'error',
+      code: 'structure.invalid-world',
+      message: error instanceof Error ? error.message : 'Semantic structures could not be resolved.',
+    };
+  }
+}
+
 export function WorldPreview({ world }: WorldPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showPlaces, setShowPlaces] = useState(true);
+  const [showStructures, setShowStructures] = useState(true);
   const placesState = useMemo(() => resolveWorldPreviewPlaces(world), [world]);
+  const structuresState = useMemo(() => resolveWorldPreviewStructures(world), [world]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -51,11 +77,15 @@ export function WorldPreview({ world }: WorldPreviewProps) {
     renderPlayableWorldToCanvas(canvas, world, cellSize, {
       places: placesState.status === 'ready' ? placesState.places : [],
       showPlaces: showPlaces && placesState.status === 'ready',
+      structures: structuresState.status === 'ready' ? structuresState.structures : [],
+      showStructures: showStructures && structuresState.status === 'ready',
     });
-  }, [placesState, showPlaces, world]);
+  }, [placesState, showPlaces, showStructures, structuresState, world]);
 
   const places = placesState.status === 'ready' ? placesState.places : [];
-  const overlayVisible = showPlaces && places.length > 0;
+  const structures = structuresState.status === 'ready' ? structuresState.structures : [];
+  const placesOverlayVisible = showPlaces && places.length > 0;
+  const structuresOverlayVisible = showStructures && structures.length > 0;
 
   return (
     <div className="world-preview">
@@ -63,9 +93,56 @@ export function WorldPreview({ world }: WorldPreviewProps) {
         <canvas
           ref={canvasRef}
           className="world-canvas"
-          aria-label={`Generated preview of ${world.spec.title}${overlayVisible ? ` with ${places.length} semantic places` : ''}`}
+          aria-label={`Generated preview of ${world.spec.title}${structuresOverlayVisible ? ` with ${structures.length} semantic structures` : ''}${placesOverlayVisible ? ` with ${places.length} semantic places` : ''}`}
         />
       </div>
+
+      <section className="structures-panel" aria-labelledby="structures-heading">
+        <div className="structures-heading-row">
+          <div>
+            <h3 id="structures-heading">Semantic structures</h3>
+            <p>
+              {structuresState.status === 'error'
+                ? 'Resolution blocked'
+                : `${structures.length} ${structures.length === 1 ? 'structure' : 'structures'} anchored to semantic places`}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="structures-toggle"
+            aria-pressed={structuresOverlayVisible}
+            aria-controls="semantic-structure-list"
+            disabled={structuresState.status === 'error' || structures.length === 0}
+            onClick={() => setShowStructures((current) => !current)}
+          >
+            {structuresOverlayVisible ? 'Hide structures' : 'Show structures'}
+          </button>
+        </div>
+
+        {structuresState.status === 'error' ? (
+          <div className="structures-error" id="semantic-structure-list" role="alert">
+            <strong>{structuresState.code}</strong>
+            <p>{structuresState.message}</p>
+            <p>Repair the referenced place or generated terrain, then generate the world again.</p>
+          </div>
+        ) : structures.length > 0 ? (
+          <ol id="semantic-structure-list" className="structures-list">
+            {structures.map((structure) => (
+              <li key={structure.id}>
+                <span className={`structure-kind structure-kind-${structure.archetype}`} aria-hidden="true" />
+                <span>
+                  <strong>{structure.id}</strong>
+                  <small>{structure.archetype} · place {structure.placeId} · cell {structure.cell.x}, {structure.cell.y}</small>
+                </span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="structures-empty" id="semantic-structure-list">
+            No semantic structures are declared. Add structures to a World Spec 0.3 document to preview them.
+          </p>
+        )}
+      </section>
 
       <section className="places-panel" aria-labelledby="places-heading">
         <div className="places-heading-row">
@@ -80,12 +157,12 @@ export function WorldPreview({ world }: WorldPreviewProps) {
           <button
             type="button"
             className="places-toggle"
-            aria-pressed={overlayVisible}
+            aria-pressed={placesOverlayVisible}
             aria-controls="semantic-place-list"
             disabled={placesState.status === 'error' || places.length === 0}
             onClick={() => setShowPlaces((current) => !current)}
           >
-            {overlayVisible ? 'Hide overlay' : 'Show overlay'}
+            {placesOverlayVisible ? 'Hide overlay' : 'Show overlay'}
           </button>
         </div>
 

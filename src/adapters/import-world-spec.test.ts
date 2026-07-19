@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_WORLD_SPEC } from '../core/world-spec';
+import { ALPHA6_DEFAULT_WORLD_SPEC, DEFAULT_WORLD_SPEC } from '../core/world-spec';
 import {
   MAX_WORLD_SPEC_FILE_BYTES,
   parseWorldSpecJson,
@@ -47,6 +47,19 @@ describe('World Spec JSON import', () => {
     expect(result.spec.visual.palette).not.toBe(DEFAULT_WORLD_SPEC.visual.palette);
     result.spec.visual.palette[0] = '#000000';
     expect(DEFAULT_WORLD_SPEC.visual.palette[0]).not.toBe('#000000');
+  });
+
+  it('loads the opt-in World Spec 0.3 structure preview without changing the Alpha.5 default', () => {
+    const result = parseWorldSpecJson(JSON.stringify(ALPHA6_DEFAULT_WORLD_SPEC));
+
+    expect(result).toMatchObject({
+      ok: true,
+      spec: {
+        schemaVersion: '0.3.0',
+        structures: ALPHA6_DEFAULT_WORLD_SPEC.structures,
+      },
+    });
+    expect(DEFAULT_WORLD_SPEC.schemaVersion).toBe('0.2.0');
   });
 
   it('preserves legal JSON punctuation, escaped quotes, and backslashes inside strings', () => {

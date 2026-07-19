@@ -4,6 +4,8 @@
 
 当前已发布版本：`v0.1.0-alpha.5`
 
+当前开发候选：`v0.1.0-alpha.6`（尚未 tag、尚未发布）
+
 当前公开示例包 SHA-256：`8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`。Alpha.5 工作台、公开下载与 importer 已统一升版；12 个 GitHub Release 附件的远端 SHA-256 已登记。Alpha.5 的 itch.io operator kit 继续作为离线验证产物，不执行登录或上传。
 
 已发布且不可变的版本：`v0.1.0-alpha.1`、`v0.1.0-alpha.2`、`v0.1.0-alpha.3`、`v0.1.0-alpha.4`、`v0.1.0-alpha.5`
@@ -11,6 +13,17 @@
 目标仓库：`babyrush0101-source/mapsoo-kids`
 
 > 本文同时记录已完成的公开证据和仍待执行的 itch.io / Codex for OSS 模板。2026-07-19 维护者决定暂缓 itch.io 页面：GitHub Release/Pages 是当前主渠道，已验证的 itch 上传套件继续保留，但页面不是 GitHub alpha 或申请准备的必需前置。只有带权威 URL 的项目才算完成；模板中的 `[REPLACE: ...]` 仍必须在正式提交或公开页面粘贴前替换，不能把不存在的外部反馈写成已完成。
+
+## 0E. Alpha.6 候选状态（2026-07-19）
+
+Alpha.6 当前只处于开发候选：World Spec 0.3、pack schema 0.4、`runtime/structures.json`、透明 structures atlas、浏览器预览和 Godot `Sprite2D` 派生已进入候选审查。真实浏览器 Sunny Meadow fixture 含 18 个文件，候选 SHA-256 为 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`。
+
+- 该摘要只固定当前候选字节，不是公开 release digest；
+- Alpha.1–Alpha.5 的公开 tag、fixture 与摘要保持不变，公开 stable/prerelease 入口仍指向 Alpha.5；
+- Alpha.6 的 release notes、itch.io metadata/page 与延期视觉源仅用于离线审查；不执行 itch.io 登录、上传或页面创建；
+- Alpha.6 专用首次导入验收见 [`16_ALPHA6_FIRST_GODOT_IMPORT.md`](16_ALPHA6_FIRST_GODOT_IMPORT.md)：正式 release 生成前附件不可下载，附件摘要以生成后的 `SHA256SUMS` 为准，并验证 addon icon、安装/启用、2 个 structures 与 `created → unchanged`；
+- STOYO 仍是计划中的消费场景，不宣称生产采用；当前也没有独立社区反馈或外部采用证据；
+- 只有公开 PR、tag workflow、Godot 矩阵和远端附件摘要登记完成后，Alpha.6 才能改写为“已发布”。
 
 ## 0D. Alpha.5 发布执行状态（2026-07-19）
 

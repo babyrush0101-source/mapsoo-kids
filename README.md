@@ -5,13 +5,13 @@
 [![CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml)
 
-[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.5 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
+[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.5 public release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) · [Alpha.6 candidate notes](docs/releases/v0.1.0-alpha.6.md) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
 
 Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a local-first tool that turns a compact world specification into a previewable, versioned game-art asset pack. The first target is a complete path from world settings to a Godot-friendly ZIP that can also be published on itch.io.
 
 ## Project status
 
-The public `main` branch and **v0.1.0-alpha.5 pre-release** provide the current immutable public baseline. Alpha.5 keeps the account-free, backend-free, API-key-free loop and extends the layered terrain pack with deterministic semantic places:
+The **v0.1.0-alpha.5 prerelease** remains the current immutable public baseline. The working tree is reviewing an **unpublished v0.1.0-alpha.6 candidate**; it is not a public release, and public download links continue to point to Alpha.5. Alpha.5 keeps the account-free, backend-free, API-key-free loop and extends the layered terrain pack with deterministic semantic places:
 
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same 3 ground variants, 16 water masks, 16 road masks, 6 prop sprites, and map again from the same seed.
@@ -20,6 +20,8 @@ The public `main` branch and **v0.1.0-alpha.5 pre-release** provide the current 
 5. Export an executable-free 15-file ZIP containing PNG atlases, Ground/Water/Roads/Props data, semantic-place metadata, a map preview, four schemas, manifest, receipt 0.2, and asset license.
 
 Alpha.5 adds World Spec 0.2 semantic places, a canonical `runtime/places.json` sidecar, six reusable place markers, a browser overlay/list, and Godot `Marker2D` anchors. Its real-browser ZIP has 15 files, four schemas, and SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`; the exact published pack imports as `created → unchanged` in the Linux/Windows Godot 4.3/4.7 release matrix. All 12 public attachment digests are pinned in the immutable release registry.
+
+The Alpha.6 candidate adds optional place-linked exterior structures, four deterministic archetypes, `runtime/structures.json`, a transparent structures atlas, browser structure controls, and managed Godot `Sprite2D` derivation. Its 18-file real-browser candidate fixture is pinned locally to SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`. That hash is candidate evidence, not a published-release digest; no tag, itch.io upload, STOYO production adoption, independent user report, or external adoption is claimed.
 
 The current public starter input is [`examples/sunny-meadow-v0.2.world.json`](examples/sunny-meadow-v0.2.world.json); the previous Alpha.4 input remains at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
@@ -82,6 +84,10 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [v0.1.0-alpha.4 release notes](docs/releases/v0.1.0-alpha.4.md)
 - [v0.1.0-alpha.4 release visual source](docs/release-visuals/README-v0.1.0-alpha.4.md)
 - [v0.1.0-alpha.5 release notes](docs/releases/v0.1.0-alpha.5.md)
+- [Alpha.6 exterior structures scope and acceptance](docs/15_ALPHA6_EXTERIOR_STRUCTURES.md)
+- [v0.1.0-alpha.6 candidate release notes](docs/releases/v0.1.0-alpha.6.md)
+- [v0.1.0-alpha.6 deferred release visual source](docs/release-visuals/README-v0.1.0-alpha.6.md)
+- [v0.1.0-alpha.6 candidate first-import acceptance](docs/16_ALPHA6_FIRST_GODOT_IMPORT.md)
 - [Community evidence ledger](docs/14_COMMUNITY_EVIDENCE.md)
 
 ## Community and contributing
@@ -118,7 +124,7 @@ pnpm release:local
 
 The command intentionally refuses to rebuild a version whose lifecycle is already `published`. To inspect a published release, download its attachments into the configured release directory and run `pnpm release:verify`; every attachment must match the pinned GitHub digest. Start a new candidate version for any changed output.
 
-Build the exact version-configured itch.io Draft directory. Alpha.1–Alpha.4 retain their historical cover/screenshots; because Alpha.5 itch publication is postponed, its current Draft contains only the executable-free asset ZIP, checksum, page metadata/copy, and byte manifest—no media and no upload:
+Build the exact version-configured itch.io Draft directory. Alpha.1–Alpha.4 retain their historical cover/screenshots; because Alpha.5 and the unpublished Alpha.6 candidate postpone itch publication, their Drafts contain only the executable-free asset ZIP, checksum, page metadata/copy, and byte manifest—no media and no upload:
 
 ```bash
 pnpm release:itch

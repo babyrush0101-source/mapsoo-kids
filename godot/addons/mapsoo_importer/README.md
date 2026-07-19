@@ -1,21 +1,21 @@
 # Mapsoo Pack Importer
 
-This Godot 4.3+ editor plugin turns an extracted Mapsoo portable pack into a `TileSet` and a scene containing `TileMapLayer` terrain plus `Sprite2D` props. It preserves schema `0.1.0` Ground + Props and schema `0.2.0` playable-terrain imports. Schema `0.3.0` adds manifest-bound semantic places as stable `Marker2D` nodes with a reusable places atlas.
+This Godot 4.3+ editor plugin turns an extracted Mapsoo portable pack into a `TileSet` and a scene containing `TileMapLayer` terrain plus `Sprite2D` props. It preserves historical pack imports, adds manifest-bound semantic places for pack schema `0.3.0`, and imports place-linked exterior structures for pack schema `0.4.0` as stable `Sprite2D` nodes.
 
 ## Install and import
 
-1. Obtain `addons/mapsoo_importer` only from the official Mapsoo repository or, once published, the Godot Asset Library, then copy it into the root of your Godot project.
+1. Obtain `addons/mapsoo_importer` from the official Mapsoo repository or a verified GitHub release attachment, then copy it into the root of your Godot project. It is not currently published in the Godot Asset Library.
 2. Open **Project Settings → Plugins** and enable **Mapsoo Pack Importer**.
 3. Extract the Mapsoo pack; do not select an untrusted ZIP directly.
 4. Choose **Project → Tools → Import Mapsoo Pack...**.
 5. Select the extracted pack's `mapsoo.manifest.json`.
 6. Open the generated scene in `res://mapsoo_imports/<pack-id>/`.
 
-The importer validates paths, declared byte sizes, SHA-256 hashes, map dimensions, atlas bounds, IDs, and supported schema/engine metadata before writing resources. For schema `0.3.0`, it also validates the exact places sidecar/schema bindings, World Spec projection, stable order, kind/sprite pairing, unique walkable cells, pixel centers, and placement constraints. PNG and JSON stay authoritative; `.tres` and `.tscn` files are derived.
+The importer validates paths, declared byte sizes, SHA-256 hashes, map dimensions, atlas bounds, IDs, and supported schema/engine metadata before writing resources. For schema `0.3.0`, it validates the places sidecar and World Spec projection. For schema `0.4.0`, it additionally validates the structures sidecar, its places linkage, archetype/sprite mapping, bounds, stable order, and atlas regions. PNG and JSON stay authoritative; `.tres` and `.tscn` files are derived.
 
 Mapsoo data packs intentionally contain no executable addon. Never enable GDScript copied from a third-party asset pack: manifest hashes prove internal consistency, not publisher identity.
 
-## Safe re-import contract (`alpha.5`)
+## Safe re-import contract (`alpha.6`)
 
 Each managed output directory contains exactly three files:
 

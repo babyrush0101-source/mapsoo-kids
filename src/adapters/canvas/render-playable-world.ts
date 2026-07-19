@@ -8,12 +8,15 @@ import {
 } from '../../core/playable-terrain';
 import { PLAYABLE_PROP_KINDS } from '../../core/generate-playable-world';
 import type { ResolvedWorldPlace } from '../../core/semantic-places';
+import type { ResolvedWorldStructure } from '../../core/semantic-structures';
 import {
   PLACE_KINDS,
+  STRUCTURE_ARCHETYPES,
   type BiomeId,
   type GeneratedWorld,
   type PlaceKind,
   type PropKind,
+  type StructureArchetype,
 } from '../../core/world-spec';
 import { normalizePixelRect } from './render-world';
 
@@ -231,6 +234,8 @@ export function renderPlayableWorldToCanvas(
   options: Readonly<{
     places?: readonly ResolvedWorldPlace[];
     showPlaces?: boolean;
+    structures?: readonly ResolvedWorldStructure[];
+    showStructures?: boolean;
   }> = {},
 ): void {
   const projection = projectPlayableTerrain(world);
@@ -287,8 +292,161 @@ export function renderPlayableWorldToCanvas(
     );
   }
 
+  if (options.showStructures && options.structures) {
+    renderSemanticStructuresOverlay(context, world, options.structures, targetSize);
+  }
+
   if (options.showPlaces && options.places) {
     renderSemanticPlacesOverlay(context, options.places, targetSize, canvas.width, canvas.height);
+  }
+}
+
+/** Stable atlas order shared with the World Spec structure contract. */
+export const SEMANTIC_STRUCTURE_ATLAS_ARCHETYPES: readonly StructureArchetype[] = STRUCTURE_ARCHETYPES;
+export const SEMANTIC_STRUCTURE_SPRITE_WIDTH_CELLS = 2;
+export const SEMANTIC_STRUCTURE_SPRITE_HEIGHT_CELLS = 2;
+
+function structureColors(world: GeneratedWorld): Readonly<{
+  outline: string;
+  wall: string;
+  roof: string;
+  accent: string;
+}> {
+  const [outline, ground, detail, water, road] = world.spec.visual.palette;
+  return {
+    outline,
+    wall: world.spec.map.biome === 'snow' ? '#dcebf2' : road,
+    roof: world.spec.map.biome === 'desert' ? detail : ground,
+    accent: world.spec.map.biome === 'snow' ? water : detail,
+  };
+}
+
+/**
+ * Draws one transparent, deterministic structure sprite in a 2x2 tile slot.
+ * The bottom-center of the slot is the structure foot point. Only pixel rects
+ * are used, keeping the art independent of fonts and platform rasterizers.
+ */
+export function drawSemanticStructure(
+  context: CanvasRenderingContext2D,
+  world: GeneratedWorld,
+  archetype: StructureArchetype,
+  left: number,
+  top: number,
+  tileSize: number,
+): void {
+  const unit = Math.max(1, Math.floor(tileSize / 8));
+  const width = tileSize * SEMANTIC_STRUCTURE_SPRITE_WIDTH_CELLS;
+  const height = tileSize * SEMANTIC_STRUCTURE_SPRITE_HEIGHT_CELLS;
+  const { outline, wall, roof, accent } = structureColors(world);
+
+  context.fillStyle = outline;
+  if (archetype === 'cottage') {
+    fillRect(context, left + unit * 2, top + unit * 7, width - unit * 4, unit * 8);
+    fillRect(context, left + unit * 4, top + unit * 5, width - unit * 8, unit * 2);
+    fillRect(context, left + unit * 6, top + unit * 3, width - unit * 12, unit * 2);
+    context.fillStyle = roof;
+    fillRect(context, left + unit * 3, top + unit * 7, width - unit * 6, unit * 2);
+    fillRect(context, left + unit * 5, top + unit * 5, width - unit * 10, unit * 2);
+    fillRect(context, left + unit * 7, top + unit * 3, width - unit * 14, unit * 2);
+    context.fillStyle = wall;
+    fillRect(context, left + unit * 4, top + unit * 9, width - unit * 8, unit * 5);
+    context.fillStyle = outline;
+    fillRect(context, left + unit * 7, top + unit * 10, unit * 3, unit * 4);
+    context.fillStyle = accent;
+    fillRect(context, left + unit * 5, top + unit * 10, unit * 2, unit * 2);
+    fillRect(context, left + unit * 11, top + unit * 10, unit * 2, unit * 2);
+  } else if (archetype === 'workshop') {
+    fillRect(context, left + unit * 2, top + unit * 6, width - unit * 4, unit * 9);
+    fillRect(context, left + unit * 11, top + unit * 2, unit * 3, unit * 6);
+    context.fillStyle = roof;
+    fillRect(context, left + unit * 2, top + unit * 6, width - unit * 4, unit * 3);
+    fillRect(context, left + unit * 5, top + unit * 4, width - unit * 9, unit * 2);
+    context.fillStyle = wall;
+    fillRect(context, left + unit * 3, top + unit * 9, width - unit * 6, unit * 5);
+    context.fillStyle = outline;
+    fillRect(context, left + unit * 10, top + unit * 10, unit * 4, unit * 4);
+    fillRect(context, left + unit * 2, top + unit * 12, unit * 5, unit * 2);
+    context.fillStyle = accent;
+    fillRect(context, left + unit * 3, top + unit * 10, unit * 4, unit * 2);
+    fillRect(context, left + unit * 11, top + unit * 3, unit, unit * 3);
+  } else if (archetype === 'tower') {
+    fillRect(context, left + unit * 4, top + unit * 2, width - unit * 8, unit * 13);
+    fillRect(context, left + unit * 3, top + unit, unit * 3, unit * 4);
+    fillRect(context, left + unit * 7, top + unit, unit * 3, unit * 4);
+    fillRect(context, left + unit * 11, top + unit, unit * 3, unit * 4);
+    context.fillStyle = wall;
+    fillRect(context, left + unit * 5, top + unit * 4, width - unit * 10, unit * 10);
+    context.fillStyle = roof;
+    fillRect(context, left + unit * 4, top + unit * 3, width - unit * 8, unit * 2);
+    context.fillStyle = outline;
+    fillRect(context, left + unit * 7, top + unit * 6, unit * 2, unit * 3);
+    fillRect(context, left + unit * 7, top + unit * 11, unit * 3, unit * 3);
+    context.fillStyle = accent;
+    fillRect(context, left + unit * 8, top + unit * 7, unit, unit);
+  } else {
+    fillRect(context, left + unit * 3, top + unit * 5, width - unit * 6, unit * 10);
+    fillRect(context, left + unit * 2, top + unit * 4, width - unit * 4, unit * 3);
+    fillRect(context, left + unit * 6, top + unit * 2, width - unit * 12, unit * 3);
+    context.fillStyle = roof;
+    fillRect(context, left + unit * 3, top + unit * 4, width - unit * 6, unit * 2);
+    fillRect(context, left + unit * 7, top + unit * 2, width - unit * 14, unit * 2);
+    context.fillStyle = wall;
+    fillRect(context, left + unit * 5, top + unit * 7, unit * 2, unit * 6);
+    fillRect(context, left + unit * 11, top + unit * 7, unit * 2, unit * 6);
+    context.fillStyle = accent;
+    fillRect(context, left + unit * 7, top + unit * 8, width - unit * 14, unit * 4);
+    context.fillStyle = outline;
+    fillRect(context, left + unit * 8, top + unit * 9, unit * 2, unit * 2);
+    fillRect(context, left + unit * 2, top + unit * 14, width - unit * 4, unit);
+  }
+
+  // Every sprite ends on the same one-pixel-equivalent foot line.
+  context.fillStyle = outline;
+  fillRect(context, left + unit * 5, top + height - unit, width - unit * 10, unit);
+}
+
+/** Renders the four structure archetypes as a transparent single-row atlas. */
+export function renderSemanticStructuresAtlas(world: GeneratedWorld): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  const tileSize = world.spec.visual.tileSize;
+  const spriteWidth = tileSize * SEMANTIC_STRUCTURE_SPRITE_WIDTH_CELLS;
+  canvas.width = SEMANTIC_STRUCTURE_ATLAS_ARCHETYPES.length * spriteWidth;
+  canvas.height = tileSize * SEMANTIC_STRUCTURE_SPRITE_HEIGHT_CELLS;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas 2D is unavailable.');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.imageSmoothingEnabled = false;
+  SEMANTIC_STRUCTURE_ATLAS_ARCHETYPES.forEach((archetype, index) => {
+    drawSemanticStructure(context, world, archetype, index * spriteWidth, 0, tileSize);
+  });
+  return canvas;
+}
+
+/**
+ * Draws resolved structures with each referenced place cell as its foot point.
+ * Negative sprite coordinates are intentional at map edges; Canvas clips them
+ * to the already-sized world surface.
+ */
+export function renderSemanticStructuresOverlay(
+  context: CanvasRenderingContext2D,
+  world: GeneratedWorld,
+  structures: readonly ResolvedWorldStructure[],
+  cellSize: number,
+): void {
+  const size = Math.max(1, Math.round(cellSize));
+  const spriteWidth = size * SEMANTIC_STRUCTURE_SPRITE_WIDTH_CELLS;
+  const spriteHeight = size * SEMANTIC_STRUCTURE_SPRITE_HEIGHT_CELLS;
+  for (const structure of structures) {
+    const footX = structure.cell.x * size + size / 2;
+    const footY = (structure.cell.y + 1) * size;
+    drawSemanticStructure(
+      context,
+      world,
+      structure.archetype,
+      Math.round(footX - spriteWidth / 2),
+      Math.round(footY - spriteHeight),
+      size,
+    );
   }
 }
 

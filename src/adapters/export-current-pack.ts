@@ -1,16 +1,16 @@
 import packageJson from '../../package.json';
-import { ALPHA5_PACK_VERSION } from '../core/pack-manifest-alpha5';
+import { ALPHA6_PACK_VERSION } from '../core/pack-manifest-alpha6';
 import {
-  buildAlpha5PortablePack,
-  downloadAlpha5PortablePack,
-} from './export-browser-pack-alpha5';
+  buildAlpha6PortablePack,
+  downloadAlpha6PortablePack,
+} from './export-browser-pack-alpha6';
 
-if (packageJson.version !== ALPHA5_PACK_VERSION) {
+if (packageJson.version !== ALPHA6_PACK_VERSION) {
   throw new Error(
-    `Current package version ${packageJson.version} does not match the alpha.5 exporter ${ALPHA5_PACK_VERSION}.`,
+    `Current package version ${packageJson.version} does not match the alpha.6 exporter ${ALPHA6_PACK_VERSION}.`,
   );
 }
 
-export const CURRENT_PACK_VERSION = ALPHA5_PACK_VERSION;
-export const buildCurrentPortablePack = buildAlpha5PortablePack;
-export const downloadCurrentPortablePack = downloadAlpha5PortablePack;
+export const CURRENT_PACK_VERSION = ALPHA6_PACK_VERSION;
+export const buildCurrentPortablePack = buildAlpha6PortablePack;
+export const downloadCurrentPortablePack = downloadAlpha6PortablePack;

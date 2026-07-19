@@ -136,8 +136,8 @@
 
 ## 9. 当前下一步
 
-1. 按 [`Alpha.5 语义地点合同`](13_ALPHA5_SEMANTIC_PLACES.md) 实现稳定地点 ID；receipt 绑定含地点声明的 World Spec，manifest/verifier 绑定派生 JSON/算法/schema/atlas，并由 Godot 生成可查询锚点，同时保持 Alpha.1–Alpha.4 不可变；
-2. 已用真实浏览器 ZIP、schema 负向案例及 Linux/Windows Godot 4.3/4.7 exact-pack 导入验收 Alpha.5，并通过公开 PR、tag workflow 与远端 digest ledger 完成发布；
+1. 按 [`Alpha.6 地点关联建筑外观候选合同`](15_ALPHA6_EXTERIOR_STRUCTURES.md) 推进首个切片：World Spec 0.3、四种 archetype、确定性核心解析与浏览器预览；透明 atlas、runtime sidecar 和 Godot `Sprite2D` 属于同一里程碑的后续出口，未完成前不得称为已发布建筑素材支持；
+2. Alpha.6 必须保持 Alpha.1–Alpha.5 的公开 tag、附件、fixture、合同与 digest 不可变，并通过真实浏览器 ZIP、Linux/Windows × Godot 4.3/4.7 exact-pack、安全重导入、可安装 Godot addon 归档（`addons/mapsoo_importer` 根、插件 README/LICENSE/icon）、首次使用向导和发布后远端摘要门禁后才可发布；可安装不等于已上架 Godot Asset Library；
 3. 继续通过 Pages 的版本绑定下载入口与 [`10 分钟首次导入指南`](10_FIRST_GODOT_IMPORT.md) 邀请第一轮外部用户，并如实记录结果；没有反馈前不声明外部采用或 STOYO 已接入；
 4. 用真实 release、反馈与精确指标更新 Codex for OSS 证据台账，再决定申请时机；
 5. 保留已验证的 itch.io 上传套件，但页面创建和公开发布延期；以后能通过人工验证时再恢复，不阻塞 GitHub 路线。

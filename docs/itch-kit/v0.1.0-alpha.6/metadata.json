@@ -1,0 +1,48 @@
+{
+  "schema_version": "mapsoo.itch-page/v1",
+  "version": "0.1.0-alpha.6",
+  "title": "Mapsoo Sunny Meadow — Free Pixel World Pack for Godot",
+  "slug": "mapsoo-sunny-meadow",
+  "classification": "Assets",
+  "kind": "Downloadable",
+  "upload_type": "Graphical Assets",
+  "release_status": "In development",
+  "pricing": {
+    "minimum_usd": 0,
+    "free_download": true,
+    "donations_optional": true
+  },
+  "platforms": [],
+  "asset_license": "CC0-1.0",
+  "visibility": "Draft",
+  "community": {
+    "comments_enabled": true,
+    "canonical_feedback_url": "https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml"
+  },
+  "repository_url": "https://github.com/babyrush0101-source/mapsoo-kids",
+  "release_url": "https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.6",
+  "demo_url": "https://babyrush0101-source.github.io/mapsoo-kids/",
+  "short_description": "Free CC0 Godot world pack with deterministic place-linked exterior structures.",
+  "tags": [
+    "Pixel Art",
+    "2D",
+    "Top-Down",
+    "Tileset",
+    "Sprites",
+    "Asset Pack",
+    "Godot",
+    "Procedural Generation",
+    "CC0"
+  ],
+  "generative_ai_disclosure": {
+    "answer": "Yes",
+    "categories": [
+      "Text & Dialog",
+      "Code"
+    ],
+    "graphics": false,
+    "sound": false,
+    "code": true,
+    "notes": "Codex assisted project code and documentation. The downloadable ZIP contains no executable scripts; its pixel artwork is deterministic procedural output, not image-model output. No generated graphics or sound are included. This metadata remains an offline Draft and has not been uploaded to itch.io."
+  }
+}

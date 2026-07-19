@@ -35,8 +35,13 @@ function exactJson(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function verifyAlpha4PlayableTerrainManifest(manifest, { semanticPlaces = false } = {}) {
-  assert(manifest.schema_version === (semanticPlaces ? '0.3.0' : '0.2.0'), 'Playable terrain manifest schema version mismatch');
+function verifyAlpha4PlayableTerrainManifest(
+  manifest,
+  { semanticPlaces = false, semanticStructures = false } = {},
+) {
+  const hasSemanticPlaces = semanticPlaces || semanticStructures;
+  const expectedSchemaVersion = semanticStructures ? '0.4.0' : hasSemanticPlaces ? '0.3.0' : '0.2.0';
+  assert(manifest.schema_version === expectedSchemaVersion, 'Playable terrain manifest schema version mismatch');
   assert(
     exactJson(manifest.pack?.generator, { name: 'Mapsoo Worldsmith', version: VERSION }),
     'Playable terrain manifest generator mismatch',
@@ -48,7 +53,11 @@ function verifyAlpha4PlayableTerrainManifest(manifest, { semanticPlaces = false 
       art_style: 'pixel_art',
       importer: {
         id: 'mapsoo_importer',
-        min_version: semanticPlaces ? '0.1.0-alpha.5' : '0.1.0-alpha.4',
+        min_version: semanticStructures
+          ? '0.1.0-alpha.6'
+          : hasSemanticPlaces
+            ? '0.1.0-alpha.5'
+            : '0.1.0-alpha.4',
         source: 'https://github.com/babyrush0101-source/mapsoo-kids',
       },
     }),
@@ -171,7 +180,8 @@ function verifyAlpha4PlayableTerrainManifest(manifest, { semanticPlaces = false 
     }
   }
 
-  assert(Array.isArray(manifest.sprites) && manifest.sprites.length === (semanticPlaces ? 12 : 6), 'Playable terrain manifest sprite count mismatch');
+  const expectedSpriteCount = semanticStructures ? 16 : hasSemanticPlaces ? 12 : 6;
+  assert(Array.isArray(manifest.sprites) && manifest.sprites.length === expectedSpriteCount, 'Playable terrain manifest sprite count mismatch');
   const propKinds = ['tree', 'rock', 'flower', 'shrub', 'log', 'marker'];
   for (const [index, kind] of propKinds.entries()) {
     const sprite = manifest.sprites[index];
@@ -185,7 +195,7 @@ function verifyAlpha4PlayableTerrainManifest(manifest, { semanticPlaces = false 
       `Playable terrain prop sprite contract mismatch: ${kind}`,
     );
   }
-  if (semanticPlaces) {
+  if (hasSemanticPlaces) {
     const placeKinds = ['spawn', 'settlement', 'landmark', 'resource', 'encounter', 'exit'];
     for (const [index, kind] of placeKinds.entries()) {
       const sprite = manifest.sprites[index + 6];
@@ -199,10 +209,34 @@ function verifyAlpha4PlayableTerrainManifest(manifest, { semanticPlaces = false 
     }
     assert(
       manifest.runtime?.places?.path === 'runtime/places.json'
-        && manifest.runtime.places.schema?.path === 'schema/mapsoo-places-0.1.schema.json'
+        && manifest.runtime.places.schema?.path === (semanticStructures
+          ? 'schema/mapsoo-places-0.2.schema.json'
+          : 'schema/mapsoo-places-0.1.schema.json')
         && /^[a-f0-9]{64}$/.test(manifest.runtime.places.sha256)
         && /^[a-f0-9]{64}$/.test(manifest.runtime.places.schema.sha256),
       'Semantic places runtime binding mismatch',
+    );
+  }
+  if (semanticStructures) {
+    const structureKinds = ['cottage', 'workshop', 'tower', 'shrine'];
+    for (const [index, kind] of structureKinds.entries()) {
+      const sprite = manifest.sprites[index + 12];
+      assert(
+        sprite?.id === `structure-${kind}-01`
+          && sprite.atlas === 'atlases/structures.png'
+          && exactJson(sprite.region_px, [index * 64, 0, 64, 64])
+          && exactJson(sprite.pivot_px, [32, 64])
+          && exactJson(sprite.footprint_cells, [2, 2])
+          && exactJson(sprite.tags, ['structure', kind]),
+        `Semantic structure sprite contract mismatch: ${kind}`,
+      );
+    }
+    assert(
+      manifest.runtime?.structures?.path === 'runtime/structures.json'
+        && manifest.runtime.structures.schema?.path === 'schema/mapsoo-structures-0.1.schema.json'
+        && /^[a-f0-9]{64}$/.test(manifest.runtime.structures.sha256)
+        && /^[a-f0-9]{64}$/.test(manifest.runtime.structures.schema.sha256),
+      'Semantic structures runtime binding mismatch',
     );
   }
 }
@@ -260,6 +294,11 @@ function verifyConfiguredExampleManifest(manifest) {
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'Semantic places asset license mismatch');
       verifyAlpha4PlayableTerrainManifest(manifest, { semanticPlaces: true });
       return;
+    case 'sunny-meadow-semantic-structures-cc0-v6':
+      assert(manifest.provenance?.contains_generative_ai === false, 'Semantic structures pack must disclose contains_generative_ai=false');
+      assert(manifest.license?.assets?.id === 'CC0-1.0', 'Semantic structures asset license mismatch');
+      verifyAlpha4PlayableTerrainManifest(manifest, { semanticStructures: true });
+      return;
     default:
       throw new Error(
         `Unsupported pack verification policy: ${CURRENT_RELEASE_CONFIG.release.verificationPolicy}`,
@@ -283,6 +322,24 @@ function verifyConfiguredWorldSpec(worldSpec) {
       assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
       assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
       return;
+    case 'sunny-meadow-semantic-structures-cc0-v6': {
+      assert(worldSpec.schemaVersion === '0.3.0', 'Example World Spec must use schema 0.3.0');
+      assert(Array.isArray(worldSpec.places) && worldSpec.places.length >= 1 && worldSpec.places.length <= 8, 'Example World Spec must declare semantic places');
+      assert(Array.isArray(worldSpec.structures) && worldSpec.structures.length <= 8, 'Example World Spec structures are invalid');
+      const placeIds = new Set(worldSpec.places.map((place) => place.id));
+      const structureIds = new Set();
+      const linkedPlaceIds = new Set();
+      for (const structure of worldSpec.structures) {
+        assert(typeof structure?.id === 'string' && structure.id && !structureIds.has(structure.id), 'Example World Spec structure IDs must be unique');
+        assert(placeIds.has(structure.placeId) && !linkedPlaceIds.has(structure.placeId), 'Example World Spec structures must link one-to-one to declared places');
+        assert(['cottage', 'workshop', 'tower', 'shrine'].includes(structure.archetype), 'Example World Spec structure archetype is invalid');
+        structureIds.add(structure.id);
+        linkedPlaceIds.add(structure.placeId);
+      }
+      assert(worldSpec.output?.targets?.includes('godot'), 'Example World Spec does not target Godot');
+      assert(worldSpec.output?.targets?.includes('itch'), 'Example World Spec does not target itch.io');
+      return;
+    }
     default:
       throw new Error(
         `Unsupported World Spec verification policy: ${CURRENT_RELEASE_CONFIG.release.verificationPolicy}`,
@@ -462,6 +519,14 @@ async function verify() {
     importerEntries.some((entry) => entry.name === 'addons/mapsoo_importer/LICENSE.txt'),
     'Godot importer ZIP does not contain its MIT license',
   );
+  assert(
+    importerEntries.some((entry) => entry.name === 'addons/mapsoo_importer/README.md'),
+    'Godot importer ZIP does not contain its installation README',
+  );
+  assert(
+    importerEntries.some((entry) => entry.name === 'addons/mapsoo_importer/icon.svg'),
+    'Godot importer ZIP does not contain its icon',
+  );
 
   const webEntries = await loadZip(RELEASE_FILES.web);
   const webIndexEntry = webEntries.find(
@@ -491,10 +556,6 @@ async function verify() {
   }
 
   const examplePackEntries = await loadZip(RELEASE_FILES.examplePack);
-  if (CURRENT_RELEASE_CONFIG.release.verificationPolicy !== 'sunny-meadow-procedural-cc0-v1') {
-    const expectedEntries = CURRENT_RELEASE_CONFIG.release.verificationPolicy.endsWith('-v5') ? 15 : 12;
-    assert(examplePackEntries.length === expectedEntries, `Receipt-bearing Sunny Meadow ZIP must contain exactly ${expectedEntries} files`);
-  }
   const examplePackRoot = CURRENT_RELEASE_CONFIG.release.examplePack.archiveRoot;
   assert(
     examplePackEntries.every((entry) => entry.name.startsWith(`${examplePackRoot}/`)),
@@ -522,6 +583,10 @@ async function verify() {
   );
   const exampleFileRecords = exampleManifest.files ?? [];
   assert(Array.isArray(exampleFileRecords), 'Sunny Meadow manifest files must be an array');
+  assert(
+    examplePackEntries.length === exampleFileRecords.length + 1,
+    'Sunny Meadow ZIP entry count must equal its manifest payload count plus mapsoo.manifest.json',
+  );
   const exampleFileRecordPaths = new Set(exampleFileRecords.map((record) => record.path));
   assert(
     exampleFileRecordPaths.size === exampleFileRecords.length,

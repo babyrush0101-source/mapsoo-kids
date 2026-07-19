@@ -1,4 +1,5 @@
 import {
+  ALPHA6_WORLD_SCHEMA_VERSION,
   LEGACY_WORLD_SCHEMA_VERSION,
   WORLD_SCHEMA_VERSION,
   cloneWorldSpec,
@@ -81,7 +82,9 @@ function isValidatedWorldSpec(value: unknown, issues: ValidationIssue[]): value 
     return false;
   }
   const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
-  return schemaVersion === LEGACY_WORLD_SCHEMA_VERSION || schemaVersion === WORLD_SCHEMA_VERSION;
+  return schemaVersion === LEGACY_WORLD_SCHEMA_VERSION
+    || schemaVersion === WORLD_SCHEMA_VERSION
+    || schemaVersion === ALPHA6_WORLD_SCHEMA_VERSION;
 }
 
 function inspectJsonTree(value: unknown, documentName: string): StrictJsonImportResult | null {

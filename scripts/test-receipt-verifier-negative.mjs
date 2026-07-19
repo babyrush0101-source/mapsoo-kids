@@ -125,7 +125,7 @@ async function runReceiptV02(config) {
     ['missing receipt schema', ({ manifest, files }) => {
       files.delete('schema/mapsoo-generation-receipt.schema.json');
       manifest.files = manifest.files.filter(({ path }) => path !== 'schema/mapsoo-generation-receipt.schema.json');
-    }, /(?:11|14) payload records|payload path set mismatch/],
+    }, /(?:11|14|17) payload records|payload path set mismatch/],
     ['receipt schema const conflict', ({ manifest, files }) => {
       const path = 'schema/mapsoo-generation-receipt.schema.json';
       const schema = JSON.parse(files.get(path).toString('utf8'));
@@ -152,6 +152,34 @@ async function runReceiptV02(config) {
       manifest.world_spec.sha256 = hash;
       receipt.world.input_spec.sha256 = hash;
     }, /World Spec seed mismatch|places World Spec binding mismatch/],
+  ];
+  for (const [name, mutate, expected] of cases) await expectFailure(config, name, mutate, expected);
+}
+
+async function runAlpha6(config) {
+  await runReceiptV02(config);
+  const cases = [
+    ['structure sidecar place binding conflict', ({ manifest, files }) => {
+      const path = 'runtime/structures.json';
+      const structures = JSON.parse(files.get(path).toString('utf8'));
+      structures.places.sha256 = '0'.repeat(64);
+      const bytes = jsonBytes(structures);
+      files.set(path, bytes);
+      updateRecord(manifest, path, bytes);
+      manifest.runtime.structures.sha256 = sha256(bytes);
+    }, /structures places binding mismatch/],
+    ['structure archetype conflict', ({ manifest, files }) => {
+      const path = 'runtime/structures.json';
+      const structures = JSON.parse(files.get(path).toString('utf8'));
+      structures.structures[0].archetype = 'tower';
+      const bytes = jsonBytes(structures);
+      files.set(path, bytes);
+      updateRecord(manifest, path, bytes);
+      manifest.runtime.structures.sha256 = sha256(bytes);
+    }, /structure is not an ordered projection|structure archetype mismatch/],
+    ['structure atlas binding conflict', ({ manifest }) => {
+      manifest.runtime.structures.schema.sha256 = '0'.repeat(64);
+    }, /runtime structures binding mismatch/],
   ];
   for (const [name, mutate, expected] of cases) await expectFailure(config, name, mutate, expected);
 }
@@ -328,6 +356,7 @@ try {
       || config.receiptVerifier === 'builtin-playable-terrain-alpha4-v0.2'
       || config.receiptVerifier === 'builtin-semantic-places-alpha5-v0.2'
     ) await runReceiptV02(config);
+    else if (config.receiptVerifier === 'builtin-semantic-structures-alpha6-v0.2') await runAlpha6(config);
     else throw new Error(`No negative suite for ${config.receiptVerifier}`);
   }
   for (const config of configs) {
