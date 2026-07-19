@@ -8,7 +8,7 @@ import {
 } from '../core/pack-manifest';
 import type { GenerationRunResult } from '../core/generation-evidence';
 import { assertTrustedGenerationRun } from '../core/generation-provider';
-import { assertV01ProceduralGenerator } from '../core/generator-identity';
+import { assertBuiltinProceduralExportEvidence } from '../core/builtin-procedural-export-policy';
 import { validateGeneratedWorld } from '../core/validate-world';
 import { renderPropsAtlas, renderTerrainAtlas, renderWorldToCanvas } from './canvas/render-world';
 
@@ -20,44 +20,11 @@ function textBlob(value: string, type = 'text/markdown'): Blob {
   return new Blob([value], { type: `${type};charset=utf-8` });
 }
 
-const LEGACY_WORKFLOW = {
-  id: 'mapsoo-procedural-world-pack',
-  version: '0.1.0',
-  definition_sha256: null,
-} as const;
-const LEGACY_TRANSFORMATIONS = [
-  { id: 'seeded-map-layout', version: '0.1.0' },
-  { id: 'procedural-pixel-atlas', version: '0.1.0' },
-  { id: 'png-rgba-export', version: '0.1.0' },
-] as const;
-
-function exactJson(left: unknown, right: unknown): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
-}
-
 export function assertLegacyAlpha1Evidence(run: GenerationRunResult): void {
-  const { world, evidence } = run;
-  assertV01ProceduralGenerator(world.generator);
-  assertV01ProceduralGenerator(evidence.provider);
-  const capabilities = evidence.provider.capabilities;
-  if (
-    evidence.requestSpec !== world.spec
-    || world.spec.output.assetLicense !== 'CC0-1.0'
-    || capabilities.execution !== 'local'
-    || capabilities.determinism !== 'seeded'
-    || capabilities.requiresCredentials
-    || capabilities.outputProvenance !== 'procedural'
-    || evidence.aiDisclosure.containsGenerativeAi
-    || evidence.aiDisclosure.humanCurated
-    || evidence.aiDisclosure.statement !== null
-    || evidence.model !== null
-    || evidence.providerTerms !== null
-    || evidence.sources.length !== 0
-    || !exactJson(evidence.workflow, LEGACY_WORKFLOW)
-    || !exactJson(evidence.transformations, LEGACY_TRANSFORMATIONS)
-  ) {
-    throw new Error('v0.1 portable export requires the exact runner-verified built-in procedural evidence profile.');
-  }
+  assertBuiltinProceduralExportEvidence(
+    run,
+    'v0.1 portable export requires the exact runner-verified built-in procedural evidence profile.',
+  );
 }
 
 export function escapeMarkdownInline(value: string): string {
