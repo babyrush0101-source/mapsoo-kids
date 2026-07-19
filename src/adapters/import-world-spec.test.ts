@@ -128,6 +128,27 @@ describe('World Spec JSON import', () => {
     expect(parseWorldSpecJson(unsafeInteger)).toMatchObject({ ok: false, code: 'import.unsafe-integer' });
   });
 
+  it('migrates a strict v0.1 World Spec without inventing semantic places', () => {
+    const { places: _places, ...legacy } = structuredClone(DEFAULT_WORLD_SPEC);
+    const result = parseWorldSpecJson(JSON.stringify({ ...legacy, schemaVersion: '0.1.0' }));
+
+    expect(result).toMatchObject({
+      ok: true,
+      spec: { schemaVersion: '0.2.0' },
+      issues: [expect.objectContaining({ code: 'spec.schema-migrated', severity: 'warning' })],
+    });
+    if (result.ok) expect(result.spec).not.toHaveProperty('places');
+  });
+
+  it('rejects v0.2-only places hidden in a v0.1 document', () => {
+    const legacyWithPlaces = { ...structuredClone(DEFAULT_WORLD_SPEC), schemaVersion: '0.1.0' };
+    expect(parseWorldSpecJson(JSON.stringify(legacyWithPlaces))).toMatchObject({
+      ok: false,
+      code: 'import.invalid-spec',
+      issues: expect.arrayContaining([expect.objectContaining({ code: 'spec.unknown-root-field' })]),
+    });
+  });
+
   it('enforces structural limits before a duplicate key can hide the unsafe value', () => {
     const deeplyNestedValue = `${'['.repeat(40)}0${']'.repeat(40)}`;
     const shadowedDeepJson = JSON.stringify(DEFAULT_WORLD_SPEC).replace(

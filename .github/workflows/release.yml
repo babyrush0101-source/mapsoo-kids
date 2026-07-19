@@ -169,12 +169,16 @@ jobs:
           printf '%s  %s\n' "$MAPSOO_PACK_HASH" "$pack_path" | sha256sum --check --strict -
           mkdir -p "$extract_dir"
           unzip -q "$pack_path" -d "$extract_dir"
-          test "$(find "$extract_dir" -type f | wc -l)" -eq 12
           test "$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
           test "$(find "$extract_dir" -type f ! -path "$extract_dir/$MAPSOO_PACK_ROOT/*" | wc -l)" -eq 0
           manifest_path="$extract_dir/$MAPSOO_PACK_ROOT/mapsoo.manifest.json"
           test -f "$manifest_path"
+          actual_files="$(find "$extract_dir" -type f | wc -l)"
+          expected_files="$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(!Array.isArray(m.files))process.exit(2);process.stdout.write(String(m.files.length+1))' "$manifest_path")"
+          test "$actual_files" -eq "$expected_files"
+          pack_schema="$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(typeof m.schema_version!=="string"||!/^\d+\.\d+\.\d+$/.test(m.schema_version))process.exit(2);process.stdout.write(m.schema_version)' "$manifest_path")"
           printf 'MAPSOO_RELEASE_MANIFEST=%s\n' "$manifest_path" >> "$GITHUB_ENV"
+          printf 'MAPSOO_RELEASE_SCHEMA=%s\n' "$pack_schema" >> "$GITHUB_ENV"
 
       - name: Download and verify Godot ${{ matrix.version }}
         shell: bash
@@ -237,7 +241,7 @@ jobs:
             echo "Godot emitted an engine error while importing the exact release pack." >&2
             exit 1
           fi
-          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=0.2.0 cells=384 props=29 first=created second=unchanged' "$log_file"
+          grep -Fx "MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=$MAPSOO_RELEASE_SCHEMA cells=384 props=29 first=created second=unchanged" "$log_file"
 
   godot-release-windows-smoke:
     name: Godot ${{ matrix.version }} Windows release transaction
@@ -283,7 +287,6 @@ jobs:
           $extractDir = Join-Path $env:RUNNER_TEMP 'mapsoo-release-extracted'
           Expand-Archive -LiteralPath $packPath -DestinationPath $extractDir
           $files = @(Get-ChildItem -LiteralPath $extractDir -Recurse -File)
-          if ($files.Count -ne 12) { throw "Expected 12 extracted files, got $($files.Count)." }
           $rootDirectories = @(Get-ChildItem -LiteralPath $extractDir -Directory)
           if ($rootDirectories.Count -ne 1 -or $rootDirectories[0].Name -ne $env:MAPSOO_PACK_ROOT) { throw 'Unexpected archive root.' }
           $rootPath = $rootDirectories[0].FullName
@@ -295,7 +298,12 @@ jobs:
           }
           $manifestPath = Join-Path $rootPath 'mapsoo.manifest.json'
           if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'Release manifest is missing.' }
+          $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+          $expectedFiles = @($manifest.files).Count + 1
+          if ($files.Count -ne $expectedFiles) { throw "Expected $expectedFiles manifest-covered files, got $($files.Count)." }
+          if (-not ($manifest.schema_version -is [string]) -or $manifest.schema_version -notmatch '^\d+\.\d+\.\d+$') { throw 'Release manifest schema_version is invalid.' }
           "MAPSOO_RELEASE_MANIFEST=$manifestPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MAPSOO_RELEASE_SCHEMA=$($manifest.schema_version)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Download and verify Godot ${{ matrix.version }}
         shell: pwsh
@@ -360,7 +368,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
             throw 'Exact release pack import emitted an error.'
           }
-          $expected = 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=0.2.0 cells=384 props=29 first=created second=unchanged'
+          $expected = "MAPSOO_PACK_CLI_OK pack_id=sunny-meadow schema=$env:MAPSOO_RELEASE_SCHEMA cells=384 props=29 first=created second=unchanged"
           if (-not (($output | ForEach-Object { $_.ToString() }) -contains $expected)) { throw 'Exact release pack re-import sentinel is missing.' }
 
   publish-draft:

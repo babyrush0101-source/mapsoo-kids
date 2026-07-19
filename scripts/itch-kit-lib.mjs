@@ -222,6 +222,7 @@ function verifyMetadata(metadata) {
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
     case 'sunny-meadow-playable-terrain-cc0-v4':
+    case 'sunny-meadow-semantic-places-cc0-v5':
       return verifyProceduralMetadata(metadata);
     default:
       throw new Error(
@@ -237,13 +238,14 @@ function verifyPageMarkdown(page) {
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
     case 'sunny-meadow-playable-terrain-cc0-v4':
+    case 'sunny-meadow-semantic-places-cc0-v5':
       verifyProceduralPageMarkdown(page);
       for (const requiredText of [
         'generation-receipt.json',
         'schema/mapsoo-generation-receipt.schema.json',
         'schema_version: 0.2.0',
-        '12 files',
-        '11 payload records',
+        CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? '15 files' : '12 files',
+        CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? '14 payload records' : '11 payload records',
         'Executable-free asset ZIP',
       ]) {
         assert(page.includes(requiredText), `receipt-era itch page is missing required fact: ${requiredText}`);
@@ -262,6 +264,17 @@ function verifyPageMarkdown(page) {
           assert(page.includes(requiredText), `playable-terrain itch page is missing required fact: ${requiredText}`);
         }
       }
+      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5')) {
+        for (const requiredText of [
+          'pack schema `0.3.0`',
+          'World Spec `0.2.0`',
+          'places sidecar `0.1.0`',
+          'runtime/places.json',
+          '6 semantic place markers',
+          'does not provide navigation or pathfinding',
+          'not a complete game',
+        ]) assert(page.includes(requiredText), `semantic-places itch page is missing required fact: ${requiredText}`);
+      }
       return;
     default:
       throw new Error(
@@ -276,6 +289,7 @@ function verifyConfiguredItchPackManifest(manifest) {
     case 'sunny-meadow-procedural-cc0-v2':
     case 'sunny-meadow-procedural-cc0-v3':
     case 'sunny-meadow-playable-terrain-cc0-v4':
+    case 'sunny-meadow-semantic-places-cc0-v5':
       assert(manifest.license?.assets?.id === 'CC0-1.0', 'itch asset manifest license mismatch');
       assert(
         manifest.provenance?.contains_generative_ai === false,
@@ -284,7 +298,7 @@ function verifyConfiguredItchPackManifest(manifest) {
       if (!CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v1')) {
         assert(manifest.receipt?.path === 'generation-receipt.json', 'receipt-era itch receipt path mismatch');
         const receiptPaths = new Set((manifest.files ?? []).map(({ path }) => path));
-        assert(receiptPaths.size === 11, 'receipt-era itch manifest must contain 11 payload records');
+        assert(receiptPaths.size === (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? 14 : 11), 'receipt-era itch manifest payload count mismatch');
         assert(receiptPaths.has('generation-receipt.json'), 'receipt-era itch manifest is missing its receipt');
         assert(
           receiptPaths.has('schema/mapsoo-generation-receipt.schema.json'),
@@ -314,6 +328,13 @@ function verifyConfiguredItchPackManifest(manifest) {
           'playable-terrain itch atlas must declare exactly 35 tiles',
         );
         assert(manifest.sprites?.length === 6, 'playable-terrain itch manifest must declare exactly six sprites');
+      }
+      if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5')) {
+        assert(manifest.schema_version === '0.3.0', 'semantic-places itch manifest schema must be 0.3.0');
+        assert(manifest.pack?.generator?.version === VERSION, 'semantic-places itch generator version mismatch');
+        assert(manifest.sprites?.length === 12, 'semantic-places itch manifest must declare six props and six place sprites');
+        assert(manifest.runtime?.places?.path === 'runtime/places.json', 'semantic-places itch runtime path mismatch');
+        assert(manifest.runtime?.places?.schema?.path === 'schema/mapsoo-places-0.1.schema.json', 'semantic-places itch schema path mismatch');
       }
       return;
     default:
@@ -513,7 +534,8 @@ export async function verifyPackZip(packPath, authoritativeHash) {
   }
 
   if (CURRENT_RELEASE_CONFIG.itch.verificationPolicy !== 'sunny-meadow-procedural-cc0-v1') {
-    assert(allEntries.length === 12, 'receipt-era itch asset ZIP must contain exactly 12 entries');
+    const expectedEntries = CURRENT_RELEASE_CONFIG.itch.verificationPolicy.endsWith('-v5') ? 15 : 12;
+    assert(allEntries.length === expectedEntries, `receipt-era itch asset ZIP must contain exactly ${expectedEntries} entries`);
     assert(allEntries.every(({ dir }) => !dir), 'receipt-era itch asset ZIP must not contain directory entries');
   }
 

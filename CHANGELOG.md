@@ -4,6 +4,21 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+## [0.1.0-alpha.5] — Candidate, not yet published
+
+### Added
+
+- World Spec 0.2 semantic places with stable IDs, six bounded kinds, four deterministic placement rules, and strict legacy 0.1 migration without invented places.
+- Pack schema 0.3 with a canonical `runtime/places.json` sidecar, per-file SHA-256 bindings, and a reusable six-marker places atlas.
+- A browser overlay and accessible place list driven by the same resolved records, including collision-aware labels and a hide/show control.
+- Godot `Marker2D` place anchors with queryable metadata, managed-output ownership, re-import protection, and Alpha.4 compatibility.
+- A real-browser 15-file Sunny Meadow fixture pinned to SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`.
+
+### Changed
+
+- Advanced the Workbench exporter and official importer candidate to Alpha.5 while keeping the published Alpha.1–Alpha.4 fixtures immutable.
+- Kept itch.io publication postponed; Alpha.5 includes only an offline Draft metadata source and does not claim an uploaded itch.io page.
+
 ## [0.1.0-alpha.4] - 2026-07-19
 
 ### Added

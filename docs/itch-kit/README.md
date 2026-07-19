@@ -8,11 +8,11 @@ Build and verify everything from source:
 pnpm release:itch
 ```
 
-Versioned source inputs are preserved under `docs/itch-kit/` for Alpha.1 through Alpha.4. All four are immutable published GitHub releases and must never be rebuilt from newer source. Alpha.4's itch.io page and upload remain postponed pending manual page review; no itch.io publication is claimed.
+Versioned source inputs are preserved under `docs/itch-kit/` for Alpha.1 through the current Alpha.5 candidate. Alpha.1–Alpha.4 are immutable published GitHub releases and must never be rebuilt from newer source. Alpha.5 is an unpublished GitHub candidate, and its itch.io page/upload is also postponed; no itch.io publication is claimed.
 
 - `uploads/` — the asset ZIP and itch-specific `SHA256SUMS`;
 - `page/` — reviewed operator inputs for page fields and bilingual copy;
-- `media/` — one 1260×1000 cover and five 1600×900 screenshots;
+- `media/` — when declared by that version, one 1260×1000 cover and five 1600×900 screenshots; Alpha.5 intentionally declares zero visuals while itch.io work is postponed;
 - `itch-upload-manifest.json` — SHA-256, byte length, role, and image dimensions for every other file.
 
 `metadata.json` is an operator checklist, not an itch.io import file: map its fields manually and do not upload it. Paste `page.md` into itch.io's rich-text editor, then restore headings, lists, and links and preview the result. Select project kind `Downloadable`; mark the asset ZIP itself as `Graphical Assets`. If `SHA256SUMS` is uploaded separately, classify it as documentation/other rather than graphical content.

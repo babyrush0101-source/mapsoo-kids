@@ -2,6 +2,8 @@
 
 本文描述 `Mapsoo Pack Importer` 从 Alpha.3 起沿用的派生资源所有权、重导入状态机与事务边界。当前 `v0.1.0-alpha.4` 已作为 GitHub prerelease 公开，示例包和 importer 可从[正式发布页](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4)下载；11 个远端附件的 SHA-256 已全部固定在发布注册表中。
 
+Alpha.5 开发版沿用同一三文件受管目录和事务状态机。新增的 `runtime/places.json` 仍是源 pack 中的权威数据，不会被复制进受管目录；它的哈希、结构和 World Spec 投影在 staging 前完成校验，生成的 Places/Marker2D 内容则由 `.tscn` 哈希纳入既有所有权基线。因此旧 Alpha.4 导入仍可读取；切换到 Alpha.5 importer 时，干净的旧输出会按现有 `updated` 路径完整重建，手工修改过的输出仍返回 `conflict`。
+
 ## 1. 受管目录
 
 每个 pack 只管理一个固定目录：

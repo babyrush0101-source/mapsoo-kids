@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-places-0.1.0.json",
+  "title": "Mapsoo Resolved Places Sidecar 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack",
+    "world_spec",
+    "coordinate_space",
+    "placement_algorithm",
+    "places"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/slug80"
+        },
+        "version": {
+          "const": "0.1.0-alpha.5"
+        }
+      }
+    },
+    "world_spec": {
+      "$ref": "#/$defs/fileReference"
+    },
+    "coordinate_space": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "unit",
+        "tile_size"
+      ],
+      "properties": {
+        "origin": {
+          "const": "top-left"
+        },
+        "unit": {
+          "const": "cell"
+        },
+        "tile_size": {
+          "enum": [
+            16,
+            32,
+            64
+          ]
+        }
+      }
+    },
+    "placement_algorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "mapsoo-semantic-place-resolver"
+        },
+        "version": {
+          "const": "0.1.0"
+        }
+      }
+    },
+    "places": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/resolvedPlace"
+      }
+    }
+  },
+  "$defs": {
+    "slug80": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*(?:/[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*)*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "fileReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3071
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2047
+        }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 47
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        }
+      }
+    },
+    "resolvedPlace": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "kind": {
+                  "const": "spawn"
+                },
+                "sprite_id": {
+                  "const": "place-spawn-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "kind": {
+                  "const": "settlement"
+                },
+                "sprite_id": {
+                  "const": "place-settlement-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "kind": {
+                  "const": "landmark"
+                },
+                "sprite_id": {
+                  "const": "place-landmark-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "kind": {
+                  "const": "resource"
+                },
+                "sprite_id": {
+                  "const": "place-resource-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "kind": {
+                  "const": "encounter"
+                },
+                "sprite_id": {
+                  "const": "place-encounter-01"
+                }
+              }
+            },
+            {
+              "properties": {
+                "kind": {
+                  "const": "exit"
+                },
+                "sprite_id": {
+                  "const": "place-exit-01"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "required": [
+        "id",
+        "order",
+        "label",
+        "kind",
+        "placement",
+        "sprite_id",
+        "tags",
+        "cell",
+        "pixel_center"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F](?:[^\\u0000-\\u001F\\u007F-\\u009F]*[^\\s\\u0000-\\u001F\\u007F-\\u009F])?$"
+        },
+        "kind": {
+          "enum": [
+            "spawn",
+            "settlement",
+            "landmark",
+            "resource",
+            "encounter",
+            "exit"
+          ]
+        },
+        "placement": {
+          "enum": [
+            "center",
+            "near-water",
+            "on-road",
+            "map-edge"
+          ]
+        },
+        "sprite_id": {
+          "type": "string",
+          "pattern": "^place-(spawn|settlement|landmark|resource|encounter|exit)-01$"
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "cell": {
+          "$ref": "#/$defs/cell"
+        },
+        "pixel_center": {
+          "$ref": "#/$defs/point"
+        }
+      }
+    }
+  }
+}

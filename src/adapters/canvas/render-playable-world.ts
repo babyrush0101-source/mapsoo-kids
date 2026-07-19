@@ -7,7 +7,14 @@ import {
   type PlayableTerrainTileDefinition,
 } from '../../core/playable-terrain';
 import { PLAYABLE_PROP_KINDS } from '../../core/generate-playable-world';
-import type { BiomeId, GeneratedWorld, PropKind } from '../../core/world-spec';
+import type { ResolvedWorldPlace } from '../../core/semantic-places';
+import {
+  PLACE_KINDS,
+  type BiomeId,
+  type GeneratedWorld,
+  type PlaceKind,
+  type PropKind,
+} from '../../core/world-spec';
 import { normalizePixelRect } from './render-world';
 
 function fillRect(
@@ -221,6 +228,10 @@ export function renderPlayableWorldToCanvas(
   canvas: HTMLCanvasElement,
   world: GeneratedWorld,
   cellSize: number,
+  options: Readonly<{
+    places?: readonly ResolvedWorldPlace[];
+    showPlaces?: boolean;
+  }> = {},
 ): void {
   const projection = projectPlayableTerrain(world);
   const targetSize = Math.max(1, Math.round(cellSize));
@@ -275,4 +286,145 @@ export function renderPlayableWorldToCanvas(
       targetSize,
     );
   }
+
+  if (options.showPlaces && options.places) {
+    renderSemanticPlacesOverlay(context, options.places, targetSize, canvas.width, canvas.height);
+  }
+}
+
+const PLACE_MARKERS = Object.freeze({
+  spawn: { color: '#d8f36b' },
+  settlement: { color: '#79d7ff' },
+  landmark: { color: '#ffd36b' },
+  resource: { color: '#87e0a0' },
+  encounter: { color: '#ff8f87' },
+  exit: { color: '#d5a8ff' },
+} as const);
+
+/** Stable atlas order shared with the semantic place contract. */
+export const SEMANTIC_PLACE_ATLAS_KINDS: readonly PlaceKind[] = PLACE_KINDS;
+
+/** Draws one deterministic, font-independent semantic place icon. */
+export function drawSemanticPlaceMarker(
+  context: CanvasRenderingContext2D,
+  kind: PlaceKind,
+  left: number,
+  top: number,
+  size: number,
+): void {
+  const marker = PLACE_MARKERS[kind];
+  const unit = Math.max(1, Math.floor(size / 8));
+  const outerLeft = left + unit;
+  const outerTop = top + unit;
+  const outerSize = Math.max(1, size - unit * 2);
+  const innerLeft = left + unit * 2;
+  const innerTop = top + unit * 2;
+  const innerSize = Math.max(1, size - unit * 4);
+  const centerX = left + size / 2;
+  const centerY = top + size / 2;
+
+  context.fillStyle = 'rgba(8, 14, 12, 0.92)';
+  fillRect(context, outerLeft, outerTop, outerSize, outerSize);
+  context.fillStyle = marker.color;
+  fillRect(context, innerLeft, innerTop, innerSize, innerSize);
+  context.fillStyle = '#101712';
+
+  if (kind === 'spawn') {
+    fillRect(context, centerX - unit, innerTop + unit, unit * 2, innerSize - unit * 2);
+    fillRect(context, innerLeft + unit, centerY - unit, innerSize - unit * 2, unit * 2);
+  } else if (kind === 'settlement') {
+    fillRect(context, innerLeft + unit, centerY, innerSize - unit * 2, innerSize / 2 - unit);
+    fillRect(context, innerLeft + unit * 2, centerY - unit * 2, innerSize - unit * 4, unit * 2);
+    fillRect(context, centerX - unit / 2, centerY + unit, unit, innerSize / 2 - unit * 2);
+  } else if (kind === 'landmark') {
+    fillRect(context, centerX - unit, innerTop + unit, unit * 2, innerSize - unit * 2);
+    fillRect(context, centerX - unit * 2, centerY - unit * 2, unit * 4, unit * 4);
+  } else if (kind === 'resource') {
+    fillRect(context, centerX - unit * 2, innerTop + unit * 2, unit * 4, unit * 3);
+    fillRect(context, centerX - unit, innerTop + unit, unit * 2, innerSize - unit * 2);
+  } else if (kind === 'encounter') {
+    fillRect(context, centerX - unit / 2, innerTop + unit, unit, innerSize - unit * 4);
+    fillRect(context, centerX - unit / 2, innerTop + innerSize - unit * 2, unit, unit);
+  } else {
+    fillRect(context, innerLeft + unit, centerY - unit, innerSize - unit * 2, unit * 2);
+    fillRect(context, innerLeft + innerSize - unit * 3, centerY - unit * 2, unit * 2, unit * 4);
+  }
+}
+
+/** Renders the six place-kind icons as one transparent single-row atlas. */
+export function renderSemanticPlacesAtlas(world: GeneratedWorld): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  const size = world.spec.visual.tileSize;
+  canvas.width = SEMANTIC_PLACE_ATLAS_KINDS.length * size;
+  canvas.height = size;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas 2D is unavailable.');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.imageSmoothingEnabled = false;
+  SEMANTIC_PLACE_ATLAS_KINDS.forEach((kind, index) => {
+    drawSemanticPlaceMarker(context, kind, index * size, 0, size);
+  });
+  return canvas;
+}
+
+/**
+ * Draws presentation-only semantic markers. Coordinates are consumed directly
+ * from the resolver records; this layer never derives or moves a place.
+ */
+export function renderSemanticPlacesOverlay(
+  context: CanvasRenderingContext2D,
+  places: readonly ResolvedWorldPlace[],
+  cellSize: number,
+  canvasWidth: number,
+  canvasHeight: number,
+): void {
+  const size = Math.max(1, Math.round(cellSize));
+  const markerSize = Math.max(10, Math.min(18, Math.round(size * 0.72)));
+  const labelHeight = 14;
+
+  context.save();
+  context.textBaseline = 'middle';
+  context.font = '700 10px ui-sans-serif, system-ui, sans-serif';
+  const occupiedLabels: Array<{ left: number; top: number; width: number; height: number }> = [];
+
+  for (const place of places) {
+    const centerX = place.cell.x * size + size / 2;
+    const centerY = place.cell.y * size + size / 2;
+    const markerLeft = Math.round(centerX - markerSize / 2);
+    const markerTop = Math.round(centerY - markerSize / 2);
+
+    drawSemanticPlaceMarker(context, place.kind, markerLeft, markerTop, markerSize);
+
+    const boundedLabel = place.label.slice(0, 32);
+    const labelWidth = Math.min(132, Math.max(46, boundedLabel.length * 6 + 10));
+    const clampLeft = (left: number) => Math.max(0, Math.min(canvasWidth - labelWidth, left));
+    const clampTop = (top: number) => Math.max(0, Math.min(canvasHeight - labelHeight, top));
+    const candidates = [
+      { left: Math.round(centerX - labelWidth / 2), top: markerTop - labelHeight - 4 },
+      { left: Math.round(centerX - labelWidth / 2), top: markerTop + markerSize + 4 },
+      { left: markerLeft + markerSize + 4, top: Math.round(centerY - labelHeight / 2) },
+      { left: markerLeft - labelWidth - 4, top: Math.round(centerY - labelHeight / 2) },
+    ].map(({ left, top }) => ({
+      left: clampLeft(left),
+      top: clampTop(top),
+      width: labelWidth,
+      height: labelHeight,
+    }));
+    const overlaps = (candidate: typeof candidates[number]) => occupiedLabels.some((existing) => !(
+      candidate.left + candidate.width + 2 <= existing.left
+      || existing.left + existing.width + 2 <= candidate.left
+      || candidate.top + candidate.height + 2 <= existing.top
+      || existing.top + existing.height + 2 <= candidate.top
+    ));
+    const labelRect = candidates.find((candidate) => !overlaps(candidate)) ?? candidates[0];
+    occupiedLabels.push(labelRect);
+
+    context.fillStyle = 'rgba(8, 14, 12, 0.92)';
+    fillRect(context, labelRect.left, labelRect.top, labelWidth, labelHeight);
+    context.fillStyle = '#f4f8f5';
+    context.textAlign = 'left';
+    context.fillText(boundedLabel, labelRect.left + 5, labelRect.top + labelHeight / 2, labelWidth - 10);
+  }
+
+  context.restore();
 }

@@ -125,7 +125,7 @@ async function runReceiptV02(config) {
     ['missing receipt schema', ({ manifest, files }) => {
       files.delete('schema/mapsoo-generation-receipt.schema.json');
       manifest.files = manifest.files.filter(({ path }) => path !== 'schema/mapsoo-generation-receipt.schema.json');
-    }, /11 payload records|payload path set mismatch/],
+    }, /(?:11|14) payload records|payload path set mismatch/],
     ['receipt schema const conflict', ({ manifest, files }) => {
       const path = 'schema/mapsoo-generation-receipt.schema.json';
       const schema = JSON.parse(files.get(path).toString('utf8'));
@@ -151,7 +151,7 @@ async function runReceiptV02(config) {
       updateRecord(manifest, path, bytes);
       manifest.world_spec.sha256 = hash;
       receipt.world.input_spec.sha256 = hash;
-    }, /World Spec seed mismatch/],
+    }, /World Spec seed mismatch|places World Spec binding mismatch/],
   ];
   for (const [name, mutate, expected] of cases) await expectFailure(config, name, mutate, expected);
 }
@@ -326,6 +326,7 @@ try {
       config.receiptVerifier === 'builtin-procedural-alpha2-v0.2'
       || config.receiptVerifier === 'builtin-procedural-alpha3-v0.2'
       || config.receiptVerifier === 'builtin-playable-terrain-alpha4-v0.2'
+      || config.receiptVerifier === 'builtin-semantic-places-alpha5-v0.2'
     ) await runReceiptV02(config);
     else throw new Error(`No negative suite for ${config.receiptVerifier}`);
   }

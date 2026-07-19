@@ -51,16 +51,16 @@ async function verifyPng(fileName, { width: expectedWidth, height: expectedHeigh
 }
 
 async function verify() {
-  const visualDirectoryStat = await lstat(visualRoot);
-  assert(visualDirectoryStat.isDirectory() && !visualDirectoryStat.isSymbolicLink(), 'Release visual root must be a real directory');
-  const actualVisualNames = (await readdir(visualRoot)).sort();
-  const configuredVisualNames = [...expectedVisuals.keys()].sort();
-  assert(
-    JSON.stringify(actualVisualNames) === JSON.stringify(configuredVisualNames),
-    'Release visual directory must contain exactly the configured PNG files',
-  );
-  for (const [fileName, visual] of expectedVisuals) {
-    await verifyPng(fileName, visual);
+  if (expectedVisuals.size > 0) {
+    const visualDirectoryStat = await lstat(visualRoot);
+    assert(visualDirectoryStat.isDirectory() && !visualDirectoryStat.isSymbolicLink(), 'Release visual root must be a real directory');
+    const actualVisualNames = (await readdir(visualRoot)).sort();
+    const configuredVisualNames = [...expectedVisuals.keys()].sort();
+    assert(
+      JSON.stringify(actualVisualNames) === JSON.stringify(configuredVisualNames),
+      'Release visual directory must contain exactly the configured PNG files',
+    );
+    for (const [fileName, visual] of expectedVisuals) await verifyPng(fileName, visual);
   }
 
   for (const historicalConfig of listReleaseConfigs().filter(

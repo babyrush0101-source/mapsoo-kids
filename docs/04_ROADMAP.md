@@ -2,6 +2,8 @@
 
 路线图按可验证成果排序，不用日期掩盖不确定性。每一阶段都应保持主分支可运行。
 
+> **两条版本轨道：** `v0.1`–`v1.0` 标题是能力轨（capability track），用于组织长期产品范围，不等于、预留或预测 `package.json` 与 GitHub tag 的 release SemVer。`alpha.4`、`alpha.5` 等标题才指向候选/公开发布序列；实际版本、lifecycle 与兼容证据以 release registry、tag 和发布附件为准。
+
 ## Phase 0 — Foundation
 
 目标：把“公开网站代码”变成可信的开源工具基线。
@@ -90,15 +92,28 @@
 
 详细合同与停止条件见 [`12_ALPHA4_PLAYABLE_TERRAIN.md`](12_ALPHA4_PLAYABLE_TERRAIN.md)。
 
+### alpha.5 — Semantic Places（候选范围）
+
+- [x] 新 candidate schema 中的稳定、唯一、路径安全地点 ID 与受限语义字段；
+- [x] 地点坐标、标签与引用的严格 schema/runtime 校验及负向案例；
+- [x] receipt 绑定含地点声明的 World Spec；manifest/verifier 绑定派生地点 JSON、算法、schema、atlas、大小与 SHA-256；
+- [x] Godot importer 派生按 ID 可查询的地点节点/sidecar，并保留安全重导入边界；
+- [x] 最小 Godot 消费 fixture 不依赖随机坐标、节点顺序或 atlas 索引；
+- [ ] 真实浏览器确定性 ZIP 与 Linux/Windows Godot 4.3/4.7 exact-pack 门禁；
+- [x] Alpha.1–Alpha.4 fixture、hash、tag 与合同保持不可变；
+- [ ] 公开 PR、候选 release 审核与发布后 digest ledger（只有实际发布后才勾选）。
+
+详细范围、验收、不做项与停止条件见 [`13_ALPHA5_SEMANTIC_PLACES.md`](13_ALPHA5_SEMANTIC_PLACES.md)。
+
 ## v0.4 — World System
 
 - [ ] 多 biome 与 transition；
-- [ ] 地点、道路与兴趣点；
+- [ ] 在 Alpha.5 稳定地点合同之上扩展道路关系与兴趣点系统；
 - [ ] 建筑和内部场景；
 - [ ] 角色 sprite/动画合同；
 - [ ] 世界版本和增量更新；
 - [x] 可执行、隐私最小化的 `StoyoAssetRequest` → World Spec namespaced extension 契约与 Workbench 本地导入；
-- [ ] STOYO 稳定地点/交互锚点与版本化运行时 sidecar。
+- [ ] 在公开中立合同稳定后评估 STOYO 专用运行时映射；未接入前不声明采用。
 
 ## v0.5 — Community Beta
 

@@ -44,7 +44,7 @@ describe('STOYO Asset Request projection', () => {
       'ea279ebbfd3c12693469472fbca6bbc1286e07515632bd5e34b7bf698602a144',
     );
     expect(projection.worldSpec).toMatchObject({
-      schemaVersion: '0.1.0',
+      schemaVersion: '0.2.0',
       id: 'river-valley-observation',
       map: { width: 24, height: 16, biome: 'meadow' },
       output: { targets: ['common', 'godot', 'itch'], assetLicense: 'CC0-1.0' },
