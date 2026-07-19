@@ -4,17 +4,21 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+## [0.1.0-alpha.6] - 2026-07-19
+
 ### Added
 
-- An unpublished Alpha.6 candidate with World Spec 0.3 place-linked exterior structures, four deterministic archetypes, a transparent structure atlas, and a portable structures sidecar.
+- World Spec 0.3 place-linked exterior structures, four deterministic archetypes, a transparent structure atlas, and a portable structures sidecar.
 - Pack schema 0.4 bindings across the World Spec, semantic places, structures metadata, atlas regions, and per-file SHA-256 records.
 - Browser structure preview/list controls and Godot `Sprite2D` derivation under the existing managed re-import boundary.
-- A real-browser 18-file Sunny Meadow candidate fixture pinned to SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`.
+- A published real-browser 18-file Sunny Meadow fixture pinned to SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`.
+- A separately installable Godot importer ZIP pinned to SHA-256 `bbfacd2b5c8503214b7647d59e9911a34fa1b4e073f86bd1310686812c9142c0`.
 
 ### Changed
 
-- Advanced the local candidate Workbench/export contract to Alpha.6 without changing the immutable Alpha.1–Alpha.5 public release bytes.
-- Kept v0.1.0-alpha.5 as the current public prerelease. Alpha.6 has not been tagged or published, and itch.io upload remains postponed.
+- Advanced the Workbench/export contract and official importer to the published Alpha.6 without changing the immutable Alpha.1–Alpha.5 release bytes.
+- Published the audited Alpha.6 prerelease with 13 attachments after the Linux/Windows × Godot 4.3/4.7 release matrix passed.
+- Kept itch.io upload postponed; STOYO remains a planned consumer, and no external adoption or independent user feedback is claimed.
 
 ## [0.1.0-alpha.5] - 2026-07-19
 

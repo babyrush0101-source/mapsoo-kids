@@ -8,15 +8,15 @@ import {
 } from './current-public-release';
 
 describe('current public release links', () => {
-  it('keeps the alpha.6 workbench separate from the published alpha.5 links', () => {
+  it('points the alpha.6 workbench at the published alpha.6 release', () => {
     expect(packageJson.version).toBe('0.1.0-alpha.6');
     expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
-    expect(CURRENT_PUBLIC_RELEASE_VERSION).toBe('0.1.0-alpha.5');
+    expect(CURRENT_PUBLIC_RELEASE_VERSION).toBe('0.1.0-alpha.6');
     expect(CURRENT_PUBLIC_RELEASE.version).toBe(CURRENT_PUBLIC_RELEASE_VERSION);
     expect(CURRENT_PUBLIC_RELEASE.tag).toBe(`v${CURRENT_PUBLIC_RELEASE_VERSION}`);
-    expect(CURRENT_PUBLIC_RELEASE.releaseUrl).toContain('/releases/tag/v0.1.0-alpha.5');
-    expect(CURRENT_PUBLIC_RELEASE.assetPack.filename).toContain('v0.1.0-alpha.5');
-    expect(CURRENT_PUBLIC_RELEASE.godotImporter.filename).toContain('v0.1.0-alpha.5');
+    expect(CURRENT_PUBLIC_RELEASE.releaseUrl).toContain('/releases/tag/v0.1.0-alpha.6');
+    expect(CURRENT_PUBLIC_RELEASE.assetPack.filename).toContain('v0.1.0-alpha.6');
+    expect(CURRENT_PUBLIC_RELEASE.godotImporter.filename).toContain('v0.1.0-alpha.6');
   });
 
   it('uses only the official HTTPS repository for downloads and community links', () => {
@@ -37,16 +37,16 @@ describe('current public release links', () => {
     }
   });
 
-  it('pins the audited alpha.5 download names and digests', () => {
+  it('pins the audited alpha.6 download names and digests', () => {
     expect(CURRENT_PUBLIC_RELEASE.assetPack).toEqual({
-      filename: 'mapsoo-sunny-meadow-v0.1.0-alpha.5.zip',
-      url: 'https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-sunny-meadow-v0.1.0-alpha.5.zip',
-      sha256: '8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36',
+      filename: 'mapsoo-sunny-meadow-v0.1.0-alpha.6.zip',
+      url: 'https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.6/mapsoo-sunny-meadow-v0.1.0-alpha.6.zip',
+      sha256: '4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054',
     });
     expect(CURRENT_PUBLIC_RELEASE.godotImporter).toEqual({
-      filename: 'mapsoo-godot-importer-v0.1.0-alpha.5.zip',
-      url: 'https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-godot-importer-v0.1.0-alpha.5.zip',
-      sha256: '6020bda92da56aacb924b994990bc6bd20086ddd1370f71eee36f9ee782c9894',
+      filename: 'mapsoo-godot-importer-v0.1.0-alpha.6.zip',
+      url: 'https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.6/mapsoo-godot-importer-v0.1.0-alpha.6.zip',
+      sha256: 'bbfacd2b5c8503214b7647d59e9911a34fa1b4e073f86bd1310686812c9142c0',
     });
   });
 
