@@ -9,7 +9,7 @@ This document describes the first provider boundary in Mapsoo Worldsmith. It is 
 - The Workbench atomically stores the runner-owned `world + evidence` result for its initial world, edited specs, and imported specs; the preview shows the Provider snapshot that actually produced the current world.
 - A single request session aborts superseded work and prevents stale completions from replacing the last successful world/evidence pair. UI and console errors expose only stable Mapsoo error codes.
 - The next-release `0.2.0` Provider Receipt schema and runtime validator are implemented without rewriting the published alpha receipt.
-- The registered alpha.2 candidate is now the package and Workbench default. It projects only runner-minted evidence into receipt `0.2.0`, derives manifest time/World Spec/license/provenance from that receipt, verifies every shipped payload byte before ZIP creation, and uses the same deterministic ZIP encoding as release packaging.
+- The registered and published alpha.2 release is the package and Workbench default. It projects only runner-minted evidence into receipt `0.2.0`, derives manifest time/World Spec/license/provenance from that receipt, verifies every shipped payload byte before ZIP creation, and uses the same deterministic ZIP encoding as release packaging.
 - No optional AI provider is shipped yet.
 - The portable/itch exporter accepts only the reserved built-in procedural integration and its exact source-free CC0 workflow/transformation evidence profile. A provider being runnable does **not** make its output publishable.
 
