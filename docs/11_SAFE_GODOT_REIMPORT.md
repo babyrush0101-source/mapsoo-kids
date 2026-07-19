@@ -1,6 +1,6 @@
-# Godot 安全重导入合同（alpha.3-dev）
+# Godot 安全重导入合同（alpha.3 candidate）
 
-本文描述 `Mapsoo Pack Importer` 的派生资源所有权、重导入状态机与事务边界。它是 alpha.3 的开发合同；当前公开下载仍是 alpha.2，直到 alpha.3 候选完成独立发布、远端附件哈希登记和公开入口切换。
+本文描述 `Mapsoo Pack Importer` 的派生资源所有权、重导入状态机与事务边界。它是 alpha.3 候选合同；当前公开下载仍是 alpha.2，直到 alpha.3 完成独立发布、远端附件哈希登记和公开入口切换。
 
 ## 1. 受管目录
 

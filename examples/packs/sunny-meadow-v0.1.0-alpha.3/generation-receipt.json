@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "created_at": "2026-07-18T20:38:44.843Z",
+  "world": {
+    "id": "sunny-meadow",
+    "input_spec": {
+      "path": "worlds/sunny-meadow.world.json",
+      "sha256": "a02f45826484439f8a346bce7aa27277f5ae9dc1d293320039cd29eea11a76d8"
+    },
+    "seed": "mapsoo-demo-001"
+  },
+  "provider": {
+    "id": "procedural-pixel-v1",
+    "version": "0.1.0",
+    "execution": "local",
+    "output_provenance": "procedural"
+  },
+  "model": null,
+  "workflow": {
+    "id": "mapsoo-procedural-world-pack",
+    "version": "0.1.0",
+    "definition_sha256": null
+  },
+  "transformations": [
+    {
+      "id": "seeded-map-layout",
+      "version": "0.1.0"
+    },
+    {
+      "id": "procedural-pixel-atlas",
+      "version": "0.1.0"
+    },
+    {
+      "id": "png-rgba-export",
+      "version": "0.1.0"
+    }
+  ],
+  "ai_disclosure": {
+    "contains_generative_ai": false,
+    "human_curated": false,
+    "statement": null
+  },
+  "licensing": {
+    "output": {
+      "id": "CC0-1.0",
+      "notice_path": "license-assets.md"
+    },
+    "provider_terms": null
+  },
+  "sources": []
+}

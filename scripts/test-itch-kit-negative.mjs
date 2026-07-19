@@ -166,8 +166,9 @@ async function runReceiptPolicyNegativeCases() {
       );
       return;
     case 'builtin-procedural-alpha2-v0.2':
+    case 'builtin-procedural-alpha3-v0.2':
       await expectPackFailure(
-        'alpha2 AI disclosure conflict with recomputed inner integrity',
+        'receipt-0.2 AI disclosure conflict with recomputed inner integrity',
         () => rewriteCurrentReceipt(({ receipt }) => {
           receipt.ai_disclosure.contains_generative_ai = true;
         }),
@@ -175,7 +176,7 @@ async function runReceiptPolicyNegativeCases() {
       );
 
       await expectPackFailure(
-        'alpha2 forged provider with recomputed inner integrity',
+        'receipt-0.2 forged provider with recomputed inner integrity',
         () => rewriteCurrentReceipt(({ receipt }) => {
           receipt.provider.id = 'future-ai-provider';
         }),
@@ -183,7 +184,7 @@ async function runReceiptPolicyNegativeCases() {
       );
 
       await expectPackFailure(
-        'alpha2 receipt schema downgrade',
+        'receipt-0.2 schema downgrade',
         () => rewriteCurrentReceipt(({ receipt }) => {
           receipt.schema_version = '0.1.0';
         }),
@@ -191,7 +192,7 @@ async function runReceiptPolicyNegativeCases() {
       );
 
       await expectPackFailure(
-        'alpha2 forged manifest pack ID',
+        'receipt-0.2 forged manifest pack ID',
         () => rewriteCurrentReceipt(({ manifest }) => {
           manifest.pack.id = 'forged-pack';
         }),
@@ -199,7 +200,7 @@ async function runReceiptPolicyNegativeCases() {
       );
 
       await expectPackFailure(
-        'alpha2 forged manifest pack version',
+        'receipt-0.2 forged manifest pack version',
         () => rewriteCurrentReceipt(({ manifest }) => {
           manifest.pack.version = '9999.0.0';
         }),

@@ -220,16 +220,16 @@ jobs:
             exit 1
           fi
 
-      - name: Import the exact verified alpha.2 candidate pack
+      - name: Import the exact verified candidate pack
         shell: bash
         run: |
           set -euo pipefail
-          log_file="$RUNNER_TEMP/mapsoo-alpha2-pack-${{ matrix.version }}.log"
+          log_file="$RUNNER_TEMP/mapsoo-candidate-pack-${{ matrix.version }}.log"
           "$GODOT_BIN" --headless --path godot \
             --script res://tests/import_pack_cli.gd -- \
             --manifest="$MAPSOO_CANDIDATE_MANIFEST" 2>&1 | tee "$log_file"
           if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
-            echo "Godot emitted an engine error while importing the alpha.2 candidate pack." >&2
+            echo "Godot emitted an engine error while importing the candidate pack." >&2
             exit 1
           fi
           grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged' "$log_file"
@@ -350,7 +350,7 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File godot/tests/run-smoke.ps1 -GodotConsole $env:GODOT_BIN
 
-      - name: Import the exact verified alpha.2 pack twice
+      - name: Import the exact verified candidate pack twice
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'

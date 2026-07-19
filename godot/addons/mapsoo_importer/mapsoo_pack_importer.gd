@@ -3,7 +3,7 @@ extends RefCounted
 
 const SUPPORTED_SCHEMA_VERSION := "0.1.0"
 const OUTPUT_ROOT := "res://mapsoo_imports"
-const IMPORTER_VERSION := "0.1.0-alpha.3-dev"
+const IMPORTER_VERSION := "0.1.0-alpha.3"
 const IMPORT_STATE_SCHEMA_VERSION := "1.0.0"
 const IMPORT_STATE_FILENAME := "mapsoo.import-state.json"
 const BUFFER_SIZE := 1024 * 1024

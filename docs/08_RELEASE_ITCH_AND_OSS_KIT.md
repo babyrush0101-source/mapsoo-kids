@@ -4,6 +4,8 @@
 
 当前已发布版本：`v0.1.0-alpha.2`
 
+当前候选版本：`v0.1.0-alpha.3`，固定示例包 SHA-256 `af95a4e57187fb85d06e34ccb0e1a1b1dba9b91e8989debf4c30a93108589696`。候选工作台与 importer 已升版，但公开下载仍保持 alpha.2；只有 tag draft 的全部附件通过远端审计并发布后，才由独立 ledger PR 切换公开入口。alpha.3 的 itch.io operator kit 继续作为离线验证产物，不执行登录或上传。
+
 已发布且不可变的历史版本：`v0.1.0-alpha.1`、`v0.1.0-alpha.2`
 
 目标仓库：`babyrush0101-source/mapsoo-kids`

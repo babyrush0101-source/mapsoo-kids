@@ -8,7 +8,7 @@ export interface PackFileRecord {
   sha256: string;
 }
 
-export type PackReleaseVersion = '0.1.0-alpha.1' | '0.1.0-alpha.2';
+export type PackReleaseVersion = '0.1.0-alpha.1' | '0.1.0-alpha.2' | '0.1.0-alpha.3';
 
 export interface PackManifest {
   schema_version: '0.1.0';
