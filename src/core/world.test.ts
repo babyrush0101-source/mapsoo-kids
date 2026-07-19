@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import exampleWorldSpec from '../../examples/sunny-meadow.world.json';
+import exampleWorldSpec from '../../examples/sunny-meadow-v0.2.world.json';
 import { generateWorld } from './generate-world';
 import { buildPackManifest, isSafePackPath } from './pack-manifest';
 import { DEFAULT_WORLD_SPEC, cloneWorldSpec } from './world-spec';

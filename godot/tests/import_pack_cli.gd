@@ -66,20 +66,43 @@ func _init() -> void:
 		_fail("Validated manifest could not be re-read for the CLI scene contract.")
 		return
 	var schema_version := str((manifest_parser.data as Dictionary).get("schema_version", ""))
-	if schema_version == "0.2.0":
+	if schema_version in ["0.2.0", "0.3.0"]:
 		if water == null or roads == null:
 			world.free()
-			_fail("Schema 0.2.0 scene is missing Water or Roads: TileMapLayer.")
+			_fail("Playable-terrain scene is missing Water or Roads: TileMapLayer.")
 			return
 		var tile_set := ResourceLoader.load(tileset_path, "TileSet", ResourceLoader.CACHE_MODE_IGNORE) as TileSet
 		if tile_set == null or tile_set.get_terrain_sets_count() != 2 or tile_set.get_physics_layers_count() != 1:
 			world.free()
-			_fail("Schema 0.2.0 TileSet is missing terrain or physics metadata.")
+			_fail("Playable-terrain TileSet is missing terrain or physics metadata.")
 			return
 		if water.z_index != 1 or roads.z_index != 2 or props.z_index != 3:
 			world.free()
-			_fail("Schema 0.2.0 scene layer z-order differs from the portable contract.")
+			_fail("Playable-terrain scene layer z-order differs from the portable contract.")
 			return
+	if schema_version == "0.3.0":
+		var manifest: Dictionary = manifest_parser.data
+		var runtime: Dictionary = manifest.get("runtime", {})
+		var places_ref: Dictionary = runtime.get("places", {})
+		var places_path := manifest_path.get_base_dir().path_join(str(places_ref.get("path", "")))
+		var sidecar_parser := JSON.new()
+		if sidecar_parser.parse(FileAccess.get_file_as_string(places_path)) != OK or typeof(sidecar_parser.data) != TYPE_DICTIONARY:
+			world.free()
+			_fail("Schema 0.3.0 places sidecar could not be re-read for the CLI scene contract.")
+			return
+		var expected_places: Array = (sidecar_parser.data as Dictionary).get("places", [])
+		var places_root := world.get_node_or_null("Places") as Node2D
+		if (places_root == null and not expected_places.is_empty()) or (places_root != null and places_root.get_child_count() != expected_places.size()):
+			world.free()
+			_fail("Schema 0.3.0 scene Places count differs from the validated sidecar.")
+			return
+		for index: int in expected_places.size():
+			var marker := places_root.get_node_or_null("Place_%04d" % index) as Marker2D
+			var expected_place: Dictionary = expected_places[index]
+			if marker == null or marker.get_meta("mapsoo_id", "") != expected_place.get("id") or marker.get_child_count() != 1 or not (marker.get_child(0) is Sprite2D):
+				world.free()
+				_fail("Schema 0.3.0 scene marker %d differs from the validated sidecar." % index)
+				return
 
 	var pack_id := str(result.get("pack_id", ""))
 	world.free()

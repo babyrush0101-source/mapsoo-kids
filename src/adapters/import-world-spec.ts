@@ -1,4 +1,12 @@
-import { cloneWorldSpec, type WorldSpec } from '../core/world-spec';
+import {
+  LEGACY_WORLD_SCHEMA_VERSION,
+  WORLD_SCHEMA_VERSION,
+  cloneWorldSpec,
+  migrateWorldSpecV010,
+  type AnyWorldSpec,
+  type WorldSpec,
+  type WorldSpecV010,
+} from '../core/world-spec';
 import { validateWorldSpec, type ValidationIssue } from '../core/validate-world';
 import {
   FORBIDDEN_WORLD_SPEC_OBJECT_KEYS,
@@ -68,8 +76,12 @@ function strictFailure(code: StrictJsonImportErrorCode, message: string): Strict
   return { ok: false, code, message };
 }
 
-function isValidatedWorldSpec(value: unknown, issues: ValidationIssue[]): value is WorldSpec {
-  return issues.every((issue) => issue.severity !== 'error');
+function isValidatedWorldSpec(value: unknown, issues: ValidationIssue[]): value is AnyWorldSpec {
+  if (issues.some((issue) => issue.severity === 'error') || typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const schemaVersion = (value as { schemaVersion?: unknown }).schemaVersion;
+  return schemaVersion === LEGACY_WORLD_SCHEMA_VERSION || schemaVersion === WORLD_SCHEMA_VERSION;
 }
 
 function inspectJsonTree(value: unknown, documentName: string): StrictJsonImportResult | null {
@@ -275,7 +287,6 @@ export function parseStrictJsonDocument(
 }
 
 function validateParsedWorldSpec(candidate: unknown): WorldSpecImportResult {
-
   const issues = validateWorldSpec(candidate);
   const errors = issues.filter((issue) => issue.severity === 'error');
   if (!isValidatedWorldSpec(candidate, issues)) {
@@ -284,6 +295,22 @@ function validateParsedWorldSpec(candidate: unknown): WorldSpecImportResult {
       `World Spec validation failed: ${errors.map((issue) => issue.code).join(', ')}.`,
       issues,
     );
+  }
+
+  if (candidate.schemaVersion === LEGACY_WORLD_SCHEMA_VERSION) {
+    const migrated = migrateWorldSpecV010(candidate as WorldSpecV010);
+    return {
+      ok: true,
+      spec: cloneWorldSpec(migrated),
+      issues: [
+        ...issues,
+        {
+          code: 'spec.schema-migrated',
+          severity: 'warning',
+          message: `World Spec ${LEGACY_WORLD_SCHEMA_VERSION} was migrated to ${WORLD_SCHEMA_VERSION}; no semantic places were invented.`,
+        },
+      ],
+    };
   }
 
   return { ok: true, spec: cloneWorldSpec(candidate), issues };

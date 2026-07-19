@@ -19,7 +19,9 @@ The public `main` branch and **v0.1.0-alpha.4 pre-release** provide the current 
 4. Download/load a World Spec JSON, or load the strict synthetic STOYO Asset Request example and project it locally.
 5. Export an executable-free 12-file ZIP containing PNG atlases, Ground/Water/Roads/Props data, a map preview, three schemas, manifest, receipt 0.2, and asset license.
 
-The versioned starter input is available at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
+The current development candidate is **v0.1.0-alpha.5**. It adds World Spec 0.2 semantic places, a canonical `runtime/places.json` sidecar, six reusable place markers, a browser overlay/list, and Godot `Marker2D` anchors. Its real-browser ZIP has 15 files, four schemas, and SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`; it imports as `created → unchanged` in local Godot 4.3/4.7 exact-pack checks. These are candidate facts, not a claim that Alpha.5 is already published; the public download cards remain on audited Alpha.4 until the PR, cross-platform CI, tag workflow, and public digest ledger complete.
+
+The public Alpha.4 starter input is [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json); the Alpha.5 candidate input is [`examples/sunny-meadow-v0.2.world.json`](examples/sunny-meadow-v0.2.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
 Local World Spec and STOYO Asset Request imports share the same 128 KiB cap, strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema/runtime validation. A STOYO request is first projected to a World Spec with a canonical SHA-256 binding; initial generation, editor generation, and both import paths then run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
@@ -76,8 +78,15 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [v0.1.0-alpha.3 release notes](docs/releases/v0.1.0-alpha.3.md)
 - [v0.1.0-alpha.3 release visual source](docs/release-visuals/README-v0.1.0-alpha.3.md)
 - [v0.1.0-alpha.4 design and acceptance](docs/12_ALPHA4_PLAYABLE_TERRAIN.md)
+- [Alpha.5 semantic places scope and acceptance](docs/13_ALPHA5_SEMANTIC_PLACES.md)
 - [v0.1.0-alpha.4 release notes](docs/releases/v0.1.0-alpha.4.md)
 - [v0.1.0-alpha.4 release visual source](docs/release-visuals/README-v0.1.0-alpha.4.md)
+- [v0.1.0-alpha.5 release notes](docs/releases/v0.1.0-alpha.5.md)
+- [Community evidence ledger](docs/14_COMMUNITY_EVIDENCE.md)
+
+## Community and contributing
+
+Bug reports, feature proposals, and reproducible Godot import feedback are welcome through the repository [issue templates](https://github.com/babyrush0101-source/mapsoo-kids/issues/new/choose). Before opening a pull request, read [CONTRIBUTING.md](CONTRIBUTING.md); project decision and response boundaries are documented in [GOVERNANCE.md](GOVERNANCE.md), sensitive reports belong in the private path described by [SECURITY.md](SECURITY.md), and independent use is recorded only when it satisfies the public [community evidence ledger](docs/14_COMMUNITY_EVIDENCE.md). This is a volunteer-maintained project and does not offer an SLA.
 
 The reviewed [silent bilingual 75-second MP4](docs/media/v0.1.0-alpha.1/video/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4) remains an immutable alpha.1 [GitHub release asset](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.1/mapsoo-worldsmith-v0.1.0-alpha.1-75s.mp4). Alpha.2 does not rename or reuse it as evidence.
 
@@ -99,7 +108,7 @@ pnpm release:history:remote
 pnpm release:browser:verify
 ```
 
-`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all four immutable public GitHub releases and run the Alpha.2–Alpha.4 exporters in a real browser, comparing raw ZIP bytes with their independently registered fixtures.
+`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all four immutable public GitHub releases and run the Alpha.2–Alpha.5 exporters in a real browser, comparing raw ZIP bytes with their independently registered fixtures.
 
 After registering and selecting a future unpublished version, build, validate, and reproduce its complete candidate release bundle:
 
@@ -109,7 +118,7 @@ pnpm release:local
 
 The command intentionally refuses to rebuild a version whose lifecycle is already `published`. To inspect a published release, download its attachments into the configured release directory and run `pnpm release:verify`; every attachment must match the pinned GitHub digest. Start a new candidate version for any changed output.
 
-Build the exact itch.io operator directory—including the executable-free asset ZIP, itch-specific checksum, page metadata/copy, cover, five screenshots, and byte manifest:
+Build the exact version-configured itch.io Draft directory. Alpha.1–Alpha.4 retain their historical cover/screenshots; because Alpha.5 itch publication is postponed, its current Draft contains only the executable-free asset ZIP, checksum, page metadata/copy, and byte manifest—no media and no upload:
 
 ```bash
 pnpm release:itch

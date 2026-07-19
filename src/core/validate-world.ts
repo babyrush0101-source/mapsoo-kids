@@ -1,4 +1,11 @@
-import { WORLD_SCHEMA_VERSION, type GeneratedWorld, type WorldSpec } from './world-spec';
+import {
+  PLACE_KINDS,
+  PLACE_PLACEMENTS,
+  LEGACY_WORLD_SCHEMA_VERSION,
+  WORLD_SCHEMA_VERSION,
+  type GeneratedWorld,
+  type WorldSpec,
+} from './world-spec';
 import { isValidGeneratorId, isValidGeneratorVersion } from './generator-identity';
 import {
   FORBIDDEN_WORLD_SPEC_OBJECT_KEYS,
@@ -22,6 +29,10 @@ const BIOMES = new Set(['meadow', 'desert', 'snow']);
 const TILE_SIZES = new Set([16, 32, 64]);
 const TILE_NAMES = new Set(['ground', 'water', 'path', 'detail']);
 const PROP_KINDS = new Set(['tree', 'rock', 'flower', 'shrub', 'log', 'marker']);
+const PLACE_KIND_SET = new Set<string>(PLACE_KINDS);
+const PLACE_PLACEMENT_SET = new Set<string>(PLACE_PLACEMENTS);
+const PLACE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const PLACE_TAG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -227,18 +238,23 @@ export function validateWorldSpec(spec: unknown): ValidationIssue[] {
     }];
   }
 
+  const legacySchema = candidate.schemaVersion === LEGACY_WORLD_SCHEMA_VERSION;
+  const currentSchema = candidate.schemaVersion === WORLD_SCHEMA_VERSION;
+
   addUnknownKeyIssue(
     issues,
     candidate,
-    ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'extensions'],
+    legacySchema
+      ? ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'extensions']
+      : ['schemaVersion', 'id', 'title', 'description', 'seed', 'visual', 'map', 'output', 'places', 'extensions'],
     'root',
   );
 
-  if (candidate.schemaVersion !== WORLD_SCHEMA_VERSION) {
+  if (!legacySchema && !currentSchema) {
     issues.push({
       code: 'spec.schema-version',
       severity: 'error',
-      message: `Schema version must be ${WORLD_SCHEMA_VERSION}.`,
+      message: `Schema version must be ${LEGACY_WORLD_SCHEMA_VERSION} or ${WORLD_SCHEMA_VERSION}.`,
     });
   }
 
@@ -374,6 +390,106 @@ export function validateWorldSpec(spec: unknown): ValidationIssue[] {
         severity: 'error',
         message: 'Generated v0.1 assets must use the CC0-1.0 license.',
       });
+    }
+  }
+
+  if (currentSchema && candidate.places !== undefined) {
+    if (!Array.isArray(candidate.places) || candidate.places.length < 1 || candidate.places.length > 8) {
+      issues.push({
+        code: 'spec.places',
+        severity: 'error',
+        message: 'Places, when declared, must contain from 1 through 8 semantic locations.',
+      });
+    } else {
+      const placeIds = new Set<string>();
+      let duplicatePlaceId = false;
+
+      for (const place of candidate.places) {
+        if (!isRecord(place)) {
+          issues.push({
+            code: 'spec.place',
+            severity: 'error',
+            message: 'Every place must be an object.',
+          });
+          continue;
+        }
+
+        addUnknownKeyIssue(issues, place, ['id', 'label', 'kind', 'placement', 'tags'], 'place');
+
+        if (
+          !isBoundedString(place.id, 1, 64)
+          || !PLACE_ID.test(place.id)
+        ) {
+          issues.push({
+            code: 'spec.place-id',
+            severity: 'error',
+            message: 'Place IDs must be 1 to 64 characters using lowercase letters, numbers, and single hyphens.',
+          });
+        } else if (placeIds.has(place.id)) {
+          duplicatePlaceId = true;
+        } else {
+          placeIds.add(place.id);
+        }
+
+        if (
+          !isBoundedString(place.label, 1, 80)
+          || !place.label.trim()
+          || place.label !== place.label.trim()
+          || hasControlCharacters(place.label)
+        ) {
+          issues.push({
+            code: 'spec.place-label',
+            severity: 'error',
+            message: 'Place labels must be 1 to 80 trimmed characters without control characters.',
+          });
+        }
+
+        if (typeof place.kind !== 'string' || !PLACE_KIND_SET.has(place.kind)) {
+          issues.push({
+            code: 'spec.place-kind',
+            severity: 'error',
+            message: `Place kind must be one of: ${PLACE_KINDS.join(', ')}.`,
+          });
+        }
+
+        if (typeof place.placement !== 'string' || !PLACE_PLACEMENT_SET.has(place.placement)) {
+          issues.push({
+            code: 'spec.place-placement',
+            severity: 'error',
+            message: `Place placement must be one of: ${PLACE_PLACEMENTS.join(', ')}.`,
+          });
+        }
+
+        if (!Array.isArray(place.tags) || place.tags.length > 8) {
+          issues.push({
+            code: 'spec.place-tags',
+            severity: 'error',
+            message: 'Place tags must be an array containing at most 8 tags.',
+          });
+        } else {
+          const tags = new Set<string>();
+          const invalidTag = place.tags.some((tag) => {
+            if (!isBoundedString(tag, 1, 32) || !PLACE_TAG.test(tag) || tags.has(tag)) return true;
+            tags.add(tag);
+            return false;
+          });
+          if (invalidTag) {
+            issues.push({
+              code: 'spec.place-tags',
+              severity: 'error',
+              message: 'Place tags must be unique 1 to 32 character lowercase letter, number, or hyphen slugs.',
+            });
+          }
+        }
+      }
+
+      if (duplicatePlaceId) {
+        issues.push({
+          code: 'spec.duplicate-place-id',
+          severity: 'error',
+          message: 'Place IDs must be unique within a world spec.',
+        });
+      }
     }
   }
 

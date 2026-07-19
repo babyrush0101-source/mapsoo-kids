@@ -1,0 +1,354 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-pack-0.3.0.json",
+  "title": "Mapsoo Asset Pack Manifest 0.3",
+  "description": "Strict Alpha.5 Godot asset-pack contract with resolved semantic places.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "pack", "compatibility", "world_spec", "demo", "layers",
+    "terrain_sets", "physics_layers", "receipt", "atlases", "sprites", "runtime",
+    "files", "license", "provenance"
+  ],
+  "properties": {
+    "schema_version": { "const": "0.3.0" },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "version", "generator", "created_at"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug80" },
+        "title": { "$ref": "#/$defs/trimmed120" },
+        "version": { "const": "0.1.0-alpha.5" },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "const": "Mapsoo Worldsmith" },
+            "version": { "const": "0.1.0-alpha.5" }
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["godot_min", "grid", "art_style", "importer"],
+      "properties": {
+        "godot_min": { "const": "4.3" },
+        "grid": { "const": "orthogonal" },
+        "art_style": { "const": "pixel_art" },
+        "importer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "min_version", "source"],
+          "properties": {
+            "id": { "const": "mapsoo_importer" },
+            "min_version": { "const": "0.1.0-alpha.5" },
+            "source": { "const": "https://github.com/babyrush0101-source/mapsoo-kids" }
+          }
+        }
+      }
+    },
+    "world_spec": { "$ref": "#/$defs/fileReference" },
+    "demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map", "preview"],
+      "properties": {
+        "map": { "$ref": "#/$defs/relativePath" },
+        "preview": { "$ref": "#/$defs/relativePath" }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        { "$ref": "#/$defs/groundLayer" },
+        { "$ref": "#/$defs/waterLayer" },
+        { "$ref": "#/$defs/roadsLayer" },
+        { "$ref": "#/$defs/propsLayer" }
+      ],
+      "items": false
+    },
+    "terrain_sets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/waterTerrainSet" },
+        { "$ref": "#/$defs/roadsTerrainSet" }
+      ],
+      "items": false
+    },
+    "physics_layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [{ "const": { "id": "world-blocking", "collision_layer": 1, "collision_mask": 1 } }],
+      "items": false
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": { "path": { "$ref": "#/$defs/relativePath" } }
+    },
+    "atlases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/terrainAtlas" }
+    },
+    "sprites": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "prefixItems": [
+        { "$ref": "#/$defs/assetSprite" }, { "$ref": "#/$defs/assetSprite" },
+        { "$ref": "#/$defs/assetSprite" }, { "$ref": "#/$defs/assetSprite" },
+        { "$ref": "#/$defs/assetSprite" }, { "$ref": "#/$defs/assetSprite" },
+        { "$ref": "#/$defs/placeSpawnSprite" }, { "$ref": "#/$defs/placeSettlementSprite" },
+        { "$ref": "#/$defs/placeLandmarkSprite" }, { "$ref": "#/$defs/placeResourceSprite" },
+        { "$ref": "#/$defs/placeEncounterSprite" }, { "$ref": "#/$defs/placeExitSprite" }
+      ],
+      "items": false
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["places"],
+      "properties": {
+        "places": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "schema"],
+          "properties": {
+            "path": { "const": "runtime/places.json" },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "sha256"],
+              "properties": {
+                "path": { "const": "schema/mapsoo-places-0.1.schema.json" },
+                "sha256": { "$ref": "#/$defs/sha256" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/fileRecord" }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assets"],
+      "properties": {
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "file"],
+          "properties": {
+            "id": { "const": "CC0-1.0" },
+            "file": { "$ref": "#/$defs/relativePath" }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contains_generative_ai", "model_provider", "model", "seed", "human_curated"],
+      "properties": {
+        "contains_generative_ai": { "type": "boolean" },
+        "model_provider": { "$ref": "#/$defs/nullableBounded160" },
+        "model": { "$ref": "#/$defs/nullableBounded160" },
+        "seed": { "$ref": "#/$defs/trimmed160" },
+        "human_curated": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "slug80": {
+      "type": "string", "minLength": 1, "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "id": {
+      "type": "string", "minLength": 1, "maxLength": 80,
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "trimmed120": {
+      "type": "string", "minLength": 1, "maxLength": 120,
+      "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]*\\S[^\\u0000-\\u001F\\u007F-\\u009F]*$"
+    },
+    "trimmed160": {
+      "type": "string", "minLength": 1, "maxLength": 160,
+      "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]*\\S[^\\u0000-\\u001F\\u007F-\\u009F]*$"
+    },
+    "nullableBounded160": {
+      "anyOf": [{ "type": "null" }, { "type": "string", "minLength": 1, "maxLength": 160 }]
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*(?:/[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*)*$"
+    },
+    "mediaType": {
+      "type": "string", "minLength": 3, "maxLength": 120,
+      "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$"
+    },
+    "fileReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "fileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "media_type", "bytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "media_type": { "$ref": "#/$defs/mediaType" },
+        "bytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "dimensions": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "prefixItems": [
+        { "type": "integer", "minimum": 8, "maximum": 48 },
+        { "type": "integer", "minimum": 8, "maximum": 32 }
+      ],
+      "items": false
+    },
+    "tileLayerBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "dimensions_cells", "atlas_id", "empty_tile_id"],
+      "properties": {
+        "id": { "enum": ["ground", "water", "roads"] },
+        "kind": { "const": "tilemap" },
+        "path": { "const": "worlds/demo-world.json" },
+        "json_pointer": { "enum": ["/layers/0/cells", "/layers/1/cells", "/layers/2/cells"] },
+        "encoding": { "const": "row-major" },
+        "dimensions_cells": { "$ref": "#/$defs/dimensions" },
+        "atlas_id": { "const": "terrain" },
+        "empty_tile_id": { "const": -1 }
+      }
+    },
+    "groundLayer": { "allOf": [{ "$ref": "#/$defs/tileLayerBase" }, { "properties": { "id": { "const": "ground" }, "json_pointer": { "const": "/layers/0/cells" } } }] },
+    "waterLayer": { "allOf": [{ "$ref": "#/$defs/tileLayerBase" }, { "properties": { "id": { "const": "water" }, "json_pointer": { "const": "/layers/1/cells" } } }] },
+    "roadsLayer": { "allOf": [{ "$ref": "#/$defs/tileLayerBase" }, { "properties": { "id": { "const": "roads" }, "json_pointer": { "const": "/layers/2/cells" } } }] },
+    "propsLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "json_pointer", "encoding", "sprite_atlas"],
+      "properties": {
+        "id": { "const": "props" }, "kind": { "const": "objects" },
+        "path": { "const": "worlds/demo-world.json" }, "json_pointer": { "const": "/props" },
+        "encoding": { "const": "objects" }, "sprite_atlas": { "const": "atlases/props.png" }
+      }
+    },
+    "waterTerrainSet": { "$ref": "#/$defs/terrainSet" },
+    "roadsTerrainSet": { "$ref": "#/$defs/terrainSet" },
+    "terrainSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "terrains"],
+      "properties": {
+        "id": { "enum": ["water", "roads"] },
+        "mode": { "const": "match-sides" },
+        "terrains": {
+          "type": "array", "minItems": 1, "maxItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "name", "color"],
+            "properties": {
+              "id": { "enum": ["water", "road"] }, "name": { "enum": ["Water", "Road"] },
+              "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+            }
+          }
+        }
+      }
+    },
+    "terrainAtlas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source_id", "file", "image_size_px", "cell_size_px", "margin_px", "separation_px", "texture_padding", "tiles"],
+      "properties": {
+        "id": { "const": "terrain" }, "source_id": { "const": 0 },
+        "file": { "const": "atlases/terrain.png" },
+        "image_size_px": { "$ref": "#/$defs/positivePair" }, "cell_size_px": { "$ref": "#/$defs/positivePair" },
+        "margin_px": { "const": [0, 0] }, "separation_px": { "const": [0, 0] },
+        "texture_padding": { "const": true },
+        "tiles": { "type": "array", "minItems": 35, "maxItems": 35, "uniqueItems": true, "items": { "type": "object" } }
+      }
+    },
+    "positivePair": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": { "type": "integer", "minimum": 1, "maximum": 4096 }
+    },
+    "quad": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": { "type": "integer", "minimum": 0, "maximum": 4096 }
+    },
+    "assetSprite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "atlas", "region_px", "pivot_px", "footprint_cells", "tags"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" }, "atlas": { "$ref": "#/$defs/relativePath" },
+        "region_px": { "$ref": "#/$defs/quad" }, "pivot_px": { "$ref": "#/$defs/positivePair" },
+        "footprint_cells": { "const": [1, 1] },
+        "tags": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "placeSpawnSprite": { "$ref": "#/$defs/placeSpriteSpawn" },
+    "placeSettlementSprite": { "$ref": "#/$defs/placeSpriteSettlement" },
+    "placeLandmarkSprite": { "$ref": "#/$defs/placeSpriteLandmark" },
+    "placeResourceSprite": { "$ref": "#/$defs/placeSpriteResource" },
+    "placeEncounterSprite": { "$ref": "#/$defs/placeSpriteEncounter" },
+    "placeExitSprite": { "$ref": "#/$defs/placeSpriteExit" },
+    "placeSpriteBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "atlas", "region_px", "pivot_px", "footprint_cells", "tags"],
+      "properties": {
+        "id": { "pattern": "^place-(spawn|settlement|landmark|resource|encounter|exit)-01$" },
+        "atlas": { "const": "atlases/places.png" }, "region_px": { "$ref": "#/$defs/quad" },
+        "pivot_px": { "$ref": "#/$defs/positivePair" }, "footprint_cells": { "const": [1, 1] },
+        "tags": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "prefixItems": [{ "const": "place" }, { "enum": ["spawn", "settlement", "landmark", "resource", "encounter", "exit"] }],
+          "items": false
+        }
+      }
+    },
+    "placeSpriteSpawn": { "allOf": [{ "$ref": "#/$defs/placeSpriteBase" }, { "properties": { "id": { "const": "place-spawn-01" }, "tags": { "const": ["place", "spawn"] } } }] },
+    "placeSpriteSettlement": { "allOf": [{ "$ref": "#/$defs/placeSpriteBase" }, { "properties": { "id": { "const": "place-settlement-01" }, "tags": { "const": ["place", "settlement"] } } }] },
+    "placeSpriteLandmark": { "allOf": [{ "$ref": "#/$defs/placeSpriteBase" }, { "properties": { "id": { "const": "place-landmark-01" }, "tags": { "const": ["place", "landmark"] } } }] },
+    "placeSpriteResource": { "allOf": [{ "$ref": "#/$defs/placeSpriteBase" }, { "properties": { "id": { "const": "place-resource-01" }, "tags": { "const": ["place", "resource"] } } }] },
+    "placeSpriteEncounter": { "allOf": [{ "$ref": "#/$defs/placeSpriteBase" }, { "properties": { "id": { "const": "place-encounter-01" }, "tags": { "const": ["place", "encounter"] } } }] },
+    "placeSpriteExit": { "allOf": [{ "$ref": "#/$defs/placeSpriteBase" }, { "properties": { "id": { "const": "place-exit-01" }, "tags": { "const": ["place", "exit"] } } }] }
+  }
+}

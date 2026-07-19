@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2.0",
+  "created_at": "2026-07-19T08:00:00.000Z",
+  "world": {
+    "id": "sunny-meadow",
+    "input_spec": {
+      "path": "worlds/sunny-meadow.world.json",
+      "sha256": "b689623b9fffd3719c8752d61fd95648449c5b48081cc8e69a06a90b853fee4a"
+    },
+    "seed": "mapsoo-demo-001"
+  },
+  "provider": {
+    "id": "procedural-terrain-v2",
+    "version": "0.2.0",
+    "execution": "local",
+    "output_provenance": "procedural"
+  },
+  "model": null,
+  "workflow": {
+    "id": "mapsoo-playable-terrain-pack",
+    "version": "0.2.0",
+    "definition_sha256": null
+  },
+  "transformations": [
+    {
+      "id": "seeded-map-layout",
+      "version": "0.1.0"
+    },
+    {
+      "id": "cardinal-terrain-projection",
+      "version": "0.2.0"
+    },
+    {
+      "id": "procedural-pixel-atlas",
+      "version": "0.2.0"
+    },
+    {
+      "id": "png-rgba-export",
+      "version": "0.1.0"
+    }
+  ],
+  "ai_disclosure": {
+    "contains_generative_ai": false,
+    "human_curated": false,
+    "statement": null
+  },
+  "licensing": {
+    "output": {
+      "id": "CC0-1.0",
+      "notice_path": "license-assets.md"
+    },
+    "provider_terms": null
+  },
+  "sources": []
+}

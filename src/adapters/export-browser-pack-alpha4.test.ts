@@ -164,10 +164,10 @@ describe('alpha.4 playable terrain browser pack', () => {
     expect(await sha256(first)).toBe(await sha256(second));
   });
 
-  it('binds the candidate package and Workbench export to alpha.4', () => {
-    expect(packageJson.version).toBe('0.1.0-alpha.4');
+  it('preserves alpha.4 after the current package advances to alpha.5', () => {
+    expect(packageJson.version).toBe('0.1.0-alpha.5');
     expect(CURRENT_PACK_VERSION).toBe(packageJson.version);
-    expect(buildCurrentPortablePack).toBe(buildAlpha4PortablePack);
+    expect(buildCurrentPortablePack).not.toBe(buildAlpha4PortablePack);
   });
 
   it('rejects untrusted and legacy-provider runs before creating Canvas payloads', async () => {

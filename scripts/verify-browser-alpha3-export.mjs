@@ -20,8 +20,8 @@ const captureArgument = process.argv.find((argument) => argument.startsWith('--c
 const versionArgument = process.argv.find((argument) => argument.startsWith('--version='));
 const browserVersion = versionArgument?.slice('--version='.length) || '0.1.0-alpha.3';
 const browserReleaseConfig = getReleaseConfig(browserVersion);
-const browserLabel = browserVersion.endsWith('alpha.4') ? 'ALPHA4' : 'ALPHA3';
-const browserSlug = browserVersion.endsWith('alpha.4') ? 'alpha4' : 'alpha3';
+const browserLabel = browserVersion.endsWith('alpha.5') ? 'ALPHA5' : browserVersion.endsWith('alpha.4') ? 'ALPHA4' : 'ALPHA3';
+const browserSlug = browserVersion.endsWith('alpha.5') ? 'alpha5' : browserVersion.endsWith('alpha.4') ? 'alpha4' : 'alpha3';
 const captureRoot = resolve(REPOSITORY_ROOT, 'release', 'browser-captures');
 
 function assert(condition, message) {
@@ -107,8 +107,8 @@ function capturePath() {
 
 async function verify() {
   assert(
-    ['0.1.0-alpha.3', '0.1.0-alpha.4'].includes(browserReleaseConfig.version),
-    'Browser gate only supports the alpha.3 and alpha.4 release policies.',
+    ['0.1.0-alpha.3', '0.1.0-alpha.4', '0.1.0-alpha.5'].includes(browserReleaseConfig.version),
+    'Browser gate only supports the alpha.3, alpha.4, and alpha.5 release policies.',
   );
   const port = await freePort();
   assert(Number.isSafeInteger(port), 'Unable to allocate a local browser-harness port.');
@@ -164,6 +164,7 @@ async function verify() {
 
     const canonical = await buildExamplePackArchive(browserReleaseConfig.version);
     assert(exported.bytes.equals(canonical), 'Real browser export bytes differ from the registered canonical pack.');
+    assert(browserReleaseConfig.expectedExamplePackSha256, 'Capture and pin this candidate browser export hash before verification.');
     assert(hash === browserReleaseConfig.expectedExamplePackSha256, 'Real browser export hash differs from the registered hash.');
     console.log(
       `MAPSOO_BROWSER_${browserLabel}_OK bytes=${exported.bytes.length} sha256=${hash}`

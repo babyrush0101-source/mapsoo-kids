@@ -211,7 +211,7 @@ export async function projectStoyoAssetRequest(input: unknown): Promise<StoyoAss
   const normalized = normalizeRequest(input);
   const assetRequestSha256 = await sha256(`${canonicalJson(normalized)}\n`);
   const worldSpec: WorldSpec = {
-    schemaVersion: '0.1.0',
+    schemaVersion: '0.2.0',
     id: normalized.packId,
     title: normalized.world.title,
     description: normalized.world.description,

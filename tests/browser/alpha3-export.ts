@@ -2,7 +2,8 @@ import { buildAlpha3PortablePack } from '../../src/adapters/export-browser-pack-
 import { ALPHA3_PACK_VERSION } from '../../src/core/pack-manifest-alpha3';
 import { parseStoyoAssetRequestJson } from '../../src/adapters/import-stoyo-asset-request';
 import { runGenerationProviderWithEvidence } from '../../src/core/generation-provider';
-import { DEFAULT_WORLD_SPEC } from '../../src/core/world-spec';
+import type { WorldSpec } from '../../src/core/world-spec';
+import historicalWorldSpec from '../../examples/sunny-meadow.world.json';
 import { PROCEDURAL_PIXEL_PROVIDER } from '../../src/providers/procedural-pixel-provider';
 import stoyoExampleRequest from '../../examples/integrations/stoyo/river-valley-asset-request.json';
 
@@ -24,7 +25,7 @@ async function exportDefaultPack(): Promise<void> {
   try {
     const run = await runGenerationProviderWithEvidence(
       PROCEDURAL_PIXEL_PROVIDER,
-      DEFAULT_WORLD_SPEC,
+      historicalWorldSpec as unknown as WorldSpec,
       { now: () => new Date(FIXED_COMPLETION_TIME) },
     );
     const pack = await buildAlpha3PortablePack(run);

@@ -1,6 +1,6 @@
 # Godot importer smoke tests
 
-`run-smoke.ps1` generates and tests both the historical schema `0.1.0` contract and the schema `0.2.0` playable-terrain contract in isolated Godot processes:
+`run-smoke.ps1` generates and tests the historical schema `0.1.0` contract, schema `0.2.0` playable terrain, and schema `0.3.0` semantic places in isolated Godot processes:
 
 1. generate a deterministic PNG/JSON/manifest fixture;
 2. let the editor import the new PNG resources;
@@ -15,6 +15,8 @@ The schema `0.2.0` contract additionally proves:
 - six hyphen-named prop sprite definitions and exact explicit tile-ID placement;
 - fail-closed rejection of missing Water collision and terrain tiles used in the wrong layer;
 - `created → unchanged` with identical bytes and mtimes.
+
+The schema `0.3.0` contract additionally proves exact `runtime.places` and schema hash binding; strict sidecar/World Spec projection; unique IDs/cells, stable order, kind/sprite mapping, walkability, placement, bounds, and pixel-center checks; stable `Place_0000`-style `Marker2D` nodes with queryable metadata and places-atlas icons; and fail-closed re-import preservation after a managed-scene edit.
 
 The positive contract covers `TileMapLayer`, `TileSetAtlasSource`, stable source/alternative IDs and atlas coordinates, exact non-empty cell and prop counts, nearest filtering, `AtlasTexture.filter_clip`, metadata, and loadable `.tres`/`.tscn` files.
 
@@ -31,7 +33,7 @@ The re-import transaction contract additionally proves:
 - a deterministic promote failure restores the complete previous directory;
 - a deterministic edit after `final → backup` returns `conflict`, restores that edit, and leaves no backup/staging residue.
 
-The exact-pack CLI imports a fixed candidate or published release pack twice and requires `created → unchanged`. For schema `0.2.0`, it also requires Water/Roads layers, two TerrainSets, one physics layer, and the documented z-order. PR and tag CI are configured to run the synthetic and exact-pack contracts on Linux and Windows with Godot 4.3 and 4.7. Windows archive SHA-512 values are pinned from the official Godot release checksum files.
+The exact-pack CLI imports a fixed candidate or published release pack twice and requires `created → unchanged`. For schemas `0.2.0`/`0.3.0`, it also requires Water/Roads layers, two TerrainSets, one physics layer, and the documented z-order. Schema `0.3.0` additionally checks every stable marker against the validated places sidecar. PR and tag CI are configured to run the synthetic and exact-pack contracts on Linux and Windows with Godot 4.3 and 4.7. Windows archive SHA-512 values are pinned from the official Godot release checksum files.
 
 Run when `godot4` or `godot` is on `PATH` (or `GODOT_BIN` points to the console executable):
 

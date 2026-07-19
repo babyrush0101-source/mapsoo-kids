@@ -19,7 +19,7 @@ function deepFreeze(value) {
   return value;
 }
 
-function releaseFiles(tag, { evidenceVideo = false, receiptSchema = false } = {}) {
+function releaseFiles(tag, { evidenceVideo = false, receiptSchema = false, placesSchema = false } = {}) {
   const files = {
     web: `mapsoo-worldsmith-web-${tag}.zip`,
     godotImporter: `mapsoo-godot-importer-${tag}.zip`,
@@ -36,6 +36,7 @@ function releaseFiles(tag, { evidenceVideo = false, receiptSchema = false } = {}
   if (receiptSchema) {
     files.receiptSchema = `mapsoo-generation-receipt.schema-${tag}.json`;
   }
+  if (placesSchema) files.placesSchema = `mapsoo-places.schema-${tag}.json`;
   return files;
 }
 
@@ -58,18 +59,21 @@ const receiptVerifierVersions = Object.freeze({
   'builtin-procedural-alpha2-v0.2': Object.freeze(['0.1.0-alpha.2']),
   'builtin-procedural-alpha3-v0.2': Object.freeze(['0.1.0-alpha.3']),
   'builtin-playable-terrain-alpha4-v0.2': Object.freeze(['0.1.0-alpha.4']),
+  'builtin-semantic-places-alpha5-v0.2': Object.freeze(['0.1.0-alpha.5']),
 });
 const packVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
   'sunny-meadow-procedural-cc0-v2',
   'sunny-meadow-procedural-cc0-v3',
   'sunny-meadow-playable-terrain-cc0-v4',
+  'sunny-meadow-semantic-places-cc0-v5',
 ]);
 const itchVerificationPolicies = Object.freeze([
   'sunny-meadow-procedural-cc0-v1',
   'sunny-meadow-procedural-cc0-v2',
   'sunny-meadow-procedural-cc0-v3',
   'sunny-meadow-playable-terrain-cc0-v4',
+  'sunny-meadow-semantic-places-cc0-v5',
 ]);
 
 export function assertReceiptVerifierBinding(receiptVerifier, version) {
@@ -568,11 +572,60 @@ const alpha4 = deepFreeze(validateReleaseConfig({
   },
 }));
 
+const ALPHA_5_VERSION = '0.1.0-alpha.5';
+const ALPHA_5_TAG = `v${ALPHA_5_VERSION}`;
+const alpha5ReleaseFiles = releaseFiles(ALPHA_5_TAG, { receiptSchema: true, placesSchema: true });
+
+const alpha5 = deepFreeze(validateReleaseConfig({
+  version: ALPHA_5_VERSION,
+  tag: ALPHA_5_TAG,
+  lifecycle: 'candidate',
+  receiptVerifier: 'builtin-semantic-places-alpha5-v0.2',
+  expectedExamplePackSha256: '8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36',
+  publicExamplePackSha256: null,
+  publicReleaseAssetSha256: null,
+  release: {
+    verificationPolicy: 'sunny-meadow-semantic-places-cc0-v5',
+    files: alpha5ReleaseFiles,
+    notes: `docs/releases/${ALPHA_5_TAG}.md`,
+    examplePack: {
+      id: 'sunny-meadow',
+      sourceDirectory: `examples/packs/sunny-meadow-${ALPHA_5_TAG}`,
+      archiveRoot: `mapsoo-sunny-meadow-${ALPHA_5_TAG}`,
+      worldSpecPackPath: 'worlds/sunny-meadow.world.json',
+    },
+    inputs: {
+      exampleWorldSpec: 'examples/sunny-meadow-v0.2.world.json',
+      license: 'LICENSE',
+      changelog: 'CHANGELOG.md',
+    },
+    schemas: [
+      { releaseFileKey: 'worldSchema', source: 'schemas/mapsoo-world-0.2.schema.json', packPath: 'schema/mapsoo-world-0.2.schema.json' },
+      { releaseFileKey: 'packSchema', source: 'schemas/mapsoo-pack-0.3.schema.json', packPath: 'schema/mapsoo-pack-0.3.schema.json' },
+      { releaseFileKey: 'placesSchema', source: 'schemas/mapsoo-places-0.1.schema.json', packPath: 'schema/mapsoo-places-0.1.schema.json' },
+      { releaseFileKey: 'receiptSchema', source: 'schemas/mapsoo-generation-receipt.schema.json', packPath: 'schema/mapsoo-generation-receipt.schema.json' },
+    ],
+  },
+  itch: {
+    verificationPolicy: 'sunny-meadow-semantic-places-cc0-v5',
+    shortDescription: 'Free CC0 Godot world pack with deterministic semantic places and engine-neutral runtime metadata.',
+    feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
+    sourceDirectory: `docs/itch-kit/${ALPHA_5_TAG}`,
+    visualDirectory: `docs/media/${ALPHA_5_TAG}/itch`,
+    renderer: `docs/release-visuals/renderer-${ALPHA_5_TAG}.html`,
+    rendererFrames: [],
+    requiredRendererFacts: [],
+    supportingFiles: [],
+    visuals: [],
+  },
+}));
+
 const releaseConfigs = Object.freeze({
   [alpha1.version]: alpha1,
   [alpha2.version]: alpha2,
   [alpha3.version]: alpha3,
   [alpha4.version]: alpha4,
+  [alpha5.version]: alpha5,
 });
 
 export function getReleaseConfig(version) {

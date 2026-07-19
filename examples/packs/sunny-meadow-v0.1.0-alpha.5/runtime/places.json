@@ -1,0 +1,81 @@
+{
+  "schema_version": "0.1.0",
+  "pack": {
+    "id": "sunny-meadow",
+    "version": "0.1.0-alpha.5"
+  },
+  "world_spec": {
+    "path": "worlds/sunny-meadow.world.json",
+    "sha256": "b689623b9fffd3719c8752d61fd95648449c5b48081cc8e69a06a90b853fee4a"
+  },
+  "coordinate_space": {
+    "origin": "top-left",
+    "unit": "cell",
+    "tile_size": 32
+  },
+  "placement_algorithm": {
+    "id": "mapsoo-semantic-place-resolver",
+    "version": "0.1.0"
+  },
+  "places": [
+    {
+      "id": "spawn",
+      "order": 0,
+      "label": "Meadow Spawn",
+      "kind": "spawn",
+      "placement": "center",
+      "sprite_id": "place-spawn-01",
+      "tags": [
+        "start",
+        "safe"
+      ],
+      "cell": {
+        "x": 11,
+        "y": 7
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 240
+      }
+    },
+    {
+      "id": "landmark",
+      "order": 1,
+      "label": "Riverside Landmark",
+      "kind": "landmark",
+      "placement": "near-water",
+      "sprite_id": "place-landmark-01",
+      "tags": [
+        "water",
+        "navigation"
+      ],
+      "cell": {
+        "x": 9,
+        "y": 7
+      },
+      "pixel_center": {
+        "x": 304,
+        "y": 240
+      }
+    },
+    {
+      "id": "exit",
+      "order": 2,
+      "label": "Road Exit",
+      "kind": "exit",
+      "placement": "map-edge",
+      "sprite_id": "place-exit-01",
+      "tags": [
+        "travel"
+      ],
+      "cell": {
+        "x": 11,
+        "y": 0
+      },
+      "pixel_center": {
+        "x": 368,
+        "y": 16
+      }
+    }
+  ]
+}

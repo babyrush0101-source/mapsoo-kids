@@ -572,7 +572,7 @@ API credits would support maintainer automation for schema and manifest compatib
 **Anything else we should know?（399 characters）**
 
 ```text
-I am the primary maintainer responsible for roadmap, releases, issue triage, and compatibility. STOYO is the planned first real consumer and is not counted as external adoption. Mapsoo works without an account, backend, or paid API and is built as reusable open-source infrastructure rather than STOYO-only code. Public release, demo, CI, video, and feedback evidence are linked from the repository.
+I am the primary maintainer responsible for roadmap, releases, issue triage, and compatibility. STOYO is the planned first real consumer and is not counted as external adoption. Mapsoo works without an account, backend, or paid API and is built as reusable open-source infrastructure rather than STOYO-only code. Public release, demo, CI, video, feedback intake, and an explicitly empty community evidence ledger are linked from the repository.
 ```
 
 ### 6.4 推荐勾选策略
@@ -580,7 +580,7 @@ I am the primary maintainer responsible for roadmap, releases, issue triage, and
 - `Primary maintainer`：建议勾选，前提是申请人与实际维护职责一致；
 - `Codex Security`：可以表达兴趣，因为 importer 解析外部 asset pack、release 存在供应链边界；是否获得访问由 OpenAI 个案评审；
 - `API credits`：仅当准备实施上文的 PR/manifest/release/issue 自动化时勾选并填写 Organization ID；
-- 不用两个旧网站仓库凑数量；以 Mapsoo Worldsmith 一个有 release、兼容性测试、真实用户反馈的核心仓库申请；
+- 不用两个旧网站仓库凑数量；取得可公开复现的真实用户反馈后，再以 Mapsoo Worldsmith 这个有 release、兼容性测试和持续维护记录的核心仓库申请；
 - 不把“使用 Codex 开发过”本身当生态价值。价值来自开放格式、Godot 工作流、安全边界和持续维护。
 
 ## 7. 最终 Go / No-Go 清单

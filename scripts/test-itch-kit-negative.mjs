@@ -168,6 +168,7 @@ async function runReceiptPolicyNegativeCases() {
     case 'builtin-procedural-alpha2-v0.2':
     case 'builtin-procedural-alpha3-v0.2':
     case 'builtin-playable-terrain-alpha4-v0.2':
+    case 'builtin-semantic-places-alpha5-v0.2':
       await expectPackFailure(
         'receipt-0.2 AI disclosure conflict with recomputed inner integrity',
         () => rewriteCurrentReceipt(({ receipt }) => {
@@ -373,16 +374,18 @@ try {
 
   await runReceiptPolicyNegativeCases();
 
-  await expectFailure(
-    'invalid cover',
-    async () => {
-      const path = join(testRoot, 'media', 'cover-1260x1000.png');
-      const bytes = await readFile(path);
-      bytes[0] = 0;
-      await writeFile(path, bytes);
-    },
-    /invalid PNG signature/,
-  );
+  if (CURRENT_RELEASE_CONFIG.itch.visuals.some(({ name }) => name === 'cover-1260x1000.png')) {
+    await expectFailure(
+      'invalid cover',
+      async () => {
+        const path = join(testRoot, 'media', 'cover-1260x1000.png');
+        const bytes = await readFile(path);
+        bytes[0] = 0;
+        await writeFile(path, bytes);
+      },
+      /invalid PNG signature/,
+    );
+  }
 
   await expectFailure(
     'stale upload manifest',

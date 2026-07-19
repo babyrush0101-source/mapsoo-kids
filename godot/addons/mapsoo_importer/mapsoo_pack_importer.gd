@@ -3,9 +3,10 @@ extends RefCounted
 
 const LEGACY_SCHEMA_VERSION := "0.1.0"
 const PLAYABLE_TERRAIN_SCHEMA_VERSION := "0.2.0"
-const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION]
+const SEMANTIC_PLACES_SCHEMA_VERSION := "0.3.0"
+const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION]
 const OUTPUT_ROOT := "res://mapsoo_imports"
-const IMPORTER_VERSION := "0.1.0-alpha.4"
+const IMPORTER_VERSION := "0.1.0-alpha.5"
 const IMPORT_STATE_SCHEMA_VERSION := "1.0.0"
 const IMPORT_STATE_FILENAME := "mapsoo.import-state.json"
 const BUFFER_SIZE := 1024 * 1024
@@ -20,6 +21,9 @@ const MAX_ATLAS_COUNT := 8
 const MAX_TILE_COUNT := 4096
 const MAX_SPRITE_COUNT := 4096
 const MAX_PROP_COUNT := 10000
+const MAX_PLACE_COUNT := 8
+const PLACE_KINDS := ["spawn", "settlement", "landmark", "resource", "encounter", "exit"]
+const PLACE_PLACEMENTS := ["center", "near-water", "on-road", "map-edge"]
 
 
 static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT) -> Dictionary:
@@ -167,7 +171,8 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 		staged_tileset_path,
 		staged_scene_path,
 		validation.layer_cell_counts,
-		validation.props.size()
+		validation.props.size(),
+		validation.places.size()
 	)
 	if not staged_validation.ok:
 		_cleanup_transaction_directory(staging_dir, warnings)
@@ -402,7 +407,8 @@ static func _validate_staged_resources(
 	tileset_path: String,
 	scene_path: String,
 	expected_layer_cells: Dictionary,
-	expected_props: int
+	expected_props: int,
+	expected_places: int = 0
 ) -> Dictionary:
 	var tile_set := ResourceLoader.load(tileset_path, "TileSet", ResourceLoader.CACHE_MODE_IGNORE_DEEP) as TileSet
 	if tile_set == null:
@@ -412,6 +418,7 @@ static func _validate_staged_resources(
 		return {"ok": false, "error": "Staged scene could not be loaded before commit: %s" % scene_path}
 	var world := packed.instantiate()
 	var props := world.get_node_or_null("Props")
+	var places := world.get_node_or_null("Places")
 	var valid := props != null
 	if valid:
 		for layer_id: Variant in expected_layer_cells:
@@ -422,6 +429,14 @@ static func _validate_staged_resources(
 				break
 	if valid:
 		valid = props.get_child_count() == expected_props
+	if valid:
+		valid = (places == null and expected_places == 0) or (places is Node2D and places.get_child_count() == expected_places)
+	if valid and places != null:
+		for index: int in expected_places:
+			var marker := places.get_node_or_null("Place_%04d" % index) as Marker2D
+			if marker == null or marker.get_child_count() != 1 or not (marker.get_child(0) is Sprite2D) or not marker.has_meta("mapsoo_id"):
+				valid = false
+				break
 	world.free()
 	if not valid:
 		return {"ok": false, "error": "Staged scene contents differ from the validated pack."}
@@ -619,6 +634,7 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		"layer_cell_counts": {},
 		"tile_layer_ids": [],
 		"props": [],
+		"places": [],
 		"width": 0,
 		"height": 0,
 		"tile_size": Vector2i.ZERO,
@@ -642,6 +658,12 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		errors.append("pack.id must be lowercase kebab-case ASCII.")
 	else:
 		prepared.pack_id = pack_id_value
+	if schema_version == SEMANTIC_PLACES_SCHEMA_VERSION:
+		var generator := _dictionary_at(pack, "generator", errors)
+		if pack.get("version") != "0.1.0-alpha.5":
+			errors.append("Schema 0.3.0 pack.version must be 0.1.0-alpha.5.")
+		if not _has_exact_keys(generator, ["name", "version"]) or generator.get("name") != "Mapsoo Worldsmith" or generator.get("version") != pack.get("version"):
+			errors.append("Schema 0.3.0 pack.generator must identify Mapsoo Worldsmith at the same pack version.")
 	if compatibility.get("godot_min") != "4.3":
 		errors.append("compatibility.godot_min must be 4.3 for schema %s." % schema_version)
 	if compatibility.get("grid") != "orthogonal":
@@ -649,7 +671,11 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	if compatibility.get("art_style") != "pixel_art":
 		errors.append("Only pixel_art packs are supported by this importer version.")
 	var importer_requirement := _dictionary_at(compatibility, "importer", errors)
-	var expected_importer_version := "0.1.0-alpha.4" if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION else "0.1.0-alpha.1"
+	var expected_importer_version := "0.1.0-alpha.1"
+	if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+		expected_importer_version = "0.1.0-alpha.4"
+	elif schema_version == SEMANTIC_PLACES_SCHEMA_VERSION:
+		expected_importer_version = "0.1.0-alpha.5"
 	if importer_requirement.get("id") != "mapsoo_importer" or importer_requirement.get("min_version") != expected_importer_version:
 		errors.append("Pack requires an unsupported importer ID or minimum version.")
 	if importer_requirement.get("source") != "https://github.com/babyrush0101-source/mapsoo-kids":
@@ -688,8 +714,9 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		errors.append(world_read.error)
 		return prepared
 	var world_spec: Dictionary = world_read.value
-	if world_spec.get("schemaVersion") != LEGACY_SCHEMA_VERSION:
-		errors.append("World Spec schemaVersion must be %s." % LEGACY_SCHEMA_VERSION)
+	var expected_world_schema := "0.2.0" if schema_version == SEMANTIC_PLACES_SCHEMA_VERSION else LEGACY_SCHEMA_VERSION
+	if world_spec.get("schemaVersion") != expected_world_schema:
+		errors.append("World Spec schemaVersion must be %s for pack schema %s." % [expected_world_schema, schema_version])
 	if world_spec.get("id") != prepared.pack_id:
 		errors.append("World Spec id must match pack.id.")
 	var world_visual := _dictionary_at(world_spec, "visual", errors)
@@ -743,7 +770,7 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		errors.append("manifest.layers must be an array.")
 		return prepared
 	var expected_tile_layer_ids: Array[String] = ["ground"]
-	if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+	if schema_version in [PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION]:
 		expected_tile_layer_ids.append_array(["water", "roads"])
 	var expected_layer_count := expected_tile_layer_ids.size() + 1
 	if layers_value.size() != expected_layer_count:
@@ -810,7 +837,7 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 					if tile_definition.atlas_id != atlas_id:
 						errors.append("%s tile ID %s belongs to a different atlas." % [layer_id.capitalize(), cell_value])
 						break
-					if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+					if schema_version in [PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION]:
 						var expected_terrain_set := "" if layer_id == "ground" else layer_id
 						if tile_definition.terrain_set_id != expected_terrain_set:
 							errors.append("%s tile ID %s has incompatible terrain metadata." % [layer_id.capitalize(), cell_value])
@@ -842,7 +869,240 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	prepared.sprites = sprite_build.sprites
 	prepared.textures = sprite_build.textures
 	_validate_props(prepared.props, prepared.sprites, props_layer.get("sprite_atlas"), prepared.width, prepared.height, schema_version, errors)
+	if schema_version == SEMANTIC_PLACES_SCHEMA_VERSION:
+		prepared.places = _validate_places_runtime(
+			manifest,
+			file_index,
+			pack_root,
+			world_spec,
+			world_path,
+			prepared,
+			errors
+		)
 	return prepared
+
+
+static func _validate_places_runtime(
+	manifest: Dictionary,
+	file_index: Dictionary,
+	pack_root: String,
+	world_spec: Dictionary,
+	world_path: String,
+	prepared: Dictionary,
+	errors: Array[String]
+) -> Array:
+	var validated: Array = []
+	var runtime := _dictionary_at(manifest, "runtime", errors)
+	if runtime.size() != 1 or not runtime.has("places"):
+		errors.append("Schema 0.3.0 runtime must contain only places.")
+		return validated
+	var places_ref := _dictionary_at(runtime, "places", errors)
+	var places_schema_ref := _dictionary_at(places_ref, "schema", errors)
+	if places_ref.size() != 3 or places_schema_ref.size() != 2:
+		errors.append("runtime.places and its schema reference must use the exact Alpha.5 fields.")
+		return validated
+	var places_path: Variant = places_ref.get("path")
+	var schema_path: Variant = places_schema_ref.get("path")
+	if places_path != "runtime/places.json" or schema_path != "schema/mapsoo-places-0.1.schema.json":
+		errors.append("Schema 0.3.0 requires the canonical places sidecar and schema paths.")
+		return validated
+	var places_record: Dictionary = file_index.get(places_path, {})
+	var schema_record: Dictionary = file_index.get(schema_path, {})
+	if places_ref.get("sha256") != places_record.get("sha256"):
+		errors.append("runtime.places.sha256 does not match its manifest.files record.")
+	if places_schema_ref.get("sha256") != schema_record.get("sha256"):
+		errors.append("runtime.places.schema.sha256 does not match its manifest.files record.")
+	if not errors.is_empty():
+		return validated
+	var sidecar_read := _read_json_file(_resolve_pack_path(pack_root, str(places_path)))
+	if not sidecar_read.ok:
+		errors.append(sidecar_read.error)
+		return validated
+	var sidecar: Dictionary = sidecar_read.value
+	if not _has_exact_keys(sidecar, ["schema_version", "pack", "world_spec", "coordinate_space", "placement_algorithm", "places"]):
+		errors.append("Places sidecar must use the exact schema 0.1.0 top-level fields.")
+		return validated
+	if sidecar.get("schema_version") != "0.1.0":
+		errors.append("Places sidecar schema_version must be 0.1.0.")
+	var pack := _dictionary_at(sidecar, "pack", errors)
+	var manifest_pack: Dictionary = manifest.get("pack", {})
+	if not _has_exact_keys(pack, ["id", "version"]) or pack.get("id") != prepared.pack_id or pack.get("version") != manifest_pack.get("version"):
+		errors.append("Places sidecar pack identity must match the Alpha.5 manifest.")
+	var sidecar_world := _dictionary_at(sidecar, "world_spec", errors)
+	var world_record: Dictionary = file_index.get(world_path, {})
+	if not _has_exact_keys(sidecar_world, ["path", "sha256"]) or sidecar_world.get("path") != world_path or sidecar_world.get("sha256") != world_record.get("sha256"):
+		errors.append("Places sidecar world_spec reference must match the manifest-bound World Spec.")
+	var coordinate := _dictionary_at(sidecar, "coordinate_space", errors)
+	if (
+		not _has_exact_keys(coordinate, ["origin", "unit", "tile_size"])
+		or coordinate.get("origin") != "top-left"
+		or coordinate.get("unit") != "cell"
+		or coordinate.get("tile_size") != prepared.tile_size.x
+	):
+		errors.append("Places coordinate_space must be top-left cells using the World Spec tile size.")
+	var algorithm := _dictionary_at(sidecar, "placement_algorithm", errors)
+	if not _has_exact_keys(algorithm, ["id", "version"]) or algorithm.get("id") != "mapsoo-semantic-place-resolver" or algorithm.get("version") != "0.1.0":
+		errors.append("Places placement_algorithm is unsupported.")
+	var authored_value: Variant = world_spec.get("places", [])
+	var resolved_value: Variant = sidecar.get("places")
+	if typeof(authored_value) != TYPE_ARRAY or typeof(resolved_value) != TYPE_ARRAY:
+		errors.append("World Spec places and runtime places must be arrays.")
+		return validated
+	var authored: Array = authored_value
+	var resolved: Array = resolved_value
+	if authored.size() > MAX_PLACE_COUNT or resolved.size() != authored.size():
+		errors.append("Runtime places must be an exact, ordered projection of at most %d World Spec places." % MAX_PLACE_COUNT)
+		return validated
+	var ids := {}
+	var occupied_cells := {}
+	var resolver_occupied := {}
+	for index: int in resolved.size():
+		var authored_value_at_index: Variant = authored[index]
+		var place_value: Variant = resolved[index]
+		if typeof(authored_value_at_index) != TYPE_DICTIONARY or typeof(place_value) != TYPE_DICTIONARY:
+			errors.append("Every authored and resolved place must be an object.")
+			continue
+		var authored_place: Dictionary = authored_value_at_index
+		var place: Dictionary = place_value
+		if not _has_exact_keys(authored_place, ["id", "label", "kind", "placement", "tags"]):
+			errors.append("World Spec place %d must use the exact Alpha.5 fields." % index)
+			continue
+		if not _has_exact_keys(place, ["id", "order", "label", "kind", "placement", "sprite_id", "tags", "cell", "pixel_center"]):
+			errors.append("Resolved place %d must use the exact sidecar fields." % index)
+			continue
+		var place_id: Variant = place.get("id")
+		var label: Variant = place.get("label")
+		var kind: Variant = place.get("kind")
+		var placement: Variant = place.get("placement")
+		var sprite_id: Variant = place.get("sprite_id")
+		if typeof(place_id) != TYPE_STRING or not _is_place_id(place_id) or ids.has(place_id):
+			errors.append("Place IDs must be unique lowercase kebab-case identifiers of at most 64 characters.")
+			continue
+		ids[place_id] = true
+		if not _is_json_integer(place.get("order")) or int(place.order) != index:
+			errors.append("Place %s order must equal its zero-based array index." % place_id)
+		if typeof(label) != TYPE_STRING or label.strip_edges() != label or label.is_empty() or label.length() > 80 or _contains_control_character(label):
+			errors.append("Place %s label must be a trimmed 1-80 character string without control characters." % place_id)
+		if typeof(kind) != TYPE_STRING or kind not in PLACE_KINDS:
+			errors.append("Place %s kind is unsupported." % place_id)
+		if typeof(placement) != TYPE_STRING or placement not in PLACE_PLACEMENTS:
+			errors.append("Place %s placement is unsupported." % place_id)
+		var expected_sprite_id := "place-%s-01" % str(kind)
+		if sprite_id != expected_sprite_id or not prepared.sprites.has(sprite_id) or prepared.sprites[sprite_id].atlas != "atlases/places.png":
+			errors.append("Place %s must reference its kind-matched sprite in atlases/places.png." % place_id)
+		var tags := _validate_place_tags(place.get("tags"), place_id, errors)
+		if (
+			authored_place.get("id") != place_id
+			or authored_place.get("label") != label
+			or authored_place.get("kind") != kind
+			or authored_place.get("placement") != placement
+			or authored_place.get("tags") != tags
+		):
+			errors.append("Resolved place %s does not exactly match its World Spec declaration." % place_id)
+		var cell := _dictionary_at(place, "cell", errors)
+		var pixel_center := _dictionary_at(place, "pixel_center", errors)
+		if not _has_exact_keys(cell, ["x", "y"]) or not _has_exact_keys(pixel_center, ["x", "y"]):
+			errors.append("Place %s cell and pixel_center must contain only x/y." % place_id)
+			continue
+		var cell_x: Variant = cell.get("x")
+		var cell_y: Variant = cell.get("y")
+		if not _is_json_integer(cell_x) or not _is_json_integer(cell_y) or cell_x < 0 or cell_y < 0 or cell_x >= prepared.width or cell_y >= prepared.height:
+			errors.append("Place %s cell is outside the map bounds." % place_id)
+			continue
+		var point := Vector2i(int(cell_x), int(cell_y))
+		var expected_resolution := _resolve_expected_place_cell(str(authored_place.get("placement", "")), prepared, resolver_occupied)
+		if not expected_resolution.ok:
+			errors.append("World Spec place %s cannot be resolved by the deterministic semantic-place resolver." % place_id)
+		else:
+			var expected_point: Vector2i = expected_resolution.cell
+			resolver_occupied["%d,%d" % [expected_point.x, expected_point.y]] = true
+			if point != expected_point:
+				errors.append("Place %s cell must equal deterministic resolver output %s, got %s." % [place_id, expected_point, point])
+		var cell_key := "%d,%d" % [point.x, point.y]
+		if occupied_cells.has(cell_key):
+			errors.append("Resolved places must occupy distinct cells; duplicate at %s." % cell_key)
+		occupied_cells[cell_key] = true
+		if not _is_json_integer(pixel_center.get("x")) or not _is_json_integer(pixel_center.get("y")) or int(pixel_center.x) != point.x * prepared.tile_size.x + prepared.tile_size.x / 2 or int(pixel_center.y) != point.y * prepared.tile_size.y + prepared.tile_size.y / 2:
+			errors.append("Place %s pixel_center must be the exact center of its resolved cell." % place_id)
+		var ground_index: int = point.y * int(prepared.width) + point.x
+		var ground_tile_id: int = prepared.layer_cells.ground[ground_index]
+		if ground_tile_id == -1 or not prepared.tile_lookup.has(ground_tile_id) or prepared.tile_lookup[ground_tile_id].walkable != true:
+			errors.append("Place %s must resolve to a walkable ground cell." % place_id)
+		if not _place_satisfies_placement(point, str(placement), prepared):
+			errors.append("Place %s cell does not satisfy placement %s." % [place_id, placement])
+		validated.append({
+			"id": place_id,
+			"order": index,
+			"label": label,
+			"kind": kind,
+			"placement": placement,
+			"sprite_id": sprite_id,
+			"tags": tags,
+			"cell": point,
+			"pixel_center": Vector2(int(pixel_center.get("x", 0)), int(pixel_center.get("y", 0))),
+		})
+	return validated
+
+
+static func _validate_place_tags(value: Variant, place_id: String, errors: Array[String]) -> Array:
+	var tags: Array = []
+	if typeof(value) != TYPE_ARRAY or value.size() > 8:
+		errors.append("Place %s tags must be an array of at most eight identifiers." % place_id)
+		return tags
+	var seen := {}
+	for tag: Variant in value:
+		if typeof(tag) != TYPE_STRING or not _is_place_tag(tag) or seen.has(tag):
+			errors.append("Place %s tags must be unique lowercase kebab-case identifiers." % place_id)
+			continue
+		seen[tag] = true
+		tags.append(tag)
+	return tags
+
+
+static func _place_satisfies_placement(cell: Vector2i, placement: String, prepared: Dictionary) -> bool:
+	if placement == "center":
+		return true
+	if placement == "map-edge":
+		return cell.x == 0 or cell.y == 0 or cell.x == prepared.width - 1 or cell.y == prepared.height - 1
+	if placement == "on-road":
+		return prepared.layer_cells.roads[cell.y * prepared.width + cell.x] != -1
+	if placement == "near-water":
+		for offset: Vector2i in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
+			var neighbor := cell + offset
+			if neighbor.x >= 0 and neighbor.y >= 0 and neighbor.x < prepared.width and neighbor.y < prepared.height and prepared.layer_cells.water[neighbor.y * prepared.width + neighbor.x] != -1:
+				return true
+	return false
+
+
+static func _resolve_expected_place_cell(placement: String, prepared: Dictionary, occupied: Dictionary) -> Dictionary:
+	var best_cell := Vector2i.ZERO
+	var best_score := 0
+	var found := false
+	var width: int = prepared.width
+	var height: int = prepared.height
+	for y: int in height:
+		for x: int in width:
+			var cell := Vector2i(x, y)
+			if occupied.has("%d,%d" % [x, y]):
+				continue
+			var index := y * width + x
+			var ground_tile_id: int = prepared.layer_cells.ground[index]
+			var walkable: bool = (
+				prepared.layer_cells.water[index] == -1
+				and ground_tile_id != -1
+				and prepared.tile_lookup.has(ground_tile_id)
+				and prepared.tile_lookup[ground_tile_id].walkable == true
+			)
+			if not walkable or not _place_satisfies_placement(cell, placement, prepared):
+				continue
+			var dx := x * 2 - (width - 1)
+			var dy := y * 2 - (height - 1)
+			var score := dx * dx + dy * dy
+			if not found or score < best_score or (score == best_score and (y < best_cell.y or (y == best_cell.y and x < best_cell.x))):
+				found = true
+				best_score = score
+				best_cell = cell
+	return {"ok": found, "cell": best_cell}
 
 
 static func _validate_file_records(value: Variant, pack_root: String, errors: Array[String]) -> Dictionary:
@@ -910,6 +1170,7 @@ static func _collect_referenced_paths(manifest: Dictionary, errors: Array[String
 	var demo: Variant = manifest.get("demo")
 	var receipt: Variant = manifest.get("receipt")
 	var license: Variant = manifest.get("license")
+	var runtime: Variant = manifest.get("runtime")
 	if typeof(world_spec) == TYPE_DICTIONARY: refs.append(world_spec.get("path"))
 	if typeof(demo) == TYPE_DICTIONARY:
 		refs.append(demo.get("map"))
@@ -918,6 +1179,12 @@ static func _collect_referenced_paths(manifest: Dictionary, errors: Array[String
 	if typeof(license) == TYPE_DICTIONARY:
 		var asset_license: Variant = license.get("assets")
 		if typeof(asset_license) == TYPE_DICTIONARY: refs.append(asset_license.get("file"))
+	if typeof(runtime) == TYPE_DICTIONARY:
+		var places: Variant = runtime.get("places")
+		if typeof(places) == TYPE_DICTIONARY:
+			refs.append(places.get("path"))
+			var places_schema: Variant = places.get("schema")
+			if typeof(places_schema) == TYPE_DICTIONARY: refs.append(places_schema.get("path"))
 	for layer_value: Variant in manifest.get("layers", []):
 		if typeof(layer_value) == TYPE_DICTIONARY:
 			refs.append(layer_value.get("path"))
@@ -1103,7 +1370,7 @@ static func _build_tile_set(
 	var source_ids := {}
 	var terrain_sets := {}
 	var physics_layers := {}
-	if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION:
+	if schema_version in [PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION]:
 		terrain_sets = _configure_terrain_sets(tile_set, terrain_sets_value, errors)
 		physics_layers = _configure_physics_layers(tile_set, physics_layers_value, errors)
 		if not errors.is_empty():
@@ -1250,6 +1517,7 @@ static func _build_tile_set(
 				"alternative_id": alternative_id,
 				"terrain_set_id": tile_metadata.terrain_set_id,
 				"collision_type": tile_metadata.collision_type,
+				"walkable": custom_data_value.walkable,
 			}
 		if tile_set.add_source(source, source_id) != source_id:
 			errors.append("Unable to preserve atlas source_id %d." % source_id)
@@ -1408,11 +1676,45 @@ static func _build_scene(prepared: Dictionary, tile_set: TileSet) -> Dictionary:
 		sprite.set_meta("mapsoo_kind", prop.kind)
 		props_root.add_child(sprite)
 		sprite.owner = root
+	if not prepared.places.is_empty():
+		var places_root := Node2D.new()
+		places_root.name = "Places"
+		places_root.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		places_root.z_index = prepared.tile_layer_ids.size() + 1
+		root.add_child(places_root)
+		places_root.owner = root
+		for place_value: Variant in prepared.places:
+			var place: Dictionary = place_value
+			var marker := Marker2D.new()
+			marker.name = "Place_%04d" % int(place.order)
+			marker.position = place.pixel_center
+			marker.set_meta("mapsoo_id", place.id)
+			marker.set_meta("mapsoo_label", place.label)
+			marker.set_meta("mapsoo_kind", place.kind)
+			marker.set_meta("mapsoo_placement", place.placement)
+			marker.set_meta("mapsoo_tags", place.tags.duplicate())
+			marker.set_meta("mapsoo_cell", place.cell)
+			places_root.add_child(marker)
+			marker.owner = root
+			var place_sprite_def: Dictionary = prepared.sprites[place.sprite_id]
+			var place_texture := AtlasTexture.new()
+			place_texture.atlas = prepared.textures[place_sprite_def.atlas]
+			place_texture.region = place_sprite_def.region
+			place_texture.filter_clip = true
+			var place_sprite := Sprite2D.new()
+			place_sprite.name = "Icon"
+			place_sprite.texture = place_texture
+			place_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			place_sprite.centered = true
+			var place_pivot: Vector2 = place_sprite_def.pivot
+			place_sprite.offset = place_sprite_def.region.size * 0.5 - place_pivot
+			marker.add_child(place_sprite)
+			place_sprite.owner = root
 	return {"ok": true, "root": root, "error": ""}
 
 
 static func _sprite_id_for_kind(kind: String, schema_version: String) -> String:
-	return "%s-01" % kind if schema_version == PLAYABLE_TERRAIN_SCHEMA_VERSION else "%s_01" % kind
+	return "%s-01" % kind if schema_version in [PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION] else "%s_01" % kind
 
 
 static func _scene_layer_name(layer_id: String) -> String:
@@ -1736,6 +2038,37 @@ static func _is_asset_id(value: String) -> bool:
 		return false
 	var pattern := RegEx.new()
 	return pattern.compile("^[a-z0-9][a-z0-9_-]*$") == OK and pattern.search(value) != null
+
+
+static func _is_place_id(value: String) -> bool:
+	if value.length() < 1 or value.length() > 64:
+		return false
+	var pattern := RegEx.new()
+	return pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$") == OK and pattern.search(value) != null
+
+
+static func _is_place_tag(value: String) -> bool:
+	if value.length() < 1 or value.length() > 32:
+		return false
+	var pattern := RegEx.new()
+	return pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$") == OK and pattern.search(value) != null
+
+
+static func _contains_control_character(value: String) -> bool:
+	for index: int in value.length():
+		var codepoint := value.unicode_at(index)
+		if codepoint < 32 or (codepoint >= 127 and codepoint <= 159):
+			return true
+	return false
+
+
+static func _has_exact_keys(value: Dictionary, expected: Array) -> bool:
+	if value.size() != expected.size():
+		return false
+	for key: Variant in expected:
+		if not value.has(key):
+			return false
+	return true
 
 
 static func _is_sha256(value: String) -> bool:

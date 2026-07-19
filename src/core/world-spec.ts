@@ -1,12 +1,40 @@
 import type { GeneratorIdentity } from './generator-identity';
 
-export const WORLD_SCHEMA_VERSION = '0.1.0' as const;
+export const LEGACY_WORLD_SCHEMA_VERSION = '0.1.0' as const;
+export const WORLD_SCHEMA_VERSION = '0.2.0' as const;
 
 export type BiomeId = 'meadow' | 'desert' | 'snow';
 export type TileSize = 16 | 32 | 64;
 
-export interface WorldSpec {
-  schemaVersion: typeof WORLD_SCHEMA_VERSION;
+export const PLACE_KINDS = Object.freeze([
+  'spawn',
+  'settlement',
+  'landmark',
+  'resource',
+  'encounter',
+  'exit',
+] as const);
+export type PlaceKind = typeof PLACE_KINDS[number];
+
+export const PLACE_PLACEMENTS = Object.freeze([
+  'center',
+  'near-water',
+  'on-road',
+  'map-edge',
+] as const);
+export type PlacePlacement = typeof PLACE_PLACEMENTS[number];
+
+export interface WorldPlace {
+  /** Stable, path-safe semantic identifier. */
+  id: string;
+  label: string;
+  kind: PlaceKind;
+  placement: PlacePlacement;
+  /** Zero to eight unique, path-safe classification tags. */
+  tags: string[];
+}
+
+interface WorldSpecBase {
   id: string;
   title: string;
   description: string;
@@ -28,6 +56,20 @@ export interface WorldSpec {
   /** Namespaced integration metadata, for example { "dev.stoyo": { ... } }. */
   extensions?: Record<string, unknown>;
 }
+
+/** The published Alpha.1-Alpha.4 contract, retained for explicit migration. */
+export interface WorldSpecV010 extends WorldSpecBase {
+  schemaVersion: typeof LEGACY_WORLD_SCHEMA_VERSION;
+}
+
+/** Alpha.5 contract. Omitting places means the author has declared no semantic locations. */
+export interface WorldSpecV020 extends WorldSpecBase {
+  schemaVersion: typeof WORLD_SCHEMA_VERSION;
+  places?: WorldPlace[];
+}
+
+export type WorldSpec = WorldSpecV020;
+export type AnyWorldSpec = WorldSpecV010 | WorldSpecV020;
 
 export interface TileDefinition {
   id: number;
@@ -80,11 +122,41 @@ export const DEFAULT_WORLD_SPEC: WorldSpec = {
     targets: ['common', 'godot', 'itch'],
     assetLicense: 'CC0-1.0',
   },
+  places: [
+    { id: 'spawn', label: 'Meadow Spawn', kind: 'spawn', placement: 'center', tags: ['start', 'safe'] },
+    {
+      id: 'landmark',
+      label: 'Riverside Landmark',
+      kind: 'landmark',
+      placement: 'near-water',
+      tags: ['water', 'navigation'],
+    },
+    { id: 'exit', label: 'Road Exit', kind: 'exit', placement: 'map-edge', tags: ['travel'] },
+  ],
 };
 
 export function cloneWorldSpec(spec: WorldSpec): WorldSpec {
   return {
     ...spec,
+    visual: { ...spec.visual, palette: [...spec.visual.palette] },
+    map: { ...spec.map },
+    output: { ...spec.output, targets: [...spec.output.targets] },
+    ...(spec.places ? { places: spec.places.map((place) => ({ ...place, tags: [...place.tags] })) } : {}),
+    ...(spec.extensions ? { extensions: structuredClone(spec.extensions) } : {}),
+  };
+}
+
+/**
+ * Losslessly upgrades the structural v0.1 contract. No places are invented:
+ * semantic locations must be an explicit author decision in v0.2.
+ */
+export function migrateWorldSpecV010(spec: WorldSpecV010): WorldSpecV020 {
+  return {
+    schemaVersion: WORLD_SCHEMA_VERSION,
+    id: spec.id,
+    title: spec.title,
+    description: spec.description,
+    seed: spec.seed,
     visual: { ...spec.visual, palette: [...spec.visual.palette] },
     map: { ...spec.map },
     output: { ...spec.output, targets: [...spec.output.targets] },
