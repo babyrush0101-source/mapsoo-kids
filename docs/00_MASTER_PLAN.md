@@ -2,9 +2,7 @@
 
 状态：执行中
 
-当前阶段：[`v0.1.0-alpha.4`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4) 已作为当前公开 prerelease 发布：真实浏览器 fixture 固定为 SHA-256 `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`，提供 schema 0.2、35 个 terrain tile、6 个 prop sprite，并通过 Linux/Windows Godot 4.3/4.7 exact-pack 发布矩阵。11 个远端附件摘要已锁定，公开下载入口已切换。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
-
-当前开发候选 `v0.1.0-alpha.5` 增加 World Spec 0.2 语义地点、pack schema 0.3、`runtime/places.json`、六类地点图标与 Godot `Marker2D` 锚点；真实浏览器 fixture SHA-256 为 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`。本地 Windows Godot 4.3/4.7 exact-pack 已通过，但在公开 PR、Linux/Windows CI、tag workflow 与远端 digest 登记完成前，不把它写成已发布版本。
+当前阶段：[`v0.1.0-alpha.5`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) 已作为当前公开 prerelease 发布：真实浏览器 fixture 固定为 SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`，提供 World Spec 0.2、pack schema 0.3、`runtime/places.json`、六类地点图标与 Godot `Marker2D` 锚点，并通过 Linux/Windows Godot 4.3/4.7 exact-pack 发布矩阵。12 个远端附件摘要已锁定，公开下载入口已切换。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
 
 主分支：`main`
 
@@ -94,7 +92,7 @@
 
 表中的 `v0.1`–`v1.0` 是能力轨标签，不预留或预测 `package.json`、Git tag 或 GitHub Release 的 SemVer。公开发布序列和兼容事实只由 release registry、tag、不可变附件及其 digest 证明；例如 Alpha.5 可以推进 World System 能力，但不因此等同于能力轨 `v0.4` 或 SemVer `0.4.0`。
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、四层可编辑地形、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1` 至 [`v0.1.0-alpha.4`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4) 四个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.2 引入 STOYO 请求导入契约，alpha.3 增加冲突保护的 Godot 重导入，alpha.4 增加 Ground/Water/Roads/Props 与 Terrain Set/基础 Water collision 合同。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、四层可编辑地形、语义地点、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1` 至 [`v0.1.0-alpha.5`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) 五个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.2 引入 STOYO 请求导入契约，alpha.3 增加冲突保护的 Godot 重导入，alpha.4 增加可编辑地形，alpha.5 增加确定性语义地点与 Godot 锚点。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
 
 ## 6. 总控节奏
 
@@ -139,7 +137,7 @@
 ## 9. 当前下一步
 
 1. 按 [`Alpha.5 语义地点合同`](13_ALPHA5_SEMANTIC_PLACES.md) 实现稳定地点 ID；receipt 绑定含地点声明的 World Spec，manifest/verifier 绑定派生 JSON/算法/schema/atlas，并由 Godot 生成可查询锚点，同时保持 Alpha.1–Alpha.4 不可变；
-2. 用真实浏览器 ZIP、schema 负向案例及 Linux/Windows Godot 4.3/4.7 exact-pack 导入验收 Alpha.5，再通过公开 PR 与候选 release 生命周期决定是否发布；
+2. 已用真实浏览器 ZIP、schema 负向案例及 Linux/Windows Godot 4.3/4.7 exact-pack 导入验收 Alpha.5，并通过公开 PR、tag workflow 与远端 digest ledger 完成发布；
 3. 继续通过 Pages 的版本绑定下载入口与 [`10 分钟首次导入指南`](10_FIRST_GODOT_IMPORT.md) 邀请第一轮外部用户，并如实记录结果；没有反馈前不声明外部采用或 STOYO 已接入；
 4. 用真实 release、反馈与精确指标更新 Codex for OSS 证据台账，再决定申请时机；
 5. 保留已验证的 itch.io 上传套件，但页面创建和公开发布延期；以后能通过人工验证时再恢复，不阻塞 GitHub 路线。

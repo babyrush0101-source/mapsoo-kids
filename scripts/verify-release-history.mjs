@@ -64,14 +64,16 @@ async function verifyPublishedRelease(config) {
   );
 
   const visualRoot = join(REPOSITORY_ROOT, config.itch.visualDirectory);
-  const visualNames = (await listFiles(visualRoot))
-    .map(({ archivePath }) => archivePath)
-    .sort(comparePortablePaths);
   const expectedVisualNames = [
     ...config.itch.visuals.map(({ name }) => name),
     ...config.itch.supportingFiles,
   ]
     .sort(comparePortablePaths);
+  const visualNames = expectedVisualNames.length === 0
+    ? []
+    : (await listFiles(visualRoot))
+        .map(({ archivePath }) => archivePath)
+        .sort(comparePortablePaths);
   assert(
     JSON.stringify(visualNames) === JSON.stringify(expectedVisualNames),
     `${config.tag} itch visual file list is invalid`,

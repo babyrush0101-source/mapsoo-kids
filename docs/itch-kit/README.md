@@ -8,7 +8,7 @@ Build and verify everything from source:
 pnpm release:itch
 ```
 
-Versioned source inputs are preserved under `docs/itch-kit/` for Alpha.1 through the current Alpha.5 candidate. Alpha.1–Alpha.4 are immutable published GitHub releases and must never be rebuilt from newer source. Alpha.5 is an unpublished GitHub candidate, and its itch.io page/upload is also postponed; no itch.io publication is claimed.
+Versioned source inputs are preserved under `docs/itch-kit/` for Alpha.1 through Alpha.5. Alpha.1–Alpha.5 are immutable published GitHub releases and must never be rebuilt from newer source. Alpha.5 itch.io publication remains postponed; its source is an offline metadata/page draft and no itch.io upload is claimed.
 
 - `uploads/` — the asset ZIP and itch-specific `SHA256SUMS`;
 - `page/` — reviewed operator inputs for page fields and bilingual copy;
