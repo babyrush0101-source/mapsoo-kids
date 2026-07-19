@@ -20,7 +20,7 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 - Advanced the candidate Workbench generator, preview, inspector, and portable exporter to Alpha.4.
 - Made the browser preview and exported map preview draw back from the same versioned terrain and prop atlases.
-- Kept public download links on the immutable Alpha.3 release until the Alpha.4 prerelease is published and audited.
+- Published the audited Alpha.4 prerelease, pinned all 11 public attachment digests, and advanced public download links from Alpha.3.
 
 ## [0.1.0-alpha.3] - 2026-07-19
 

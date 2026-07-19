@@ -129,11 +129,11 @@ async function assertReceiptDispatchFailsClosed() {
   assert(config, 'release registry is missing alpha.1');
   for (const registered of configs) assertDeepFrozen(registered, `${registered.tag} config`);
   const alpha4 = getReleaseConfig('0.1.0-alpha.4');
-  assert(alpha4.lifecycle === 'candidate', 'alpha.4 must remain a candidate until publication');
+  assert(alpha4.lifecycle === 'published', 'alpha.4 must be registered as published after publication');
   assert(
-    alpha4.expectedExamplePackSha256 === null
-      || /^[a-f0-9]{64}$/.test(alpha4.expectedExamplePackSha256),
-    'alpha.4 candidate hash must be null before capture or a pinned lowercase SHA-256',
+    alpha4.expectedExamplePackSha256 === 'a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35'
+      && alpha4.publicExamplePackSha256 === alpha4.expectedExamplePackSha256,
+    'alpha.4 expected and public example-pack hashes must remain pinned',
   );
   assert(
     alpha4.release.schemas.find(({ releaseFileKey }) => releaseFileKey === 'packSchema')?.source
@@ -256,15 +256,11 @@ async function assertReceiptDispatchFailsClosed() {
     /does not authorize/,
     'alpha3 receipt verifier on alpha4',
   );
-  if (alpha4.expectedExamplePackSha256 === null) {
-    await expectFailure(
-      () => assertReleaseBuildAllowed(alpha4),
-      /capture and pin its canonical example-pack hash first/,
-      'unpinned alpha4 candidate build',
-    );
-  } else {
-    assert(assertReleaseBuildAllowed(alpha4) === alpha4, 'pinned alpha4 candidate build must be authorized');
-  }
+  await expectFailure(
+    () => assertReleaseBuildAllowed(alpha4),
+    /Refusing to rebuild published release/,
+    'published alpha4 build',
+  );
 
   for (const action of [
     () => getReleaseConfig('9999.0.0-unknown'),

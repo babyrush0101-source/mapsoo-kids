@@ -43,6 +43,6 @@
     "graphics": false,
     "sound": false,
     "code": true,
-    "notes": "Codex assisted project code and documentation. The downloadable ZIP contains no executable scripts; its pixel artwork is deterministic procedural output, not image-model output. No generated graphics or sound are included. This metadata remains an offline Draft while the GitHub prerelease is a candidate and itch.io upload is postponed."
+    "notes": "Codex assisted project code and documentation. The downloadable ZIP contains no executable scripts; its pixel artwork is deterministic procedural output, not image-model output. No generated graphics or sound are included. The GitHub prerelease is published; this metadata remains an offline Draft because itch.io upload is postponed."
   }
 }

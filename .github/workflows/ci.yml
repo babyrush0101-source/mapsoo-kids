@@ -57,7 +57,45 @@ jobs:
         run: pnpm release:browser:verify
 
       - name: Build and verify reproducible release and itch.io operator bundles
-        run: pnpm release:local && pnpm release:itch
+        shell: bash
+        run: |
+          set -euo pipefail
+          lifecycle="$(node --input-type=module --eval "import { CURRENT_RELEASE_CONFIG } from './scripts/release-config.mjs'; process.stdout.write(CURRENT_RELEASE_CONFIG.lifecycle)")"
+          if [ "$lifecycle" = candidate ]; then
+            pnpm release:local
+            pnpm release:itch
+          else
+            test "$lifecycle" = published
+            echo "Published release bytes are verified from GitHub by release:history:remote; rebuilding is intentionally disabled."
+            node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { mkdir, writeFile } from 'node:fs/promises';
+          import { dirname, join } from 'node:path';
+          import { CURRENT_RELEASE_CONFIG, REPOSITORY_ROOT } from './scripts/release-config.mjs';
+
+          const config = CURRENT_RELEASE_CONFIG;
+          const fileName = config.release.files.examplePack;
+          const url = `https://github.com/babyrush0101-source/mapsoo-kids/releases/download/${config.tag}/${fileName}`;
+          const response = await fetch(url, { redirect: 'follow' });
+          if (!response.ok) throw new Error(`Unable to download published example pack: HTTP ${response.status}`);
+          const bytes = Buffer.from(await response.arrayBuffer());
+          const actualHash = createHash('sha256').update(bytes).digest('hex');
+          if (actualHash !== config.publicExamplePackSha256) {
+            throw new Error(`Published example-pack SHA-256 mismatch: ${actualHash}`);
+          }
+          const outputPath = join(
+            REPOSITORY_ROOT,
+            'release',
+            'itch',
+            config.tag,
+            'uploads',
+            fileName,
+          );
+          await mkdir(dirname(outputPath), { recursive: true });
+          await writeFile(outputPath, bytes);
+          console.log(`MAPSOO_PUBLISHED_PACK_DOWNLOADED bytes=${bytes.length} sha256=${actualHash}`);
+          NODE
+          fi
 
       - name: Verify historical alpha.1 video source and committed MP4
         run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output

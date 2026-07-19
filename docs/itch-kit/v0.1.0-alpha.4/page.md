@@ -21,7 +21,7 @@ This is a **versioned, verified example pack**, not a complete game and not a cl
 
 The ZIP contains exactly **12 files**: one manifest plus **11 payload records**. It is an **Executable-free asset ZIP** containing PNG, JSON, and Markdown only.
 
-Candidate SHA-256: `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`.
+Published pack SHA-256: `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`.
 
 ## Godot quick start
 
@@ -61,12 +61,12 @@ This is an asset pack and import contract, **not a complete game, gameplay syste
 
 The distributed pixel artwork is produced by deterministic, self-contained procedural code, **not by an image-generation model**. Codex assisted project code and documentation, so the itch.io project discloses **Text & Dialog** and **Code**. The asset ZIP has no executable scripts and includes no AI-generated graphics or sound. Its `contains_generative_ai: false` field describes the generated artwork and map payload, not the project's development history.
 
-## Candidate status, links, and feedback
+## Publication status, links, and feedback
 
-The GitHub prerelease is still a candidate and the itch.io upload is postponed. This page is an offline operator draft; it does not claim a public itch.io page exists.
+The GitHub prerelease is published and the itch.io upload remains postponed. This page is an offline operator draft; it does not claim a public itch.io page exists.
 
 - Source and documentation: https://github.com/babyrush0101-source/mapsoo-kids
-- Candidate GitHub release URL: https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4
+- Published GitHub release URL: https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.4
 - Generator demo: https://babyrush0101-source.github.io/mapsoo-kids/
 - Reproducible feedback: https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml
 
@@ -76,6 +76,6 @@ When reporting an import problem, include your OS, Godot version, release tag, p
 
 ## 中文说明
 
-Mapsoo Sunny Meadow 是由 Mapsoo Worldsmith 在本地确定性生成的免费 alpha 分层地形素材候选包。它采用 pack schema `0.2.0`，提供 Ground、Water、Roads、Props 四层、35 个地形 Tile、6 个道具 Sprite，以及一个 24 × 16 示例世界。Water 与 Roads 分别导入为 Godot `MATCH_SIDES` Terrain Set；Water 使用 `world-blocking` 全格碰撞，Ground 与 Roads 无碰撞。候选包 SHA-256 为 `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`。
+Mapsoo Sunny Meadow 是由 Mapsoo Worldsmith 在本地确定性生成的免费 alpha 分层地形素材包。它采用 pack schema `0.2.0`，提供 Ground、Water、Roads、Props 四层、35 个地形 Tile、6 个道具 Sprite，以及一个 24 × 16 示例世界。Water 与 Roads 分别导入为 Godot `MATCH_SIDES` Terrain Set；Water 使用 `world-blocking` 全格碰撞，Ground 与 Roads 无碰撞。已发布包 SHA-256 为 `a57e810baaf2f015d7db96bf0e88ab7b6340d476a61ade7447735a6109b8fb35`。
 
-程序化 PNG 与生成地图采用 CC0-1.0，随包 schema 和文档采用仓库 MIT License。素材 ZIP 不含 GDScript 或 addon；当前图像由程序化代码绘制，不是图像生成模型输出。Codex 参与代码和文档辅助，因此 itch.io 披露 Text & Dialog 与 Code。本版本不是完整游戏、导航或寻路系统。GitHub prerelease 仍是 candidate，itch.io 上传继续延期。
+程序化 PNG 与生成地图采用 CC0-1.0，随包 schema 和文档采用仓库 MIT License。素材 ZIP 不含 GDScript 或 addon；当前图像由程序化代码绘制，不是图像生成模型输出。Codex 参与代码和文档辅助，因此 itch.io 披露 Text & Dialog 与 Code。本版本不是完整游戏、导航或寻路系统。GitHub prerelease 已公开，itch.io 上传继续延期。
