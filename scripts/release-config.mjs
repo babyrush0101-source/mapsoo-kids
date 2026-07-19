@@ -236,6 +236,10 @@ function validateReleaseConfig(config) {
     assertRelativeConfigPath(config.itch[key], `${config.tag} itch.${key}`);
   }
   assertConfig(
+    ['required', 'postponed'].includes(config.itch.sourceKitStatus ?? 'required'),
+    `${config.tag} itch source-kit status is invalid`,
+  );
+  assertConfig(
     typeof config.itch.shortDescription === 'string' && config.itch.shortDescription.length > 0,
     `${config.tag} itch short description is missing`,
   );
@@ -747,11 +751,29 @@ const alpha7ReleaseFiles = releaseFiles(ALPHA_7_TAG, {
 const alpha7 = deepFreeze(validateReleaseConfig({
   version: ALPHA_7_VERSION,
   tag: ALPHA_7_TAG,
-  lifecycle: 'candidate',
+  lifecycle: 'published',
   receiptVerifier: 'builtin-world-gallery-alpha7-v0.2',
   expectedExamplePackSha256: '6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c',
-  publicExamplePackSha256: null,
-  publicReleaseAssetSha256: null,
+  publicExamplePackSha256: '6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c',
+  publicReleaseAssetSha256: {
+    [alpha7ReleaseFiles.changelog]: '2669582cde4c363941af0c2adc51c9ee57488e8fbc0b9a24b129c2126eb6995b',
+    [alpha7ReleaseFiles.license]: '0fb6db3e8b9916a72339ad81b200c8b9419d5524ed333d42eaac86c41b6a1581',
+    [alpha7ReleaseFiles.exampleWorldSpec]: 'e33a3e67f2febd803b7920a0fc9e58ebead35e5b8b830fabe3816e0e960b4655',
+    [alpha7ReleaseFiles.dustwindWorldSpec]: 'd229ed303e2c003a2f9ba75760e1dab5ab0e8dcd1d385f0c0e17bf69c6140e07',
+    [alpha7ReleaseFiles.frostwatchWorldSpec]: '0ca57d56c646898a091f9a7b59c2542c645d66138e435d527ed0e089148a716f',
+    [alpha7ReleaseFiles.examplePack]: '6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c',
+    [alpha7ReleaseFiles.dustwindPack]: 'd6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502',
+    [alpha7ReleaseFiles.frostwatchPack]: '35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12',
+    [alpha7ReleaseFiles.receiptSchema]: '7e9d88967366d43d84b4529746c362963e63b9992ea101ae92703b3797c9b9e3',
+    [alpha7ReleaseFiles.godotImporter]: '674ce0a057c1808b8d2b04e706a26031aa7ca321304ce34c0e6a2f3553bd6a26',
+    [alpha7ReleaseFiles.packSchema]: '209a97580ceede4fc46f1fbe86144a1cb7a28b68c20396558fac38b410d26c21',
+    [alpha7ReleaseFiles.placesSchema]: '880c319b72dedcc38c881fb06ee269649a9e1301a4dd09d63005b94d9aa03152',
+    [alpha7ReleaseFiles.structuresSchema]: 'be1b7f4720c74f6a342a224eb9d6ed8bad99c34ca0c0fe9e1397b8eee9c6710d',
+    [alpha7ReleaseFiles.worldSchema]: 'aa9e1422d25f92b7fea0b41723b35f59a2a77ad87008baa15e7e0921b3abcef6',
+    [alpha7ReleaseFiles.web]: 'd3b5e899c57fe433ad283bee605ea8cbb024ccdeecf615f2d6c6470157bd024f',
+    [alpha7ReleaseFiles.manifest]: '1e93af30bfda3e7a1d24e69d4852adbbdea532b1df87ac63631e55e9d8631e6e',
+    [alpha7ReleaseFiles.checksums]: '79525089015e1a8ac4fd51978521171406684366d61153bc45f60e385ac02619',
+  },
   release: {
     verificationPolicy: 'world-gallery-semantic-structures-cc0-v7',
     files: alpha7ReleaseFiles,
@@ -795,6 +817,7 @@ const alpha7 = deepFreeze(validateReleaseConfig({
   },
   itch: {
     verificationPolicy: 'world-gallery-semantic-structures-cc0-v7',
+    sourceKitStatus: 'postponed',
     shortDescription: 'Free CC0 Godot world gallery with three deterministic, executable-free asset packs.',
     feedbackUrl: 'https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml',
     sourceDirectory: `docs/itch-kit/${ALPHA_7_TAG}`,

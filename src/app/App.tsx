@@ -78,6 +78,8 @@ export function App() {
   const [importNotice, setImportNotice] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
   const draftIssues = useMemo(() => validateWorldSpec(draft), [draft]);
   const activeExampleId = useMemo(() => findMatchingWorldExample(draft)?.id ?? '', [draft]);
+  const selectedPublicPack = CURRENT_PUBLIC_RELEASE.assetPacks.find((pack) => pack.id === activeExampleId)
+    ?? CURRENT_PUBLIC_RELEASE.assetPack;
   const packIssues = useMemo(() => (world ? validateGeneratedWorld(world) : []), [world]);
   const hasDraftErrors = draftIssues.some((issue) => issue.severity === 'error');
   const hasPackErrors = !world || packIssues.some((issue) => issue.severity === 'error');
@@ -155,7 +157,7 @@ export function App() {
       setExportState('idle');
       setGenerationNotice({
         tone: 'success',
-        message: `Loaded ${spec.title} from the Alpha.7 candidate registry.`,
+        message: `Loaded ${spec.title} from the Alpha.7 public registry.`,
       });
     } catch (error) {
       if (!generationSession.isCurrent(request)) return;
@@ -739,8 +741,8 @@ export function App() {
             <article>
               <span>01</span>
               <h3>Download the starter pack</h3>
-              <p>Use the exact executable-free Sunny Meadow pack tested by the public release workflow.</p>
-              <a className="onboarding-action is-primary" href={CURRENT_PUBLIC_RELEASE.assetPack.url}>
+              <p>Use the exact executable-free pack for the selected public world, tested by the release workflow.</p>
+              <a className="onboarding-action is-primary" href={selectedPublicPack.url}>
                 Download asset ZIP <span aria-hidden="true">↓</span>
               </a>
             </article>
@@ -778,8 +780,8 @@ export function App() {
           </div>
 
           <div className="integrity-note">
-            <span>Sunny Meadow {CURRENT_PUBLIC_RELEASE.tag} SHA-256</span>
-            <code>{CURRENT_PUBLIC_RELEASE.assetPack.sha256}</code>
+            <span>{selectedPublicPack.id} {CURRENT_PUBLIC_RELEASE.tag} SHA-256</span>
+            <code>{selectedPublicPack.sha256}</code>
             <small>Hashes prove downloaded bytes match the audited attachment; install executable code only from the official repository.</small>
           </div>
         </section>

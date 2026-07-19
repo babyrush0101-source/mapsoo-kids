@@ -1,6 +1,8 @@
 # Alpha.7 多世界示例包与资产画廊
 
-状态：候选合同；首个实现切片已完成，尚未发布 Alpha.7。
+状态：已发布；`v0.1.0-alpha.7` 于 2026-07-19 通过公开审核、发布矩阵与附件审计。
+
+公开证据：[GitHub Release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.7) · [PR #44](https://github.com/babyrush0101-source/mapsoo-kids/pull/44) · [发布流水线](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29688782893)。17 个附件的实际 SHA-256 已写入不可变发布注册表；itch.io 仍按范围约束保持搁置。
 
 ## 1. 目的与选择理由
 
@@ -77,9 +79,9 @@ Alpha.7 不实现或承诺：
 - Godot Asset Library 上架或外部采用证明；
 - 修改任何已发布 Alpha.1–Alpha.6 tag、fixture、附件或摘要。
 
-## 7. 停止条件
+## 7. 发布门禁结论
 
-出现以下任一情况，Alpha.7 不得发布：
+以下停止条件均未触发；它们继续作为 Alpha.7 的历史审计标准：
 
 1. 必须改写 Alpha.1–Alpha.6 历史合同或字节才能容纳三个示例；
 2. 画廊、World Spec、预览和下载指向不同世界或不同版本；

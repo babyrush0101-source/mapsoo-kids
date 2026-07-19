@@ -49,19 +49,29 @@ async function verifyPublishedRelease(config) {
   const releaseNotes = await readFile(releaseNotesPath, 'utf8');
   assert(releaseNotes.includes(config.tag), `${config.tag} release notes do not name their tag`);
 
-  const sourceRoot = join(REPOSITORY_ROOT, config.itch.sourceDirectory);
-  const sourceNames = (await listFiles(sourceRoot)).map(({ archivePath }) => archivePath);
-  assert(
-    JSON.stringify(sourceNames) === JSON.stringify(['metadata.json', 'page.md']),
-    `${config.tag} itch source file list is invalid`,
-  );
-  const metadata = JSON.parse(await readFile(join(sourceRoot, 'metadata.json'), 'utf8'));
-  assert(metadata.version === config.version, `${config.tag} itch metadata version is invalid`);
-  const page = await readFile(join(sourceRoot, 'page.md'), 'utf8');
-  assert(
-    page.includes(config.release.files.examplePack),
-    `${config.tag} itch page does not name its configured asset pack`,
-  );
+  if ((config.itch.sourceKitStatus ?? 'required') === 'required') {
+    const sourceRoot = join(REPOSITORY_ROOT, config.itch.sourceDirectory);
+    const sourceNames = (await listFiles(sourceRoot)).map(({ archivePath }) => archivePath);
+    assert(
+      JSON.stringify(sourceNames) === JSON.stringify(['metadata.json', 'page.md']),
+      `${config.tag} itch source file list is invalid`,
+    );
+    const metadata = JSON.parse(await readFile(join(sourceRoot, 'metadata.json'), 'utf8'));
+    assert(metadata.version === config.version, `${config.tag} itch metadata version is invalid`);
+    const page = await readFile(join(sourceRoot, 'page.md'), 'utf8');
+    assert(
+      page.includes(config.release.files.examplePack),
+      `${config.tag} itch page does not name its configured asset pack`,
+    );
+  } else {
+    assert(
+      config.itch.rendererFrames.length === 0
+        && config.itch.requiredRendererFacts.length === 0
+        && config.itch.supportingFiles.length === 0
+        && config.itch.visuals.length === 0,
+      `${config.tag} postponed itch source kit must not claim prepared visuals`,
+    );
+  }
 
   const visualRoot = join(REPOSITORY_ROOT, config.itch.visualDirectory);
   const expectedVisualNames = [
