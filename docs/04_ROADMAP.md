@@ -91,7 +91,7 @@
 - [x] 贡献指南、行为准则、issue/PR 模板；
 - [ ] 文档站或完整示例页；
 - [ ] 外部试玩与可复现反馈；
-- [ ] itch.io 免费素材页；
+- [ ] itch.io 免费素材页（维护者决定延期；保留已验证上传套件，但不作为当前 alpha.2 gate）；
 - [ ] beta release 与 changelog。
 
 ## v1.0 — Stable
