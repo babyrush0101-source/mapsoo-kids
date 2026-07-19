@@ -10,11 +10,16 @@ const NOTICE_PATH = join(ROOT, 'public', 'THIRD_PARTY_NOTICES.txt');
 const WRITE = process.argv.includes('--write');
 
 const EXPECTED_PRODUCTION_DEPENDENCIES = [
+  ['ajv', '8.17.1', 'MIT'],
+  ['ajv-formats', '3.0.1', 'MIT'],
   ['core-util-is', '1.0.3', 'MIT'],
+  ['fast-deep-equal', '3.1.3', 'MIT'],
+  ['fast-uri', '3.1.3', 'BSD-3-Clause'],
   ['immediate', '3.0.6', 'MIT'],
   ['inherits', '2.0.4', 'ISC'],
   ['isarray', '1.0.0', 'MIT'],
   ['js-tokens', '4.0.0', 'MIT'],
+  ['json-schema-traverse', '1.0.0', 'MIT'],
   ['jszip', '3.10.1', '(MIT OR GPL-3.0-or-later)'],
   ['lie', '3.3.0', 'MIT'],
   ['loose-envify', '1.4.0', 'MIT'],
@@ -23,6 +28,7 @@ const EXPECTED_PRODUCTION_DEPENDENCIES = [
   ['react', '18.3.1', 'MIT'],
   ['react-dom', '18.3.1', 'MIT'],
   ['readable-stream', '2.3.8', 'MIT'],
+  ['require-from-string', '2.0.2', 'MIT'],
   ['safe-buffer', '5.1.2', 'MIT'],
   ['scheduler', '0.23.2', 'MIT'],
   ['setimmediate', '1.0.5', 'MIT'],

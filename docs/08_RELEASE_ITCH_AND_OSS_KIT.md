@@ -2,17 +2,24 @@
 
 更新日期：2026-07-19
 
-当前已发布版本：`v0.1.0-alpha.6`
+当前已发布版本：`v0.1.0-alpha.7`
 
-当前开发候选：无
+当前开发候选：`v0.1.0-alpha.8`（STOYO 可复现导出 CLI；输出保持 Alpha.7 Pack Schema 0.5）
 
-当前公开示例包 SHA-256：`4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`。Alpha.6 工作台、公开下载与 importer 已统一升版；13 个 GitHub Release 附件的远端 SHA-256 已登记。Importer ZIP SHA-256 为 `bbfacd2b5c8503214b7647d59e9911a34fa1b4e073f86bd1310686812c9142c0`。Alpha.6 的 itch.io operator kit 继续作为离线验证产物，不执行登录或上传。
+当前三个公开示例包 SHA-256：Sunny Meadow `6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c`、Dustwind Outpost `d6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502`、Frostwatch Vale `35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12`。Alpha.7 的 17 个 GitHub Release 附件摘要已登记；itch.io operator kit 继续只作离线验证，不执行登录或上传。
 
-已发布且不可变的版本：`v0.1.0-alpha.1`、`v0.1.0-alpha.2`、`v0.1.0-alpha.3`、`v0.1.0-alpha.4`、`v0.1.0-alpha.5`、`v0.1.0-alpha.6`
+已发布且不可变的版本：`v0.1.0-alpha.1`、`v0.1.0-alpha.2`、`v0.1.0-alpha.3`、`v0.1.0-alpha.4`、`v0.1.0-alpha.5`、`v0.1.0-alpha.6`、`v0.1.0-alpha.7`
 
 目标仓库：`babyrush0101-source/mapsoo-kids`
 
 > 本文同时记录已完成的公开证据和仍待执行的 itch.io / Codex for OSS 模板。2026-07-19 维护者决定暂缓 itch.io 页面：GitHub Release/Pages 是当前主渠道，已验证的 itch 上传套件继续保留，但页面不是 GitHub alpha 或申请准备的必需前置。只有带权威 URL 的项目才算完成；模板中的 `[REPLACE: ...]` 仍必须在正式提交或公开页面粘贴前替换，不能把不存在的外部反馈写成已完成。
+
+## 0F. Alpha.7 发布执行状态（2026-07-19）
+
+- [GitHub prerelease](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.7) 已公开，包含三份独立、可逐包核验的 World Spec 0.3 / Pack Schema 0.5 素材包；
+- [PR #44](https://github.com/babyrush0101-source/mapsoo-kids/pull/44) 与 [发布流水线](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29688782893) 提供公开审查证据；
+- 17 个附件摘要全部进入不可变 registry；Linux/Windows × Godot 4.3/4.7 对三个 exact pack 全部通过；
+- itch.io 继续延期；社区证据台账仍为空，不把维护者/CI 下载或 STOYO 计划写成外部采用。
 
 ## 0E. Alpha.6 发布执行状态（2026-07-19）
 

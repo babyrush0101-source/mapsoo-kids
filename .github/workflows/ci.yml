@@ -90,7 +90,7 @@ jobs:
       - name: Verify historical alpha.1 video source and committed MP4
         run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output
 
-      - name: Bind the three verified candidate packs for Godot jobs
+      - name: Bind the public example packs and STOYO bridge pack for Godot jobs
         id: candidate-pack
         shell: bash
         run: |
@@ -121,6 +121,10 @@ jobs:
           await writeFile(join(stage, 'pack-set.json'), `${JSON.stringify({ schemaVersion: 1, packs: descriptors }, null, 2)}\n`);
           appendFileSync(process.env.GITHUB_OUTPUT, `artifact=mapsoo-example-packs-${config.tag}\npath=${stage}\n`);
           NODE
+          pnpm stoyo:export -- \
+            --input examples/integrations/stoyo/river-valley-asset-request.json \
+            --out-dir release/godot-pack-set/stoyo \
+            --completed-at 2026-07-19T12:00:00.000Z
 
       - name: Upload the verified candidate pack set
         uses: actions/upload-artifact@v4
@@ -272,6 +276,13 @@ jobs:
             -ExtractedRoot $env:MAPSOO_PACK_SET_EXTRACTED `
             -GodotConsole $env:GODOT_BIN
 
+      - name: Import the reproducible STOYO bridge pack
+        shell: pwsh
+        run: |
+          & scripts/run-stoyo-pack-godot.ps1 `
+            -ArtifactRoot (Join-Path $env:RUNNER_TEMP 'mapsoo-candidate-packs/stoyo') `
+            -GodotConsole $env:GODOT_BIN
+
   godot-windows-smoke:
     name: Godot ${{ matrix.version }} Windows transaction smoke
     needs: check
@@ -390,4 +401,11 @@ jobs:
           & scripts/run-exact-pack-set.ps1 `
             -DescriptorPath $env:MAPSOO_PACK_SET_DESCRIPTOR `
             -ExtractedRoot $env:MAPSOO_PACK_SET_EXTRACTED `
+            -GodotConsole $env:GODOT_BIN
+
+      - name: Import the reproducible STOYO bridge pack
+        shell: pwsh
+        run: |
+          & scripts/run-stoyo-pack-godot.ps1 `
+            -ArtifactRoot (Join-Path $env:RUNNER_TEMP 'mapsoo-candidate-packs/stoyo') `
             -GodotConsole $env:GODOT_BIN

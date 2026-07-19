@@ -92,7 +92,7 @@
 
 表中的 `v0.1`–`v1.0` 是能力轨标签，不预留或预测 `package.json`、Git tag 或 GitHub Release 的 SemVer。公开发布序列和兼容事实只由 release registry、tag、不可变附件及其 digest 证明；例如 Alpha.6 可以推进 World System 能力，但不因此等同于能力轨 `v0.4` 或 SemVer `0.4.0`。
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、四层可编辑地形、语义地点、地点关联建筑外观、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1` 至 [`v0.1.0-alpha.6`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.6) 六个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.2 引入 STOYO 请求导入契约，alpha.3 增加冲突保护的 Godot 重导入，alpha.4 增加可编辑地形，alpha.5 增加确定性语义地点与 Godot 锚点，alpha.6 增加地点关联建筑外观、`Sprite2D` 派生和可安装 addon。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、四层可编辑地形、语义地点、地点关联建筑外观、三世界画廊、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1` 至 [`v0.1.0-alpha.7`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.7) 七个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.7 发布 Sunny Meadow、Dustwind Outpost 与 Frostwatch Vale 三个独立包。Alpha.8 当前候选切片增加脱敏 `StoyoAssetRequest` 到 Alpha.7 兼容 Godot 包及外部回执的可复现无 UI CLI，但这不是 STOYO 生产采用证明。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
 
 ## 6. 总控节奏
 
@@ -136,8 +136,8 @@
 
 ## 9. 当前下一步
 
-1. [`Alpha.7 多世界示例包与资产画廊候选合同`](17_ALPHA7_MULTI_WORLD_GALLERY.md) 的首个切片已完成：`meadow`、`desert`、`snow` 三个受信 World Spec 示例、深冻结 example registry、Workbench 三卡片画廊、确定性测试和桌面/390px 真实浏览器验证均已落地；当前仍只称为候选；
-2. 下一切片为三个世界分别生成和验证 portable ZIP，建立 fixture 预览与版本绑定候选下载元数据，并让 Linux/Windows × Godot 4.3/4.7 对三个 exact pack 全绿；在发布附件和远端摘要完成前，不得把画廊候选称为已发布多世界素材包；
-3. 继续通过 Pages 的版本绑定下载入口与 [`Alpha.6 首次 Godot 导入指南`](16_ALPHA6_FIRST_GODOT_IMPORT.md) 邀请第一轮外部用户，并把真实结果记录在社区证据台账；没有反馈前不声明外部采用或 STOYO 已接入；
-4. 以 Alpha.6 的真实 release、191 个测试、155 个 receipt 负向案例、13 个附件和六个 release 的 69 个远端资产为维护证据更新 Codex for OSS 申请草稿；meaningful usage 仍为空，提交时必须如实说明；
-5. 保留已验证的 itch.io 离线上传套件，但页面创建和公开发布继续延期；以后能通过人工验证时再恢复，不阻塞 GitHub 路线。
+1. 审核并发布 [`Alpha.8 STOYO 可复现素材包导出 CLI`](18_ALPHA8_STOYO_EXPORT_CLI.md)：固定显式时间，把公开安全请求确定性转换为 Alpha.7 兼容 ZIP 与独立 hash 回执，并在 Linux/Windows × Godot 4.3/4.7 验证 exact pack；
+2. CLI 必须保持 `created / unchanged / conflict`、不覆盖既有输出、严格 UTF-8/JSON/白名单边界，并在 ZIP 写出前后交叉核验 manifest、receipt、World Spec 与请求 hash；
+3. 继续通过 Pages 的版本绑定下载入口与 Alpha.7 发布说明邀请第一轮外部用户，并把真实结果记录在社区证据台账；没有反馈前不声明外部采用或 STOYO 已接入；
+4. 以 Alpha.7 的真实 release、三个公开素材包、17 个附件和七个不可变 prerelease 为维护证据更新 Codex for OSS 申请草稿；meaningful usage 仍为空，提交时必须如实说明；
+5. 道路关系和 STOYO 消费端 contract test 留到后续切片；itch.io 页面创建与公开发布继续延期，不阻塞 GitHub 路线。

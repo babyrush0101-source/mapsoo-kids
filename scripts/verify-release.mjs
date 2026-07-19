@@ -44,7 +44,7 @@ function verifyAlpha4PlayableTerrainManifest(
   const expectedSchemaVersion = worldGallery ? '0.5.0' : semanticStructures ? '0.4.0' : hasSemanticPlaces ? '0.3.0' : '0.2.0';
   assert(manifest.schema_version === expectedSchemaVersion, 'Playable terrain manifest schema version mismatch');
   assert(
-    exactJson(manifest.pack?.generator, { name: 'Mapsoo Worldsmith', version: VERSION }),
+    exactJson(manifest.pack?.generator, { name: 'Mapsoo Worldsmith', version: CURRENT_RELEASE_CONFIG.packVersion }),
     'Playable terrain manifest generator mismatch',
   );
   assert(
@@ -253,7 +253,7 @@ function verifyConfiguredExampleManifest(manifest, expectedPackId = CURRENT_RELE
     manifest.pack?.id === expectedPackId,
     'Example manifest pack ID mismatch',
   );
-  assert(manifest.pack?.version === VERSION, 'Example manifest version mismatch');
+  assert(manifest.pack?.version === CURRENT_RELEASE_CONFIG.packVersion, 'Example manifest pack-contract version mismatch');
 
   switch (CURRENT_RELEASE_CONFIG.release.verificationPolicy) {
     case 'sunny-meadow-procedural-cc0-v1':
@@ -272,7 +272,7 @@ function verifyConfiguredExampleManifest(manifest, expectedPackId = CURRENT_RELE
       if (!CURRENT_RELEASE_CONFIG.release.verificationPolicy.endsWith('-v1')) {
         assert(manifest.schema_version === '0.1.0', 'Receipt-bearing manifest schema must remain 0.1.0');
         assert(
-          manifest.pack?.generator?.version === VERSION,
+          manifest.pack?.generator?.version === CURRENT_RELEASE_CONFIG.packVersion,
           'Receipt-bearing manifest generator version mismatch',
         );
         assert(
@@ -623,6 +623,9 @@ async function verify() {
   for (const { releaseFileKey, source } of CURRENT_RELEASE_CONFIG.release.schemas) {
     await verifyCopiedFile(RELEASE_FILES[releaseFileKey], join(REPOSITORY_ROOT, source));
   }
+  for (const { releaseFileKey, source } of CURRENT_RELEASE_CONFIG.release.extraFiles ?? []) {
+    await verifyCopiedFile(RELEASE_FILES[releaseFileKey], join(REPOSITORY_ROOT, source));
+  }
   await verifyCopiedFile(
     RELEASE_FILES.license,
     join(REPOSITORY_ROOT, CURRENT_RELEASE_CONFIG.release.inputs.license),
@@ -647,6 +650,9 @@ async function verify() {
   for (const { releaseFileKey } of CURRENT_RELEASE_CONFIG.release.schemas) {
     JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[releaseFileKey]), 'utf8'));
   }
+  for (const { releaseFileKey } of CURRENT_RELEASE_CONFIG.release.extraFiles ?? []) {
+    JSON.parse(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[releaseFileKey]), 'utf8'));
+  }
 
   const manifest = JSON.parse(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.manifest), 'utf8'),
@@ -660,6 +666,7 @@ async function verify() {
     'license',
     'schemas',
     'web',
+    ...((CURRENT_RELEASE_CONFIG.release.extraFiles?.length ?? 0) > 0 ? ['integrationContracts'] : []),
     ...(RELEASE_FILES.evidenceVideo ? ['evidenceVideo'] : []),
   ].sort(comparePortablePaths);
   assert(
@@ -692,6 +699,15 @@ async function verify() {
     ),
     'Release manifest schema artifacts mismatch',
   );
+  if ((CURRENT_RELEASE_CONFIG.release.extraFiles?.length ?? 0) > 0) {
+    assert(
+      JSON.stringify(manifest.artifacts?.integrationContracts)
+        === JSON.stringify(CURRENT_RELEASE_CONFIG.release.extraFiles.map(({ releaseFileKey, source }) => ({
+          file: RELEASE_FILES[releaseFileKey], source,
+        }))),
+      'Release manifest integration contract artifacts mismatch',
+    );
+  }
   if (RELEASE_FILES.evidenceVideo) {
     assert(
       manifest.artifacts?.evidenceVideo?.file === RELEASE_FILES.evidenceVideo,

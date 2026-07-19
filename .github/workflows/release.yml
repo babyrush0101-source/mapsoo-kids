@@ -87,7 +87,7 @@ jobs:
       - name: Build and verify reproducible release assets
         run: pnpm release:local
 
-      - name: Bind the exact three-pack release set for Godot jobs
+      - name: Bind the exact compatibility and STOYO bridge packs for Godot jobs
         id: candidate-pack
         shell: bash
         run: |
@@ -119,6 +119,10 @@ jobs:
           await writeFile(join(stage, 'pack-set.json'), `${JSON.stringify({ schemaVersion: 1, packs: descriptors }, null, 2)}\n`);
           appendFileSync(process.env.GITHUB_OUTPUT, `artifact=mapsoo-example-packs-${config.tag}\npath=${stage}\n`);
           NODE
+          pnpm stoyo:export -- \
+            --input examples/integrations/stoyo/river-valley-asset-request.json \
+            --out-dir release/godot-pack-set/stoyo \
+            --completed-at 2026-07-19T12:00:00.000Z
 
       - name: Preserve the verified release pack set for Godot jobs
         uses: actions/upload-artifact@v4
@@ -243,6 +247,13 @@ jobs:
             -ExtractedRoot $env:MAPSOO_PACK_SET_EXTRACTED `
             -GodotConsole $env:GODOT_BIN
 
+      - name: Import the exact STOYO bridge pack
+        shell: pwsh
+        run: |
+          & scripts/run-stoyo-pack-godot.ps1 `
+            -ArtifactRoot (Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs/stoyo') `
+            -GodotConsole $env:GODOT_BIN
+
   godot-release-windows-smoke:
     name: Godot ${{ matrix.version }} Windows release transaction
     needs: build
@@ -353,6 +364,13 @@ jobs:
           & scripts/run-exact-pack-set.ps1 `
             -DescriptorPath $env:MAPSOO_PACK_SET_DESCRIPTOR `
             -ExtractedRoot $env:MAPSOO_PACK_SET_EXTRACTED `
+            -GodotConsole $env:GODOT_BIN
+
+      - name: Import the exact STOYO bridge pack
+        shell: pwsh
+        run: |
+          & scripts/run-stoyo-pack-godot.ps1 `
+            -ArtifactRoot (Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs/stoyo') `
             -GodotConsole $env:GODOT_BIN
 
   publish-draft:

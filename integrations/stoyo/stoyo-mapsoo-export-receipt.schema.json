@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/integrations/stoyo/stoyo-mapsoo-export-receipt-1.0.0.json",
+  "title": "STOYO to Mapsoo export receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "completed_at", "request", "projection", "provider", "pack", "tool"],
+  "properties": {
+    "schema_version": { "const": "dev.stoyo.mapsoo-export-receipt/1.0.0" },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\\.[0-9]{3}Z$"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "pack_id", "asset_request_sha256", "stoyo_world_id", "stoyo_world_version", "scene_id", "required_scene_tags", "content_rating"],
+      "properties": {
+        "schema_version": { "const": "dev.stoyo.asset-request/1.0.0" },
+        "pack_id": { "$ref": "#/$defs/id" },
+        "asset_request_sha256": { "$ref": "#/$defs/sha256" },
+        "stoyo_world_id": { "$ref": "#/$defs/id" },
+        "stoyo_world_version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$" },
+        "scene_id": { "$ref": "#/$defs/id" },
+        "required_scene_tags": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "content_rating": { "$ref": "#/$defs/id" }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["world_spec_schema_version", "world_spec_path", "world_spec_sha256"],
+      "properties": {
+        "world_spec_schema_version": { "const": "0.3.0" },
+        "world_spec_path": { "type": "string", "pattern": "^worlds/[a-z0-9]+(?:-[a-z0-9]+)*\\.world\\.json$" },
+        "world_spec_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "execution", "output_provenance"],
+      "properties": {
+        "id": { "const": "procedural-terrain-v2" },
+        "version": { "const": "0.2.0" },
+        "execution": { "const": "local" },
+        "output_provenance": { "const": "procedural" }
+      }
+    },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "version", "schema_version", "bytes", "sha256", "manifest_sha256", "generation_receipt_sha256"],
+      "properties": {
+        "filename": { "type": "string", "pattern": "^mapsoo-[a-z0-9]+(?:-[a-z0-9]+)*-v0\\.1\\.0-alpha\\.7\\.zip$" },
+        "version": { "const": "0.1.0-alpha.7" },
+        "schema_version": { "const": "0.5.0" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "generation_receipt_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "mapsoo-stoyo-export" },
+        "version": { "const": "0.1.0" }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 80 },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

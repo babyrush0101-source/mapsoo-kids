@@ -37,6 +37,19 @@ The older published Alpha.1–Alpha.5 fixtures and hashes remain immutable. A pi
 
 The published [v0.1.0-alpha.7 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.7) is tagged at commit `c2e2ed5`. Its successful [release workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29688782893) rebuilt all three fixed packs, passed the exact 17-attachment audit, and imported every pack in the Linux/Windows × Godot 4.3/4.7 release matrix.
 
+## Reproducible STOYO export CLI
+
+The Alpha.8 candidate adds a no-UI bridge for a public-safe `StoyoAssetRequest`. It validates and hashes the request, migrates its projection to World Spec 0.3 without inventing places or structures, reuses the audited local procedural exporter, and writes an Alpha.7-compatible Godot pack plus a separate request-to-pack receipt:
+
+```bash
+pnpm stoyo:export -- \
+  --input examples/integrations/stoyo/river-valley-asset-request.json \
+  --out-dir ./stoyo-output \
+  --completed-at 2026-07-19T12:00:00.000Z
+```
+
+Node.js 20+, pnpm 11+, and Chrome/Chromium are required. The explicit timestamp is part of reproducibility. Existing output is accepted only when both files are byte-identical; otherwise the command fails closed and never overwrites it. This executable bridge is not a claim that STOYO has a production consumer yet; see the [Alpha.8 scope and verification contract](docs/18_ALPHA8_STOYO_EXPORT_CLI.md).
+
 The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; schema 0.2 derives Ground, Water, and Roads `TileMapLayer` nodes, Props, two TerrainSets, and basic Water collision under `res://mapsoo_imports/`. Managed-resource ownership remains in `mapsoo.import-state.json`: identical clean input is `unchanged`, a clean source update is `updated`, and manual edits or legacy output without state fail closed as `conflict`. This is a terrain asset and import contract, not a complete game, navigation system, or production-readiness claim. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
 ## First Godot import
@@ -92,6 +105,7 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [v0.1.0-alpha.6 first-import guide](docs/16_ALPHA6_FIRST_GODOT_IMPORT.md)
 - [Alpha.7 multi-world gallery scope and acceptance](docs/17_ALPHA7_MULTI_WORLD_GALLERY.md)
 - [v0.1.0-alpha.7 release notes](docs/releases/v0.1.0-alpha.7.md)
+- [Alpha.8 reproducible STOYO export CLI scope and acceptance](docs/18_ALPHA8_STOYO_EXPORT_CLI.md)
 - [Community evidence ledger](docs/14_COMMUNITY_EVIDENCE.md)
 
 ## Community and contributing
@@ -118,7 +132,7 @@ pnpm release:history:remote
 pnpm release:browser:verify
 ```
 
-`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all six immutable public GitHub releases and run the Alpha.2–Alpha.6 exporters in a real browser, comparing raw ZIP bytes with their independently registered fixtures.
+`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all seven immutable public GitHub releases, reproduce the Alpha.2–Alpha.7 browser exporters against their registered fixtures, and verify the Alpha.8 STOYO bridge CLI.
 
 After registering and selecting a future unpublished version, build, validate, and reproduce its complete candidate release bundle:
 

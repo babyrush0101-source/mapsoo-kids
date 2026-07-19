@@ -398,7 +398,7 @@ try {
     assertReceiptVerifierBinding(config.receiptVerifier, config.version);
   }
   const forbiddenBindings = configs.flatMap((policyConfig) => configs
-    .filter((versionConfig) => versionConfig !== policyConfig)
+    .filter((versionConfig) => versionConfig.receiptVerifier !== policyConfig.receiptVerifier)
     .map((versionConfig) => [policyConfig.receiptVerifier, versionConfig.version]));
   forbiddenBindings.push(['unknown-policy', configs[0].version]);
   for (const [policy, version] of forbiddenBindings) {
