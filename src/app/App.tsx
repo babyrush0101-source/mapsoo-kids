@@ -19,6 +19,7 @@ import {
 import { validateGeneratedWorld, validateWorldSpec } from '../core/validate-world';
 import { WorldPreview } from '../features/world-preview/WorldPreview';
 import { DEFAULT_GENERATION_PROVIDER } from '../providers/provider-registry';
+import { CURRENT_PUBLIC_RELEASE } from './current-public-release';
 import { GenerationSession, type GenerationRequest } from './generation-session';
 import { safeGenerationFailureLog, safeGenerationFailureMessage } from './generation-status';
 
@@ -97,6 +98,16 @@ export function App() {
 
     return () => generationSession.cancel();
   }, [generationSession]);
+
+  useEffect(() => {
+    if (window.location.hash !== '#godot-quickstart') return;
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('godot-quickstart')?.scrollIntoView({ block: 'start' });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   function chooseBiome(biome: BiomeId) {
     setDraft((current) => ({
@@ -632,6 +643,72 @@ export function App() {
             </div>
             {exportState === 'failed' && <p className="export-error">Pack assembly failed. Check the browser console.</p>}
           </aside>
+        </section>
+
+        <section className="first-import" id="godot-quickstart" aria-labelledby="godot-quickstart-title">
+          <div className="first-import-heading">
+            <div>
+              <span className="step">04</span>
+              <p className="eyebrow">Verified first-import path</p>
+              <h2 id="godot-quickstart-title">From release ZIP to a Godot scene in 10 minutes.</h2>
+            </div>
+            <a
+              className="text-link"
+              href={CURRENT_PUBLIC_RELEASE.releaseUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View audited release ↗
+            </a>
+          </div>
+
+          <div className="first-import-grid">
+            <article>
+              <span>01</span>
+              <h3>Download the starter pack</h3>
+              <p>Use the exact executable-free Sunny Meadow pack tested by the public release workflow.</p>
+              <a className="onboarding-action is-primary" href={CURRENT_PUBLIC_RELEASE.assetPack.url}>
+                Download asset ZIP <span aria-hidden="true">↓</span>
+              </a>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>Install the official importer</h3>
+              <p>Extract the separate MIT-licensed addon into your Godot project, then enable the plugin.</p>
+              <a className="onboarding-action" href={CURRENT_PUBLIC_RELEASE.godotImporter.url}>
+                Download importer <span aria-hidden="true">↓</span>
+              </a>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Import and report the result</h3>
+              <p>Follow the timed guide, open the generated scene, and share success or an exact error.</p>
+              <div className="onboarding-links">
+                <a
+                  className="onboarding-action"
+                  href={CURRENT_PUBLIC_RELEASE.firstImportGuideUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open 10-minute guide ↗
+                </a>
+                <a
+                  className="onboarding-action"
+                  href={CURRENT_PUBLIC_RELEASE.feedbackFormUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Share first-import feedback ↗
+                </a>
+              </div>
+            </article>
+          </div>
+
+          <div className="integrity-note">
+            <span>Sunny Meadow {CURRENT_PUBLIC_RELEASE.tag} SHA-256</span>
+            <code>{CURRENT_PUBLIC_RELEASE.assetPack.sha256}</code>
+            <small>Hashes prove downloaded bytes match the audited attachment; install executable code only from the official repository.</small>
+          </div>
         </section>
 
         <section className="principles">

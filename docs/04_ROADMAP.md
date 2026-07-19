@@ -73,6 +73,7 @@
 - [x] `TileMapLayer` 地图 scene 创建；
 - [ ] 重新导入和冲突策略；
 - [x] importer 基线 headless smoke test；
+- [x] 版本绑定的公开 10 分钟首次导入指南、Pages 下载入口与结构化反馈表单；
 - [ ] Godot Asset Library 发布准备。
 
 ## v0.4 — World System
@@ -89,6 +90,7 @@
 
 - [ ] 3–5 个高质量示例包；
 - [x] 贡献指南、行为准则、issue/PR 模板；
+- [x] alpha.2 首次导入反馈表单与统一维护入口；
 - [ ] 文档站或完整示例页；
 - [ ] 外部试玩与可复现反馈；
 - [ ] itch.io 免费素材页（维护者决定延期；保留已验证上传套件，但不作为当前 alpha.2 gate）；
