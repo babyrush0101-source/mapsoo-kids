@@ -100,7 +100,7 @@ itch.io 是未来可选的额外分发面，当前已延期。当前查阅的官
 
 ### Why does this project qualify?（500 字符内候选稿）
 
-> I am the primary maintainer of Mapsoo Worldsmith, an active MIT-licensed, local-first pipeline for deterministic 2D world asset packs. Seven public prereleases provide three audited worlds, versioned PNG/JSON formats, provenance receipts, reproducible builds, a separate Godot importer, and Linux/Windows tests on Godot 4.3/4.7. The project gives indie developers an open, engine-neutral way to create and audit reusable world assets. External adoption is still early.
+> I am the primary maintainer of Mapsoo Worldsmith, an active MIT-licensed, local-first pipeline for deterministic 2D world asset packs. Eight public prereleases provide three audited worlds, versioned PNG/JSON formats, provenance receipts, reproducible builds, a separate Godot importer, and Linux/Windows tests on Godot 4.3/4.7. The project gives indie developers an open, engine-neutral way to create and audit reusable world assets. External adoption is still early.
 
 ### API credits usage（仅在申请时使用，500 字符内候选稿）
 
@@ -108,7 +108,7 @@ itch.io 是未来可选的额外分发面，当前已延期。当前查阅的官
 
 ### Anything else（500 字符内候选稿）
 
-> The repository has public CI, seven immutable prereleases, three audited world packs, reproducible release ledgers, a live browser demo, a Godot addon, security and contribution policies, and structured feedback. A reproducible STOYO request-to-pack CLI is under review, but we do not claim production or external adoption: maintainer/CI tests are excluded, itch.io is postponed, and the evidence ledger remains explicitly empty.
+> The repository has public CI, eight immutable prereleases, three audited world packs, reproducible release ledgers, a live browser demo, a Godot addon, security and contribution policies, and structured feedback. The published Alpha.8 release adds a reproducible STOYO request-to-pack CLI, but we do not claim production or external adoption: maintainer/CI tests are excluded, itch.io is postponed, and the evidence ledger remains explicitly empty.
 
 ### Role
 

@@ -1,6 +1,6 @@
 # Alpha.8 STOYO 可复现素材包导出 CLI
 
-状态：首个实现切片；输出沿用已发布 Alpha.7 的 Pack Schema 0.5 / World Spec 0.3 合同，不创建或改写 Alpha.7 官方 release 附件。
+状态：已作为 [`v0.1.0-alpha.8`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.8) 公开预发布；输出沿用已发布 Alpha.7 的 Pack Schema 0.5 / World Spec 0.3 合同，不创建或改写 Alpha.7 官方 release 附件。
 
 ## 1. 目的
 
@@ -65,7 +65,7 @@ public-safe StoyoAssetRequest 1.0 JSON
 - [x] 导出后重新打开 ZIP，验证 CRC、单根、18 文件、17 条 manifest record、逐文件 digest、World Spec extension 和 generation receipt；
 - [x] 回执通过严格 JSON Schema 正反例验证，不包含本地绝对路径，并绑定 ZIP、manifest、World Spec 与 generation receipt；
 - [x] CLI 验证加入真实 Chrome gate；
-- [ ] Linux/Windows × Godot 4.3/4.7 对 CLI 生成包完成 `created → unchanged → conflict preserved` 的公开 CI；
+- [x] Linux/Windows × Godot 4.3/4.7 对 CLI 生成包完成 `created → unchanged → conflict preserved` 的公开 CI；
 - [ ] 在 STOYO 出现实际消费仓库后，加入不含私密数据的消费者 contract test；在此之前不声明 production adoption。
 
 ## 5. 明确不做
