@@ -5,35 +5,35 @@
 [![CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml)
 
-[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.5 public release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) · [Alpha.6 candidate notes](docs/releases/v0.1.0-alpha.6.md) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
+[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.6 public release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.6) · [Alpha.6 release notes](docs/releases/v0.1.0-alpha.6.md) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
 
 Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a local-first tool that turns a compact world specification into a previewable, versioned game-art asset pack. The first target is a complete path from world settings to a Godot-friendly ZIP that can also be published on itch.io.
 
 ## Project status
 
-The **v0.1.0-alpha.5 prerelease** remains the current immutable public baseline. The working tree is reviewing an **unpublished v0.1.0-alpha.6 candidate**; it is not a public release, and public download links continue to point to Alpha.5. Alpha.5 keeps the account-free, backend-free, API-key-free loop and extends the layered terrain pack with deterministic semantic places:
+The **v0.1.0-alpha.6 prerelease** is the current immutable public baseline. It keeps the account-free, backend-free, API-key-free loop and extends Alpha.5 semantic places with optional place-linked exterior structures:
 
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same 3 ground variants, 16 water masks, 16 road masks, 6 prop sprites, and map again from the same seed.
 3. Preview the layered pixel-art result in the browser and review validation issues.
 4. Download/load a World Spec JSON, or load the strict synthetic STOYO Asset Request example and project it locally.
-5. Export an executable-free 15-file ZIP containing PNG atlases, Ground/Water/Roads/Props data, semantic-place metadata, a map preview, four schemas, manifest, receipt 0.2, and asset license.
+5. Export an executable-free 18-file ZIP containing PNG atlases, Ground/Water/Roads/Props data, semantic-place and structure metadata, a map preview, five schemas, manifest, receipt 0.2, and asset license.
 
 Alpha.5 adds World Spec 0.2 semantic places, a canonical `runtime/places.json` sidecar, six reusable place markers, a browser overlay/list, and Godot `Marker2D` anchors. Its real-browser ZIP has 15 files, four schemas, and SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`; the exact published pack imports as `created → unchanged` in the Linux/Windows Godot 4.3/4.7 release matrix. All 12 public attachment digests are pinned in the immutable release registry.
 
-The Alpha.6 candidate adds optional place-linked exterior structures, four deterministic archetypes, `runtime/structures.json`, a transparent structures atlas, browser structure controls, and managed Godot `Sprite2D` derivation. Its 18-file real-browser candidate fixture is pinned locally to SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`. That hash is candidate evidence, not a published-release digest; no tag, itch.io upload, STOYO production adoption, independent user report, or external adoption is claimed.
+Alpha.6 adds optional place-linked exterior structures, four deterministic archetypes, `runtime/structures.json`, a transparent structures atlas, browser structure controls, and managed Godot `Sprite2D` derivation. Its published 18-file real-browser fixture has SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`. The separate importer ZIP has SHA-256 `bbfacd2b5c8503214b7647d59e9911a34fa1b4e073f86bd1310686812c9142c0`. itch.io upload remains postponed; no STOYO production adoption, independent user report, or external adoption is claimed.
 
 The current public starter input is [`examples/sunny-meadow-v0.2.world.json`](examples/sunny-meadow-v0.2.world.json); the previous Alpha.4 input remains at [`examples/sunny-meadow.world.json`](examples/sunny-meadow.world.json). The privacy-minimized STOYO integration fixture is [`examples/integrations/stoyo/river-valley-asset-request.json`](examples/integrations/stoyo/river-valley-asset-request.json).
 
 Local World Spec and STOYO Asset Request imports share the same 128 KiB cap, strict UTF-8 decoding, duplicate-key detection, bounded JSON depth/complexity, safe-number checks, forbidden prototype-key checks, and strict schema/runtime validation. A STOYO request is first projected to a World Spec with a canonical SHA-256 binding; initial generation, editor generation, and both import paths then run through the same validated provider runner. A newer user action aborts and supersedes older work, so a failed or stale request never replaces the last successful world.
 
-![Actual Sunny Meadow alpha.5 preview](examples/packs/sunny-meadow-v0.1.0-alpha.5/previews/map-preview.png)
+![Actual Sunny Meadow alpha.6 preview](examples/packs/sunny-meadow-v0.1.0-alpha.6/previews/map-preview.png)
 
-The committed [Sunny Meadow alpha.5 fixture](examples/packs/sunny-meadow-v0.1.0-alpha.5/) was captured from the real browser exporter after the strict pack-schema 0.3 contract was finalized. It has 15 files, 14 manifest payload records, 35 terrain tiles, 6 prop sprites, 4 semantic places, and fixed SHA-256 `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36`.
+The committed [Sunny Meadow alpha.6 fixture](examples/packs/sunny-meadow-v0.1.0-alpha.6/) was captured from the real browser exporter after the pack-schema 0.4 contract was finalized. It has 18 files, 17 manifest payload records, 3 semantic places, 2 placed structures, and fixed SHA-256 `4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`.
 
-The older published Alpha.1–Alpha.4 fixtures and hashes remain immutable. A pinned pure-JavaScript PNG encoder removes browser-native PNG compression drift, and CI runs the real browser exporter before passing the byte-identical canonical ZIP to the Godot matrix.
+The older published Alpha.1–Alpha.5 fixtures and hashes remain immutable. A pinned pure-JavaScript PNG encoder removes browser-native PNG compression drift, and CI runs the real browser exporter before passing the byte-identical canonical ZIP to the Godot matrix.
 
-The published [v0.1.0-alpha.5 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5) is tagged at commit `b67e7f4`. Its [release workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903) rebuilt the fixed pack, passed the exact 12-attachment audit, and imported that same pack in [Linux Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583761), [Linux Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583744), [Windows Godot 4.3](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583748), and [Windows Godot 4.7](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29683396903/job/88183583768).
+The published [v0.1.0-alpha.6 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.6) is tagged at commit `315bc1b`. Its successful [release workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29685960441) rebuilt the fixed pack, passed the exact 13-attachment audit, and imported that same pack in the Linux/Windows × Godot 4.3/4.7 release matrix.
 
 The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; schema 0.2 derives Ground, Water, and Roads `TileMapLayer` nodes, Props, two TerrainSets, and basic Water collision under `res://mapsoo_imports/`. Managed-resource ownership remains in `mapsoo.import-state.json`: identical clean input is `unchanged`, a clean source update is `updated`, and manual edits or legacy output without state fail closed as `conflict`. This is a terrain asset and import contract, not a complete game, navigation system, or production-readiness claim. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
@@ -41,9 +41,9 @@ The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionall
 
 The public first-user path is intentionally short and version-bound:
 
-1. Download the audited [Sunny Meadow asset ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-sunny-meadow-v0.1.0-alpha.5.zip).
-2. Download the separate [Godot importer ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-godot-importer-v0.1.0-alpha.5.zip) from the same release.
-3. Follow the bilingual [10-minute first-import guide](docs/10_FIRST_GODOT_IMPORT.md).
+1. Download the audited [Sunny Meadow asset ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.6/mapsoo-sunny-meadow-v0.1.0-alpha.6.zip) (`4563552187977b38cdba86c7d3cbf5429a67b7a0a6049e978c2ef2992ef3a054`).
+2. Download the separate [Godot importer ZIP](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.6/mapsoo-godot-importer-v0.1.0-alpha.6.zip) (`bbfacd2b5c8503214b7647d59e9911a34fa1b4e073f86bd1310686812c9142c0`) from the same release.
+3. Follow the bilingual [Alpha.6 first-import guide](docs/16_ALPHA6_FIRST_GODOT_IMPORT.md).
 4. Submit either success or failure through the [structured feedback form](https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml).
 
 The expected generated scene is `res://mapsoo_imports/sunny-meadow/sunny-meadow.world.tscn`. The guide pins both download hashes and explains the current derived-output/re-import boundary.
@@ -85,9 +85,9 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [v0.1.0-alpha.4 release visual source](docs/release-visuals/README-v0.1.0-alpha.4.md)
 - [v0.1.0-alpha.5 release notes](docs/releases/v0.1.0-alpha.5.md)
 - [Alpha.6 exterior structures scope and acceptance](docs/15_ALPHA6_EXTERIOR_STRUCTURES.md)
-- [v0.1.0-alpha.6 candidate release notes](docs/releases/v0.1.0-alpha.6.md)
+- [v0.1.0-alpha.6 release notes](docs/releases/v0.1.0-alpha.6.md)
 - [v0.1.0-alpha.6 deferred release visual source](docs/release-visuals/README-v0.1.0-alpha.6.md)
-- [v0.1.0-alpha.6 candidate first-import acceptance](docs/16_ALPHA6_FIRST_GODOT_IMPORT.md)
+- [v0.1.0-alpha.6 first-import guide](docs/16_ALPHA6_FIRST_GODOT_IMPORT.md)
 - [Community evidence ledger](docs/14_COMMUNITY_EVIDENCE.md)
 
 ## Community and contributing
@@ -114,7 +114,7 @@ pnpm release:history:remote
 pnpm release:browser:verify
 ```
 
-`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all four immutable public GitHub releases and run the Alpha.2–Alpha.5 exporters in a real browser, comparing raw ZIP bytes with their independently registered fixtures.
+`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all six immutable public GitHub releases and run the Alpha.2–Alpha.6 exporters in a real browser, comparing raw ZIP bytes with their independently registered fixtures.
 
 After registering and selecting a future unpublished version, build, validate, and reproduce its complete candidate release bundle:
 
@@ -124,7 +124,7 @@ pnpm release:local
 
 The command intentionally refuses to rebuild a version whose lifecycle is already `published`. To inspect a published release, download its attachments into the configured release directory and run `pnpm release:verify`; every attachment must match the pinned GitHub digest. Start a new candidate version for any changed output.
 
-Build the exact version-configured itch.io Draft directory. Alpha.1–Alpha.4 retain their historical cover/screenshots; because Alpha.5 and the unpublished Alpha.6 candidate postpone itch publication, their Drafts contain only the executable-free asset ZIP, checksum, page metadata/copy, and byte manifest—no media and no upload:
+Build the exact version-configured itch.io Draft directory. Alpha.1–Alpha.4 retain their historical cover/screenshots; because Alpha.5 and Alpha.6 postpone itch publication, their Drafts contain only the executable-free asset ZIP, checksum, page metadata/copy, and byte manifest—no media and no upload:
 
 ```bash
 pnpm release:itch
