@@ -67,6 +67,34 @@ main { width: min(1540px, calc(100% - 40px)); margin: 0 auto; }
 .hero-copy h1 { margin: 18px 0 20px; font-size: clamp(52px, 7.2vw, 108px); line-height: 0.9; letter-spacing: -0.075em; font-weight: 750; }
 .hero-copy > p:last-child { max-width: 760px; color: var(--muted); font-size: clamp(17px, 1.6vw, 23px); line-height: 1.55; }
 
+.world-gallery { margin: 0 0 28px; border: 1px solid var(--line); background: var(--panel); }
+.world-gallery-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding: 24px clamp(20px, 3vw, 40px); border-bottom: 1px solid var(--line); }
+.world-gallery-heading > div { min-width: 0; }
+.world-gallery-heading .eyebrow { margin: 0 0 8px; font-size: 10px; }
+.world-gallery-heading h2 { margin: 0; font-size: clamp(24px, 3vw, 40px); letter-spacing: -.045em; }
+.world-gallery-heading > p { max-width: 440px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.world-gallery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); }
+.world-gallery-card { min-width: 0; background: #0d1613; }
+.world-gallery-card.is-active { box-shadow: inset 0 0 0 2px var(--accent); position: relative; z-index: 1; }
+.world-gallery-art { position: relative; height: 132px; overflow: hidden; background: linear-gradient(165deg, var(--gallery-light) 0 24%, var(--gallery-ground) 24% 100%); image-rendering: pixelated; }
+.world-gallery-art::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0 15%, rgba(255,255,255,.08) 15% 18%, transparent 18% 72%, rgba(0,0,0,.08) 72% 76%, transparent 76%); }
+.gallery-sun { position: absolute; right: 13%; top: 15px; width: 18px; height: 18px; background: var(--gallery-road); box-shadow: 0 0 0 5px rgba(255,255,255,.08); }
+.gallery-water { position: absolute; left: -8%; right: -8%; bottom: 21px; height: 24px; background: var(--gallery-water); transform: rotate(-4deg); }
+.gallery-path { position: absolute; left: 22%; bottom: -42px; width: 34px; height: 122px; background: var(--gallery-road); transform: rotate(21deg); }
+.gallery-structure { position: absolute; left: 55%; bottom: 34px; width: 31px; height: 28px; border: 4px solid var(--gallery-dark); background: var(--gallery-road); box-shadow: 9px 7px 0 -3px rgba(0,0,0,.22); }
+.gallery-structure::before { content: ''; position: absolute; left: -7px; right: -7px; top: -13px; height: 13px; background: var(--gallery-dark); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.world-gallery-card-body { padding: 17px 18px 18px; }
+.world-gallery-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.world-gallery-meta span { border: 1px solid var(--line); border-radius: 999px; padding: 3px 6px; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.world-gallery-meta span:last-child { color: var(--orange); border-color: rgba(242,166,90,.35); }
+.world-gallery-card h3 { margin: 16px 0 6px; font-size: 19px; letter-spacing: -.025em; }
+.world-gallery-card p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.world-gallery-card code { display: block; margin: 13px 0; overflow: hidden; color: var(--gallery-light); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.world-gallery-card button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 10px 11px; background: transparent; color: var(--ink); font-size: 10px; font-weight: 800; }
+.world-gallery-card button:hover:not(:disabled), .world-gallery-card button:focus-visible { border-color: var(--accent); color: var(--accent); }
+.world-gallery-card button:disabled { cursor: not-allowed; opacity: .48; }
+.world-gallery-card.is-active button { border-color: rgba(216,243,107,.4); color: var(--accent); }
+
 .workbench { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(480px, 2fr) minmax(270px, 0.95fr); border: 1px solid var(--line); background: var(--line); gap: 1px; box-shadow: 0 26px 90px rgba(0, 0, 0, 0.32); }
 .panel { background: var(--panel); padding: 24px; min-width: 0; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
@@ -247,6 +275,9 @@ footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1
   .topbar { padding: 0 16px; }
   .topbar-meta { font-size: 0; }
   .topbar-meta a { font-size: 12px; }
+  .world-gallery-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .world-gallery-grid { grid-template-columns: 1fr; }
+  .world-gallery-art { height: 118px; }
   .workbench { display: block; background: transparent; border: 0; }
   .panel { border: 1px solid var(--line); margin-bottom: 12px; }
   .preview-panel { min-height: 560px; }

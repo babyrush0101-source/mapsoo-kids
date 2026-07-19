@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "0.3.0",
+  "id": "frostwatch-vale",
+  "title": "Frostwatch Vale",
+  "description": "A quiet snowbound vale marked by an ice shrine and a distant watchtower.",
+  "seed": "mapsoo-frostwatch-001",
+  "visual": {
+    "style": "pixel-art",
+    "tileSize": 32,
+    "palette": ["#34495e", "#8aa7bb", "#dcebf2", "#4e82a6", "#a8bbc8"]
+  },
+  "map": {
+    "width": 24,
+    "height": 16,
+    "biome": "snow"
+  },
+  "output": {
+    "targets": ["common", "godot", "itch"],
+    "assetLicense": "CC0-1.0"
+  },
+  "places": [
+    {
+      "id": "vale-spawn",
+      "label": "Vale Camp",
+      "kind": "spawn",
+      "placement": "center",
+      "tags": ["start", "shelter"]
+    },
+    {
+      "id": "ice-shrine",
+      "label": "Icewater Shrine",
+      "kind": "landmark",
+      "placement": "near-water",
+      "tags": ["water", "memory"]
+    },
+    {
+      "id": "frostwatch",
+      "label": "Frostwatch Tower",
+      "kind": "landmark",
+      "placement": "on-road",
+      "tags": ["navigation", "lookout"]
+    },
+    {
+      "id": "north-pass",
+      "label": "North Pass",
+      "kind": "exit",
+      "placement": "map-edge",
+      "tags": ["travel"]
+    }
+  ],
+  "structures": [
+    { "id": "icewater-shrine", "placeId": "ice-shrine", "archetype": "shrine" },
+    { "id": "frostwatch-tower", "placeId": "frostwatch", "archetype": "tower" }
+  ]
+}

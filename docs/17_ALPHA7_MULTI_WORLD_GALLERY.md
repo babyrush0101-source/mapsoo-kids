@@ -1,6 +1,6 @@
 # Alpha.7 多世界示例包与资产画廊
 
-状态：候选合同；尚未实现、尚未发布。
+状态：候选合同；首个实现切片已完成，尚未发布 Alpha.7。
 
 ## 1. 目的与选择理由
 
@@ -28,7 +28,7 @@ Alpha.6 已证明一套 Sunny Meadow 世界可以从 World Spec 0.3 确定性生
 6. **发布登记**：release registry、远端历史校验和 `SHA256SUMS` 纳入三个 pack 及画廊所需公开附件；Alpha.1–Alpha.6 的 tag、附件、fixture、合同和 digest 保持不可变。
 7. **外部反馈入口**：首次导入指南增加三个示例的选择说明，反馈模板要求填写示例 ID、Godot 版本、平台和结果。没有独立用户提交前，不把画廊访问、维护者下载或 CI 下载写成采用。
 
-## 4. 首个实现切片
+## 4. 首个实现切片（已完成）
 
 首个切片只交付：
 
@@ -38,6 +38,8 @@ Alpha.6 已证明一套 Sunny Meadow 世界可以从 World Spec 0.3 确定性生
 - 三个世界两次生成结果一致的核心/浏览器测试。
 
 首个切片完成时只能称为“Alpha.7 画廊候选”。在三个 portable ZIP、Godot exact-pack 矩阵、发布附件和远端摘要全部通过前，不得称为已发布多世界示例包。
+
+当前实现证据：`dustwind-outpost` 与 `frostwatch-vale` 两个新 World Spec 0.3 已加入；三个示例由深冻结 registry 登记并在模块加载时复核 ID、路径、biome 与严格 World Spec 校验；Workbench 提供三卡片选择并通过同一 provider 生成所选世界。196 个测试、完整 `pnpm check` 与安全高危门禁通过；真实浏览器已手动验证 Desert/Snow 切换时 title、ID、seed、palette、地点、结构和 Canvas 同步变化，桌面及 390px 无横向溢出或控制台错误。当前卡片顶部是受 palette 驱动的候选示意，不是发布 pack 的真实预览；真实 fixture 预览和版本绑定下载仍属于完整里程碑，不能提前勾选。
 
 ## 5. 完整门禁
 

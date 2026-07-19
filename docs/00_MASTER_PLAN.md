@@ -136,8 +136,8 @@
 
 ## 9. 当前下一步
 
-1. 按 [`Alpha.7 多世界示例包与资产画廊候选合同`](17_ALPHA7_MULTI_WORLD_GALLERY.md) 推进首个切片：为 `meadow`、`desert`、`snow` 建立三个受信 World Spec 示例、统一 example registry、Workbench 三卡片画廊与确定性浏览器门禁；
-2. Alpha.7 完整里程碑必须为三个世界分别生成和验证 portable ZIP，并让 Linux/Windows × Godot 4.3/4.7 对三个 exact pack 全绿；在发布附件和远端摘要完成前，不得把画廊候选称为已发布多世界素材包；
+1. [`Alpha.7 多世界示例包与资产画廊候选合同`](17_ALPHA7_MULTI_WORLD_GALLERY.md) 的首个切片已完成：`meadow`、`desert`、`snow` 三个受信 World Spec 示例、深冻结 example registry、Workbench 三卡片画廊、确定性测试和桌面/390px 真实浏览器验证均已落地；当前仍只称为候选；
+2. 下一切片为三个世界分别生成和验证 portable ZIP，建立 fixture 预览与版本绑定候选下载元数据，并让 Linux/Windows × Godot 4.3/4.7 对三个 exact pack 全绿；在发布附件和远端摘要完成前，不得把画廊候选称为已发布多世界素材包；
 3. 继续通过 Pages 的版本绑定下载入口与 [`Alpha.6 首次 Godot 导入指南`](16_ALPHA6_FIRST_GODOT_IMPORT.md) 邀请第一轮外部用户，并把真实结果记录在社区证据台账；没有反馈前不声明外部采用或 STOYO 已接入；
 4. 以 Alpha.6 的真实 release、191 个测试、155 个 receipt 负向案例、13 个附件和六个 release 的 69 个远端资产为维护证据更新 Codex for OSS 申请草稿；meaningful usage 仍为空，提交时必须如实说明；
 5. 保留已验证的 itch.io 离线上传套件，但页面创建和公开发布继续延期；以后能通过人工验证时再恢复，不阻塞 GitHub 路线。

@@ -120,13 +120,13 @@
 
 ### alpha.7 — Multi-world Gallery（候选）
 
-- [ ] Sunny Meadow、Dustwind Outpost、Frostwatch Vale 三个受信 World Spec 0.3 示例；
-- [ ] 统一 example registry 与 Workbench 三卡片资产画廊；
+- [x] Sunny Meadow、Dustwind Outpost、Frostwatch Vale 三个受信 World Spec 0.3 示例；
+- [x] 统一、深冻结的 example registry 与 Workbench 三卡片资产画廊；
 - [ ] 三个独立、确定性、可逐包核验的 portable ZIP；
 - [ ] 三世界真实预览、版本绑定下载和桌面/390px 浏览器验收；
 - [ ] Linux/Windows × Godot 4.3/4.7 对三个 exact pack 的导入矩阵；
 - [ ] 首次导入指南和反馈模板支持明确选择示例世界；
-- [ ] Alpha.1–Alpha.6 fixture、hash、tag、附件与合同保持不可变；
+- [x] 第一切片保持 Alpha.1–Alpha.6 fixture、hash、tag、附件与合同不可变；完整发布前仍须再次复核；
 - [ ] 公开 PR、prerelease 与发布后远端摘要门禁。
 
 本版本是在三个独立单-biome 世界之间提供可验证选择，不实现单个世界内部的多 biome transition。完整范围、门禁与停止条件见 [`17_ALPHA7_MULTI_WORLD_GALLERY.md`](17_ALPHA7_MULTI_WORLD_GALLERY.md)。
