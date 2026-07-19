@@ -131,15 +131,15 @@
 
 本版本是在三个独立单-biome 世界之间提供可验证选择，不实现单个世界内部的多 biome transition。完整范围、门禁与停止条件见 [`17_ALPHA7_MULTI_WORLD_GALLERY.md`](17_ALPHA7_MULTI_WORLD_GALLERY.md)。
 
-### alpha.8 — Reproducible STOYO Pack Export CLI（候选）
+### alpha.8 — Reproducible STOYO Pack Export CLI（已发布）
 
 - [x] 严格解析公开安全的 `StoyoAssetRequest 1.0`，绑定 canonical SHA-256；
 - [x] 无损迁移到 World Spec 0.3，不推断或虚构地点与建筑；
 - [x] 通过 loopback-only headless Chrome 复用已审核的 Alpha.7 浏览器导出器；
 - [x] 输出 executable-free Alpha.7 兼容 ZIP 与 `dev.stoyo.mapsoo-export-receipt/1.0.0` 外部回执；
 - [x] 显式 UTC 时间、跨运行字节复现、`created / unchanged / conflict` 与原子独占写入；
-- [ ] Linux/Windows × Godot 4.3/4.7 exact-pack CI 全绿；
-- [ ] 公开 PR、Alpha.8 prerelease 与发布后远端证据回写。
+- [x] Linux/Windows × Godot 4.3/4.7 exact-pack CI 全绿；
+- [x] 公开 PR、Alpha.8 prerelease 与发布后 20 个远端附件摘要回写。
 
 本切片提供公开可执行的生产边界，不代表 STOYO 已有运行时消费者或生产采用。完整范围见 [`18_ALPHA8_STOYO_EXPORT_CLI.md`](18_ALPHA8_STOYO_EXPORT_CLI.md)。
 

@@ -2,17 +2,24 @@
 
 更新日期：2026-07-19
 
-当前已发布版本：`v0.1.0-alpha.7`
+当前已发布版本：`v0.1.0-alpha.8`
 
-当前开发候选：`v0.1.0-alpha.8`（STOYO 可复现导出 CLI；输出保持 Alpha.7 Pack Schema 0.5）
+当前开发候选：无；下一切片尚未登记（Alpha.8 STOYO CLI 输出保持 Alpha.7 Pack Schema 0.5）
 
-当前三个公开示例包 SHA-256：Sunny Meadow `6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c`、Dustwind Outpost `d6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502`、Frostwatch Vale `35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12`。Alpha.7 的 17 个 GitHub Release 附件摘要已登记；itch.io operator kit 继续只作离线验证，不执行登录或上传。
+当前三个公开示例包 SHA-256：Sunny Meadow `6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c`、Dustwind Outpost `d6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502`、Frostwatch Vale `35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12`。Alpha.8 的 20 个 GitHub Release 附件摘要已登记；itch.io operator kit 继续只作离线验证，不执行登录或上传。
 
-已发布且不可变的版本：`v0.1.0-alpha.1`、`v0.1.0-alpha.2`、`v0.1.0-alpha.3`、`v0.1.0-alpha.4`、`v0.1.0-alpha.5`、`v0.1.0-alpha.6`、`v0.1.0-alpha.7`
+已发布且不可变的版本：`v0.1.0-alpha.1`、`v0.1.0-alpha.2`、`v0.1.0-alpha.3`、`v0.1.0-alpha.4`、`v0.1.0-alpha.5`、`v0.1.0-alpha.6`、`v0.1.0-alpha.7`、`v0.1.0-alpha.8`
 
 目标仓库：`babyrush0101-source/mapsoo-kids`
 
 > 本文同时记录已完成的公开证据和仍待执行的 itch.io / Codex for OSS 模板。2026-07-19 维护者决定暂缓 itch.io 页面：GitHub Release/Pages 是当前主渠道，已验证的 itch 上传套件继续保留，但页面不是 GitHub alpha 或申请准备的必需前置。只有带权威 URL 的项目才算完成；模板中的 `[REPLACE: ...]` 仍必须在正式提交或公开页面粘贴前替换，不能把不存在的外部反馈写成已完成。
+
+## 0G. Alpha.8 发布执行状态（2026-07-19）
+
+- [GitHub prerelease](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.8) 已公开；[PR #46](https://github.com/babyrush0101-source/mapsoo-kids/pull/46) 与 [发布流水线](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29691179168) 提供公开审查证据；
+- 20 个附件摘要全部进入不可变 registry；Linux/Windows × Godot 4.3/4.7 对三份 Alpha.7 兼容包和可复现 STOYO 桥接包全部通过；
+- STOYO 桥接 ZIP 固定为 SHA-256 `0ef0dd3a5b76e832a31847a120f65a4a6b9a60f8c4fa7c22397762ad2b542ad8`，但不作为第四个官方世界画廊附件；
+- itch.io 继续延期；社区证据台账仍为空，不把维护者/CI 下载写成外部采用。
 
 ## 0F. Alpha.7 发布执行状态（2026-07-19）
 

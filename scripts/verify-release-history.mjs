@@ -109,7 +109,7 @@ async function verifyPublishedRelease(config) {
   assert(manifestBytes, `${config.tag} pack is missing mapsoo.manifest.json`);
   const manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes));
   assert(manifest.pack?.id === config.release.examplePack.id, `${config.tag} pack ID is invalid`);
-  assert(manifest.pack?.version === config.version, `${config.tag} pack version is invalid`);
+  assert(manifest.pack?.version === config.packVersion, `${config.tag} pack version is invalid`);
 
   await verifyReceiptForRelease({
     version: config.version,

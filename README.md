@@ -5,13 +5,13 @@
 [![CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml/badge.svg)](https://github.com/babyrush0101-source/mapsoo-kids/actions/workflows/pages.yml)
 
-[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.7 public release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.7) · [Alpha.7 release notes](docs/releases/v0.1.0-alpha.7.md) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
+[Live demo](https://babyrush0101-source.github.io/mapsoo-kids/) · [v0.1.0-alpha.8 public release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.8) · [Alpha.8 release notes](docs/releases/v0.1.0-alpha.8.md) · [First-import feedback](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)
 
 Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a local-first tool that turns a compact world specification into previewable, versioned game-art asset packs for Godot. itch.io distribution is intentionally postponed; GitHub Releases is the audited public channel for this alpha.
 
 ## Project status
 
-The **v0.1.0-alpha.7 prerelease** is the current immutable public baseline. It keeps the account-free, backend-free, API-key-free loop and publishes three complete world recipes as independent asset packs:
+The **v0.1.0-alpha.8 prerelease** is the current immutable public toolchain release. Its three asset-pack compatibility fixtures remain the byte-identical Alpha.7 public baseline, preserving the account-free, backend-free, API-key-free loop:
 
 1. Edit a compact World Spec for meadow, desert, or snowfield worlds.
 2. Generate the same 3 ground variants, 16 water masks, 16 road masks, 6 prop sprites, and map again from the same seed.
@@ -39,7 +39,7 @@ The published [v0.1.0-alpha.7 release](https://github.com/babyrush0101-source/ma
 
 ## Reproducible STOYO export CLI
 
-The Alpha.8 candidate adds a no-UI bridge for a public-safe `StoyoAssetRequest`. It validates and hashes the request, migrates its projection to World Spec 0.3 without inventing places or structures, reuses the audited local procedural exporter, and writes an Alpha.7-compatible Godot pack plus a separate request-to-pack receipt:
+The published Alpha.8 release adds a no-UI bridge for a public-safe `StoyoAssetRequest`. It validates and hashes the request, migrates its projection to World Spec 0.3 without inventing places or structures, reuses the audited local procedural exporter, and writes an Alpha.7-compatible Godot pack plus a separate request-to-pack receipt:
 
 ```bash
 pnpm stoyo:export -- \
@@ -49,6 +49,8 @@ pnpm stoyo:export -- \
 ```
 
 Node.js 20+, pnpm 11+, and Chrome/Chromium are required. The explicit timestamp is part of reproducibility. Existing output is accepted only when both files are byte-identical; otherwise the command fails closed and never overwrites it. This executable bridge is not a claim that STOYO has a production consumer yet; see the [Alpha.8 scope and verification contract](docs/18_ALPHA8_STOYO_EXPORT_CLI.md).
+
+The [public Alpha.8 workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29691179168) rebuilt all 20 release attachments and imported the three compatibility packs plus the reproducible STOYO bridge pack on Linux/Windows with Godot 4.3/4.7. Every remote attachment digest is pinned in the immutable release registry.
 
 The ZIP uses engine-neutral PNG and JSON as its source of truth and intentionally contains no executable addon code. Install the MIT-licensed importer only from this official repository (or the Godot Asset Library once published), then select the extracted pack's `mapsoo.manifest.json`; schema 0.2 derives Ground, Water, and Roads `TileMapLayer` nodes, Props, two TerrainSets, and basic Water collision under `res://mapsoo_imports/`. Managed-resource ownership remains in `mapsoo.import-state.json`: identical clean input is `unchanged`, a clean source update is `updated`, and manual edits or legacy output without state fail closed as `conflict`. This is a terrain asset and import contract, not a complete game, navigation system, or production-readiness claim. SHA-256 records verify pack consistency, not publisher identity, so never enable scripts copied from a third-party asset pack.
 
@@ -132,7 +134,7 @@ pnpm release:history:remote
 pnpm release:browser:verify
 ```
 
-`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all seven immutable public GitHub releases, reproduce the Alpha.2–Alpha.7 browser exporters against their registered fixtures, and verify the Alpha.8 STOYO bridge CLI.
+`pnpm check` is the deterministic offline project gate and includes the production-license notice verifier. The audit checks both the current app and historical alpha.1 video lockfiles against the package registry. The final commands confirm all eight immutable public GitHub releases, reproduce the Alpha.2–Alpha.7 browser exporters against their registered fixtures, and verify the Alpha.8 STOYO bridge CLI.
 
 After registering and selecting a future unpublished version, build, validate, and reproduce its complete candidate release bundle:
 
