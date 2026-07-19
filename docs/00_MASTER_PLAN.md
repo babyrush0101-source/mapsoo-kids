@@ -2,7 +2,7 @@
 
 状态：执行中
 
-当前阶段：`v0.1.0-alpha.2` 已通过公开 CI、Godot 4.3/4.7 精确包验证并发布为 GitHub prerelease；GitHub Release/Pages 是当前主发布渠道，itch.io 页面按维护者决定延期，下一阶段是外部试用与反馈
+当前阶段：`v0.1.0-alpha.2` 已通过公开 CI、Godot 4.3/4.7 精确包验证并发布为 GitHub prerelease；GitHub Release/Pages 是当前主发布渠道，itch.io 页面按维护者决定延期；alpha.3 正在开发安全重导入合同，完成开发 PR 与公开跨平台 CI 后再进入独立候选发布
 
 主分支：`main`
 

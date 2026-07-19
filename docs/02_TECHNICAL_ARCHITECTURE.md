@@ -217,3 +217,9 @@ v0.1 不需要后端。以下情况出现时再引入：
 - 需要计费、速率限制、审核和审计。
 
 即使增加后端，World Spec、manifest、validator 和 procedural provider 仍保持可离线使用。
+
+## 12. Godot 派生资源事务
+
+Godot importer 把 portable pack 的 PNG/JSON 视为权威输入，把 `.tres`、`.tscn` 与本地 ownership state 视为同一代派生输出。alpha.3 开发合同使用输入 snapshot、精确受管文件集合、同父 staging、`final → backup → promote` 和 backup 后 baseline 复核，输出 `created / unchanged / updated / conflict` 四种显式状态。
+
+该机制只承诺正常进程内事务与回滚，不承诺断电原子性或跨进程并发。完整状态机和恢复边界见 [`11_SAFE_GODOT_REIMPORT.md`](11_SAFE_GODOT_REIMPORT.md)。

@@ -149,6 +149,30 @@ func _generate_fixture() -> Error:
 	if write_error != OK:
 		return write_error
 
+	var updated_demo := demo_map.duplicate(true)
+	updated_demo["layers"][0]["cells"][27] = 0
+	updated_demo["props"].append({"id": "flower-4-4", "kind": "flower", "x": 4, "y": 4})
+	write_error = _write_json(ROOT.path_join("worlds/demo-world.updated.json"), updated_demo)
+	if write_error != OK:
+		return write_error
+	var updated_manifest := manifest.duplicate(true)
+	updated_manifest["pack"]["version"] = "0.1.0-alpha.3-test"
+	updated_manifest["demo"]["map"] = "worlds/demo-world.updated.json"
+	updated_manifest["layers"][0]["path"] = "worlds/demo-world.updated.json"
+	updated_manifest["layers"][1]["path"] = "worlds/demo-world.updated.json"
+	updated_manifest["atlases"][0]["tiles"][0]["custom_data"]["walkable"] = false
+	var updated_map_path := ROOT.path_join("worlds/demo-world.updated.json")
+	var updated_map_bytes := FileAccess.get_file_as_bytes(updated_map_path)
+	updated_manifest["files"].append({
+		"path": "worlds/demo-world.updated.json",
+		"media_type": "application/json",
+		"bytes": updated_map_bytes.size(),
+		"sha256": _sha256(updated_map_path),
+	})
+	write_error = _write_json(ROOT.path_join("mapsoo.manifest.updated.json"), updated_manifest)
+	if write_error != OK:
+		return write_error
+
 	var traversal := manifest.duplicate(true)
 	traversal["atlases"][0]["file"] = "../outside.png"
 	write_error = _write_json(ROOT.path_join("mapsoo.manifest.path-traversal.json"), traversal)

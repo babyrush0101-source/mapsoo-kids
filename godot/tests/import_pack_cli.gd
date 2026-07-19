@@ -14,14 +14,22 @@ func _init() -> void:
 	if result.get("ok", false) != true:
 		_fail("Import failed: %s" % result.get("errors", []))
 		return
+	var first_status := str(result.get("status", ""))
+	if first_status not in ["created", "unchanged"]:
+		_fail("First exact-pack import must be created or unchanged, got %s." % first_status)
+		return
 
 	var tileset_path := str(result.get("tileset_path", ""))
 	var scene_path := str(result.get("scene_path", ""))
+	var state_path := str(result.get("state_path", ""))
 	if not ResourceLoader.exists(tileset_path, "TileSet"):
 		_fail("Generated TileSet is not loadable: %s" % tileset_path)
 		return
 	if not ResourceLoader.exists(scene_path, "PackedScene"):
 		_fail("Generated scene is not loadable: %s" % scene_path)
+		return
+	if not FileAccess.file_exists(state_path):
+		_fail("Generated ownership state is missing: %s" % state_path)
 		return
 
 	var packed := ResourceLoader.load(scene_path, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
@@ -53,7 +61,22 @@ func _init() -> void:
 
 	var pack_id := str(result.get("pack_id", ""))
 	world.free()
-	print("MAPSOO_PACK_CLI_OK pack_id=%s cells=%d props=%d" % [pack_id, expected_cells, expected_props])
+	var managed_paths := [tileset_path, scene_path, state_path]
+	var before_bytes := {}
+	var before_mtimes := {}
+	for path: String in managed_paths:
+		before_bytes[path] = FileAccess.get_file_as_bytes(path)
+		before_mtimes[path] = FileAccess.get_modified_time(path)
+	OS.delay_msec(1100)
+	var repeated: Dictionary = Importer.import_pack(manifest_path, OUTPUT_ROOT)
+	if repeated.get("ok", false) != true or repeated.get("status", "") != "unchanged":
+		_fail("Second exact-pack import must be unchanged: %s" % repeated)
+		return
+	for path: String in managed_paths:
+		if FileAccess.get_file_as_bytes(path) != before_bytes[path] or FileAccess.get_modified_time(path) != before_mtimes[path]:
+			_fail("Unchanged exact-pack import rewrote %s." % path)
+			return
+	print("MAPSOO_PACK_CLI_OK pack_id=%s cells=%d props=%d first=%s second=unchanged" % [pack_id, expected_cells, expected_props, first_status])
 	quit(0)
 
 

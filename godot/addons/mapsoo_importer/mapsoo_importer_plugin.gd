@@ -38,15 +38,22 @@ func _open_manifest_dialog() -> void:
 func _on_manifest_selected(path: String) -> void:
 	var result := IMPORTER.import_pack(path, IMPORTER.OUTPUT_ROOT)
 	if not result.ok:
-		_show_message("Import failed", "\n".join(result.errors))
+		var failure_title := "Import conflict" if result.status == "conflict" else "Import failed"
+		_show_message(failure_title, "\n".join(result.errors))
 		return
 	get_editor_interface().get_resource_filesystem().scan()
 	var warning_text := ""
 	if not result.warnings.is_empty():
 		warning_text = "\n\nWarnings:\n%s" % "\n".join(result.warnings)
+	var outcome_text := {
+		"created": "Created",
+		"unchanged": "Unchanged",
+		"updated": "Updated",
+	}.get(result.status, "Imported")
 	_show_message(
-		"Import complete",
-		"Created:\n%s\n%s\n\n%d cells, %d props%s" % [
+		"Import %s" % result.status,
+		"%s:\n%s\n%s\n\n%d cells, %d props%s" % [
+			outcome_text,
 			result.tileset_path,
 			result.scene_path,
 			result.cell_count,

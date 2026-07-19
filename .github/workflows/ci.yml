@@ -232,4 +232,132 @@ jobs:
             echo "Godot emitted an engine error while importing the alpha.2 candidate pack." >&2
             exit 1
           fi
-          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29' "$log_file"
+          grep -Fx 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged' "$log_file"
+
+  godot-windows-smoke:
+    name: Godot ${{ matrix.version }} Windows transaction smoke
+    needs: check
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "4.3"
+            url: https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_win64.exe.zip
+            archive: Godot_v4.3-stable_win64.exe.zip
+            executable: Godot_v4.3-stable_win64_console.exe
+            sha512: ad09b7e19949327700dfbe64e35880a2a08091c0751277f5cc21b915e5df9b4fe93fb43c50d6bdfb9d16b46168592491aa698e0d2dbe9f92132e163dd77b97e1
+          - version: "4.7"
+            url: https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_win64.exe.zip
+            archive: Godot_v4.7-stable_win64.exe.zip
+            executable: Godot_v4.7-stable_win64_console.exe
+            sha512: 41645a908eb3181d6f2d1201ed7b6d6f095f6a23aaed8903d5d255277cc8d142814f3e6817f865b3cac142c39b8aff99280091d3bbdaa301517730b3ba0522b9
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download the exact verified candidate pack
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.check.outputs.pack_artifact }}
+          path: ${{ runner.temp }}/mapsoo-candidate-pack
+
+      - name: Verify and extract the candidate pack
+        shell: pwsh
+        env:
+          MAPSOO_PACK_FILE: ${{ needs.check.outputs.pack_file }}
+          MAPSOO_PACK_HASH: ${{ needs.check.outputs.pack_hash }}
+          MAPSOO_PACK_ROOT: ${{ needs.check.outputs.pack_root }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packPath = Join-Path $env:RUNNER_TEMP "mapsoo-candidate-pack\$env:MAPSOO_PACK_FILE"
+          $actualHash = (Get-FileHash -LiteralPath $packPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualHash -ne $env:MAPSOO_PACK_HASH) { throw "Candidate pack SHA-256 mismatch: $actualHash" }
+          $extractDir = Join-Path $env:RUNNER_TEMP 'mapsoo-candidate-extracted'
+          Expand-Archive -LiteralPath $packPath -DestinationPath $extractDir
+          $files = @(Get-ChildItem -LiteralPath $extractDir -Recurse -File)
+          if ($files.Count -ne 12) { throw "Expected 12 extracted files, got $($files.Count)." }
+          $rootDirectories = @(Get-ChildItem -LiteralPath $extractDir -Directory)
+          if ($rootDirectories.Count -ne 1 -or $rootDirectories[0].Name -ne $env:MAPSOO_PACK_ROOT) { throw 'Unexpected archive root.' }
+          $rootPath = $rootDirectories[0].FullName
+          $rootPrefix = $rootPath + [IO.Path]::DirectorySeparatorChar
+          foreach ($file in $files) {
+            if (-not $file.FullName.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+              throw "Candidate pack contains a file outside its archive root: $($file.FullName)"
+            }
+          }
+          $manifestPath = Join-Path $extractDir "$env:MAPSOO_PACK_ROOT\mapsoo.manifest.json"
+          if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'Candidate manifest is missing.' }
+          "MAPSOO_CANDIDATE_MANIFEST=$manifestPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Download and verify Godot ${{ matrix.version }}
+        shell: pwsh
+        env:
+          GODOT_ARCHIVE: ${{ matrix.archive }}
+          GODOT_EXECUTABLE: ${{ matrix.executable }}
+          GODOT_SHA512: ${{ matrix.sha512 }}
+          GODOT_URL: ${{ matrix.url }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archivePath = Join-Path $env:RUNNER_TEMP $env:GODOT_ARCHIVE
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            try {
+              Invoke-WebRequest -Uri $env:GODOT_URL -OutFile $archivePath
+              break
+            }
+            catch {
+              if ($attempt -eq 3) { throw }
+              Write-Warning "Godot download attempt $attempt failed; retrying."
+              if (Test-Path -LiteralPath $archivePath) { Remove-Item -LiteralPath $archivePath -Force }
+              Start-Sleep -Seconds 2
+            }
+          }
+          $actualHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA512).Hash.ToLowerInvariant()
+          if ($actualHash -ne $env:GODOT_SHA512) { throw "Godot SHA-512 mismatch: $actualHash" }
+          $installDir = Join-Path $env:RUNNER_TEMP "mapsoo-godot-${{ matrix.version }}-windows"
+          Expand-Archive -LiteralPath $archivePath -DestinationPath $installDir
+          $godotBin = Join-Path $installDir $env:GODOT_EXECUTABLE
+          if (-not (Test-Path -LiteralPath $godotBin -PathType Leaf)) { throw 'Godot console executable is missing.' }
+          "GODOT_BIN=$godotBin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Print Godot version
+        shell: pwsh
+        run: '& $env:GODOT_BIN --version'
+
+      - name: Check importer GDScript syntax
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $scripts = @(
+            'res://addons/mapsoo_importer/mapsoo_pack_importer.gd',
+            'res://addons/mapsoo_importer/mapsoo_importer_plugin.gd',
+            'res://tests/generate_fixture.gd',
+            'res://tests/import_smoke.gd',
+            'res://tests/import_pack_cli.gd'
+          )
+          foreach ($script in $scripts) {
+            $output = @(& $env:GODOT_BIN --headless --path godot --check-only --script $script 2>&1)
+            $output | ForEach-Object { Write-Host $_.ToString() }
+            if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
+              throw "GDScript syntax check failed: $script"
+            }
+          }
+
+      - name: Run Windows importer transaction contract
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File godot/tests/run-smoke.ps1 -GodotConsole $env:GODOT_BIN
+
+      - name: Import the exact verified alpha.2 pack twice
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = @(& $env:GODOT_BIN --headless --path godot --script res://tests/import_pack_cli.gd -- "--manifest=$env:MAPSOO_CANDIDATE_MANIFEST" 2>&1)
+          $output | ForEach-Object { Write-Host $_.ToString() }
+          if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
+            throw 'Exact-pack import emitted an error.'
+          }
+          $expected = 'MAPSOO_PACK_CLI_OK pack_id=sunny-meadow cells=384 props=29 first=created second=unchanged'
+          if (-not (($output | ForEach-Object { $_.ToString() }) -contains $expected)) { throw 'Exact-pack re-import sentinel is missing.' }

@@ -3,6 +3,9 @@ extends RefCounted
 
 const SUPPORTED_SCHEMA_VERSION := "0.1.0"
 const OUTPUT_ROOT := "res://mapsoo_imports"
+const IMPORTER_VERSION := "0.1.0-alpha.3-dev"
+const IMPORT_STATE_SCHEMA_VERSION := "1.0.0"
+const IMPORT_STATE_FILENAME := "mapsoo.import-state.json"
 const BUFFER_SIZE := 1024 * 1024
 const MAX_JSON_BYTES := 2 * 1024 * 1024
 const MAX_FILE_COUNT := 512
@@ -54,46 +57,541 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 	var output_dir := "%s/%s" % [OUTPUT_ROOT, pack_id]
 	var tileset_path := "%s/%s.tileset.tres" % [output_dir, pack_id]
 	var scene_path := "%s/%s.world.tscn" % [output_dir, pack_id]
-	var absolute_output := ProjectSettings.globalize_path(output_dir)
-	if FileAccess.file_exists(tileset_path) or FileAccess.file_exists(scene_path):
-		warnings.append("Re-importing pack '%s' replaces its derived TileSet and scene; keep hand edits outside %s." % [pack_id, output_dir])
-	var mkdir_error := DirAccess.make_dir_recursive_absolute(absolute_output)
-	if mkdir_error != OK:
-		errors.append("Unable to create output directory %s (error %d)." % [output_dir, mkdir_error])
+	var state_path := "%s/%s" % [output_dir, IMPORT_STATE_FILENAME]
+	var manifest_sha256: String = manifest_read.sha256
+	if manifest_sha256.is_empty():
+		errors.append("Unable to hash the validated manifest: %s" % local_manifest_path)
+		return _result(false, errors, warnings)
+	var source_snapshot := _capture_source_snapshot(local_manifest_path, pack_root, manifest, manifest_sha256)
+	if not source_snapshot.ok:
+		errors.append(source_snapshot.error)
 		return _result(false, errors, warnings)
 
+	var existing := _inspect_existing_import(
+		output_dir,
+		pack_id,
+		tileset_path,
+		scene_path,
+		state_path,
+		manifest_sha256
+	)
+	warnings.append_array(existing.warnings)
+	if existing.status == "conflict":
+		errors.append_array(existing.errors)
+		var conflict_result := _result(false, errors, warnings)
+		conflict_result.merge({
+			"status": "conflict",
+			"pack_id": pack_id,
+			"output_dir": output_dir,
+			"tileset_path": tileset_path,
+			"scene_path": scene_path,
+			"state_path": state_path,
+			"manifest_sha256": manifest_sha256,
+		}, true)
+		return conflict_result
+	if existing.status == "unchanged":
+		return _successful_result(
+			"unchanged",
+			pack_id,
+			output_dir,
+			tileset_path,
+			scene_path,
+			state_path,
+			manifest_sha256,
+			existing.cell_count,
+			existing.prop_count,
+			errors,
+			warnings
+		)
+
+	var operation_status: String = existing.status
+	var staging_dir := _unique_transaction_dir("staging", pack_id)
+	var staging_absolute := ProjectSettings.globalize_path(staging_dir)
+	var mkdir_error := DirAccess.make_dir_recursive_absolute(staging_absolute)
+	if mkdir_error != OK:
+		errors.append("Unable to create staging directory for %s (error %d)." % [output_dir, mkdir_error])
+		return _result(false, errors, warnings)
+	var staged_tileset_path := "%s/%s.tileset.tres" % [staging_dir, pack_id]
+	var staged_scene_path := "%s/%s.world.tscn" % [staging_dir, pack_id]
+	var staged_state_path := "%s/%s" % [staging_dir, IMPORT_STATE_FILENAME]
+
 	var tile_set: TileSet = validation.tile_set
-	var save_error := ResourceSaver.save(tile_set, tileset_path)
+	var save_error := ResourceSaver.save(tile_set, staged_tileset_path)
 	if save_error != OK:
-		errors.append("Unable to save TileSet %s (error %d)." % [tileset_path, save_error])
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append("Unable to stage TileSet for %s (error %d)." % [tileset_path, save_error])
 		return _result(false, errors, warnings)
 
 	var scene_build := _build_scene(validation, tile_set)
 	if not scene_build.ok:
+		_cleanup_transaction_directory(staging_dir, warnings)
 		errors.append(scene_build.error)
 		return _result(false, errors, warnings)
 	var packed_scene := PackedScene.new()
 	var pack_error := packed_scene.pack(scene_build.root)
 	if pack_error != OK:
 		scene_build.root.free()
+		_cleanup_transaction_directory(staging_dir, warnings)
 		errors.append("Unable to pack the generated scene (error %d)." % pack_error)
 		return _result(false, errors, warnings)
-	var scene_save_error := ResourceSaver.save(packed_scene, scene_path)
+	var scene_save_error := ResourceSaver.save(packed_scene, staged_scene_path)
 	scene_build.root.free()
 	if scene_save_error != OK:
-		errors.append("Unable to save scene %s (error %d)." % [scene_path, scene_save_error])
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append("Unable to stage scene for %s (error %d)." % [scene_path, scene_save_error])
 		return _result(false, errors, warnings)
 
+	var generated_hashes := {
+		"%s.tileset.tres" % pack_id: _sha256_file(staged_tileset_path),
+		"%s.world.tscn" % pack_id: _sha256_file(staged_scene_path),
+	}
+	if generated_hashes.values().has(""):
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append("Unable to hash staged resources for %s." % output_dir)
+		return _result(false, errors, warnings)
+	var import_state := _create_import_state(
+		pack_id,
+		manifest_sha256,
+		generated_hashes,
+		validation.cell_count,
+		validation.props.size()
+	)
+	var state_write_error := _write_json_file(staged_state_path, import_state)
+	if state_write_error != OK:
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append("Unable to stage import state for %s (error %d)." % [output_dir, state_write_error])
+		return _result(false, errors, warnings)
+	var staged_validation := _validate_staged_resources(
+		staged_tileset_path,
+		staged_scene_path,
+		validation.cell_count,
+		validation.props.size()
+	)
+	if not staged_validation.ok:
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append(staged_validation.error)
+		return _result(false, errors, warnings)
+	var source_check := _capture_source_snapshot(local_manifest_path, pack_root, manifest, manifest_sha256)
+	if not source_check.ok or source_check.sha256 != source_snapshot.sha256:
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append("The source pack changed while generated resources were being staged; no files were replaced.")
+		return _result(false, errors, warnings)
+
+	var baseline_check := _inspect_existing_import(
+		output_dir,
+		pack_id,
+		tileset_path,
+		scene_path,
+		state_path,
+		manifest_sha256
+	)
+	if baseline_check.status != operation_status or baseline_check.baseline_sha256 != existing.baseline_sha256:
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append("The existing import changed while the new pack was being staged; no files were replaced.")
+		var changed_result := _result(false, errors, warnings)
+		changed_result.merge({
+			"status": "conflict",
+			"pack_id": pack_id,
+			"output_dir": output_dir,
+			"tileset_path": tileset_path,
+			"scene_path": scene_path,
+			"state_path": state_path,
+			"manifest_sha256": manifest_sha256,
+		}, true)
+		return changed_result
+
+	var commit := _commit_staged_directory(
+		staging_dir,
+		output_dir,
+		operation_status == "updated",
+		existing.baseline_sha256
+	)
+	warnings.append_array(commit.warnings)
+	if not commit.ok:
+		_cleanup_transaction_directory(staging_dir, warnings)
+		errors.append_array(commit.errors)
+		var commit_result := _result(false, errors, warnings)
+		if commit.get("status", "") == "conflict":
+			commit_result.merge({
+				"status": "conflict",
+				"pack_id": pack_id,
+				"output_dir": output_dir,
+				"tileset_path": tileset_path,
+				"scene_path": scene_path,
+				"state_path": state_path,
+				"manifest_sha256": manifest_sha256,
+			}, true)
+		return commit_result
+
+	return _successful_result(
+		operation_status,
+		pack_id,
+		output_dir,
+		tileset_path,
+		scene_path,
+		state_path,
+		manifest_sha256,
+		validation.cell_count,
+		validation.props.size(),
+		errors,
+		warnings
+	)
+
+
+static func _inspect_existing_import(
+	output_dir: String,
+	pack_id: String,
+	tileset_path: String,
+	scene_path: String,
+	state_path: String,
+	manifest_sha256: String
+) -> Dictionary:
+	var errors: Array[String] = []
+	var warnings: Array[String] = []
+	var inspection := {
+		"status": "created",
+		"errors": errors,
+		"warnings": warnings,
+		"cell_count": 0,
+		"prop_count": 0,
+		"baseline_sha256": "",
+	}
+	var absolute_output := ProjectSettings.globalize_path(output_dir)
+	if not DirAccess.dir_exists_absolute(absolute_output):
+		return inspection
+
+	var directory := DirAccess.open(absolute_output)
+	if directory == null:
+		errors.append("Unable to inspect existing output directory %s." % output_dir)
+		inspection.status = "conflict"
+		return inspection
+	directory.include_hidden = true
+	var actual_files: Array[String] = []
+	for filename: String in directory.get_files():
+		actual_files.append(filename)
+	actual_files.sort()
+	var expected_files: Array[String] = [
+		"%s.tileset.tres" % pack_id,
+		"%s.world.tscn" % pack_id,
+		IMPORT_STATE_FILENAME,
+	]
+	expected_files.sort()
+	if actual_files != expected_files or not directory.get_directories().is_empty():
+		errors.append(
+			"Existing output %s is not an exact importer-managed directory. Move or delete it after preserving any work, then import again." % output_dir
+		)
+		inspection.status = "conflict"
+		return inspection
+
+	var state_read := _read_json_file(state_path)
+	if not state_read.ok:
+		errors.append("Existing import state is unreadable or invalid: %s" % state_read.error)
+		inspection.status = "conflict"
+		return inspection
+	var state: Dictionary = state_read.value
+	var importer: Variant = state.get("importer")
+	var generated_files: Variant = state.get("generated_files")
+	if (
+		state.size() != 9
+		or state.get("schema_version") != IMPORT_STATE_SCHEMA_VERSION
+		or state.get("pack_id") != pack_id
+		or typeof(importer) != TYPE_DICTIONARY
+		or importer.size() != 2
+		or importer.get("id") != "mapsoo_importer"
+		or typeof(importer.get("version")) != TYPE_STRING
+		or importer.get("version").is_empty()
+		or typeof(state.get("godot_serialization")) != TYPE_STRING
+		or state.get("godot_serialization").is_empty()
+		or not _is_sha256(str(state.get("manifest_sha256", "")))
+		or typeof(generated_files) != TYPE_DICTIONARY
+		or generated_files.size() != 2
+		or not _is_json_integer(state.get("cell_count"))
+		or int(state.get("cell_count")) < 0
+		or not _is_json_integer(state.get("prop_count"))
+		or int(state.get("prop_count")) < 0
+	):
+		errors.append("Existing import state does not match the supported ownership schema: %s" % state_path)
+		inspection.status = "conflict"
+		return inspection
+	var recorded_integrity: Variant = state.get("integrity_sha256")
+	var expected_integrity := _sha256_text(JSON.stringify(_canonical_import_state_core(state), "", true))
+	if typeof(recorded_integrity) != TYPE_STRING or not _is_sha256(recorded_integrity) or recorded_integrity != expected_integrity:
+		errors.append("Existing import state failed its integrity check: %s" % state_path)
+		inspection.status = "conflict"
+		return inspection
+
+	var expected_hashes := {
+		"%s.tileset.tres" % pack_id: tileset_path,
+		"%s.world.tscn" % pack_id: scene_path,
+	}
+	var current_hashes := {}
+	for filename: String in expected_hashes:
+		var recorded_hash: Variant = generated_files.get(filename)
+		var current_hash := _sha256_file(expected_hashes[filename])
+		if typeof(recorded_hash) != TYPE_STRING or not _is_sha256(recorded_hash) or current_hash != recorded_hash:
+			errors.append("Managed output changed outside the importer: %s" % expected_hashes[filename])
+			inspection.status = "conflict"
+			return inspection
+		current_hashes[filename] = current_hash
+
+	inspection.cell_count = int(state.get("cell_count"))
+	inspection.prop_count = int(state.get("prop_count"))
+	inspection.baseline_sha256 = _sha256_text(JSON.stringify({
+		"state_file_sha256": _sha256_file(state_path),
+		"generated_files": current_hashes,
+	}, "", true))
+	var same_generation: bool = (
+		state.get("manifest_sha256") == manifest_sha256
+		and importer.get("version") == IMPORTER_VERSION
+		and state.get("godot_serialization") == _current_godot_serialization()
+	)
+	inspection.status = "unchanged" if same_generation else "updated"
+	return inspection
+
+
+static func _create_import_state(
+	pack_id: String,
+	manifest_sha256: String,
+	generated_hashes: Dictionary,
+	cell_count: int,
+	prop_count: int
+) -> Dictionary:
+	var state := _canonical_import_state_core({
+		"schema_version": IMPORT_STATE_SCHEMA_VERSION,
+		"importer": {
+			"id": "mapsoo_importer",
+			"version": IMPORTER_VERSION,
+		},
+		"godot_serialization": _current_godot_serialization(),
+		"pack_id": pack_id,
+		"manifest_sha256": manifest_sha256,
+		"generated_files": generated_hashes.duplicate(true),
+		"cell_count": cell_count,
+		"prop_count": prop_count,
+	})
+	state["integrity_sha256"] = _sha256_text(JSON.stringify(state, "", true))
+	return state
+
+
+static func _canonical_import_state_core(state: Dictionary) -> Dictionary:
+	var importer: Dictionary = state.get("importer", {})
+	var generated_files: Dictionary = state.get("generated_files", {})
+	var generated_keys: Array = generated_files.keys()
+	generated_keys.sort()
+	var canonical_files := {}
+	for filename: Variant in generated_keys:
+		canonical_files[str(filename)] = str(generated_files.get(filename, ""))
+	return {
+		"schema_version": str(state.get("schema_version", "")),
+		"importer": {
+			"id": str(importer.get("id", "")),
+			"version": str(importer.get("version", "")),
+		},
+		"godot_serialization": str(state.get("godot_serialization", "")),
+		"pack_id": str(state.get("pack_id", "")),
+		"manifest_sha256": str(state.get("manifest_sha256", "")),
+		"generated_files": canonical_files,
+		"cell_count": int(state.get("cell_count", 0)),
+		"prop_count": int(state.get("prop_count", 0)),
+	}
+
+
+static func _validate_staged_resources(
+	tileset_path: String,
+	scene_path: String,
+	expected_cells: int,
+	expected_props: int
+) -> Dictionary:
+	var tile_set := ResourceLoader.load(tileset_path, "TileSet", ResourceLoader.CACHE_MODE_IGNORE_DEEP) as TileSet
+	if tile_set == null:
+		return {"ok": false, "error": "Staged TileSet could not be loaded before commit: %s" % tileset_path}
+	var packed := ResourceLoader.load(scene_path, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE_DEEP) as PackedScene
+	if packed == null:
+		return {"ok": false, "error": "Staged scene could not be loaded before commit: %s" % scene_path}
+	var world := packed.instantiate()
+	var ground := world.get_node_or_null("Ground") as TileMapLayer
+	var props := world.get_node_or_null("Props")
+	var valid := ground != null and props != null
+	if valid:
+		valid = ground.get_used_cells().size() == expected_cells and props.get_child_count() == expected_props
+	world.free()
+	if not valid:
+		return {"ok": false, "error": "Staged scene contents differ from the validated pack."}
+	return {"ok": true, "error": ""}
+
+
+static func _successful_result(
+	status: String,
+	pack_id: String,
+	output_dir: String,
+	tileset_path: String,
+	scene_path: String,
+	state_path: String,
+	manifest_sha256: String,
+	cell_count: int,
+	prop_count: int,
+	errors: Array[String],
+	warnings: Array[String]
+) -> Dictionary:
 	var result := _result(true, errors, warnings)
 	result.merge({
+		"status": status,
 		"pack_id": pack_id,
 		"output_dir": output_dir,
 		"tileset_path": tileset_path,
 		"scene_path": scene_path,
-		"cell_count": validation.cell_count,
-		"prop_count": validation.props.size(),
+		"state_path": state_path,
+		"manifest_sha256": manifest_sha256,
+		"cell_count": cell_count,
+		"prop_count": prop_count,
 	}, true)
 	return result
+
+
+static func _commit_staged_directory(
+	staging_dir: String,
+	output_dir: String,
+	is_update: bool,
+	expected_baseline_sha256: String = "",
+	simulate_promote_failure: bool = false,
+	simulate_baseline_change: bool = false
+) -> Dictionary:
+	var errors: Array[String] = []
+	var warnings: Array[String] = []
+	var normalised_staging := _normalise_resource_dir(staging_dir)
+	var normalised_output := _normalise_resource_dir(output_dir)
+	var pack_id := normalised_output.get_file()
+	if (
+		normalised_staging != staging_dir
+		or normalised_output != output_dir
+		or normalised_staging.get_base_dir() != OUTPUT_ROOT
+		or normalised_output.get_base_dir() != OUTPUT_ROOT
+		or not _is_pack_id(pack_id)
+		or not normalised_staging.get_file().begins_with(".mapsoo-staging-%s-" % pack_id)
+	):
+		errors.append("Transaction paths must be same-parent importer paths under %s." % OUTPUT_ROOT)
+		return {"ok": false, "status": "", "errors": errors, "warnings": warnings}
+	var staged_inspection := _inspect_existing_import(
+		staging_dir,
+		pack_id,
+		"%s/%s.tileset.tres" % [staging_dir, pack_id],
+		"%s/%s.world.tscn" % [staging_dir, pack_id],
+		"%s/%s" % [staging_dir, IMPORT_STATE_FILENAME],
+		""
+	)
+	if staged_inspection.status == "conflict":
+		errors.append("The staged import is not an exact, valid importer-managed directory.")
+		errors.append_array(staged_inspection.errors)
+		return {"ok": false, "status": "", "errors": errors, "warnings": warnings}
+	var staging_absolute := ProjectSettings.globalize_path(staging_dir)
+	var output_absolute := ProjectSettings.globalize_path(output_dir)
+	if not is_update:
+		var create_error := DirAccess.rename_absolute(staging_absolute, output_absolute)
+		if create_error != OK:
+			errors.append("Unable to commit the staged import to %s (error %d)." % [output_dir, create_error])
+		return {"ok": errors.is_empty(), "status": "", "errors": errors, "warnings": warnings}
+	if not _is_sha256(expected_baseline_sha256):
+		errors.append("A verified output baseline is required before replacing an existing import.")
+		return {"ok": false, "status": "", "errors": errors, "warnings": warnings}
+
+	var backup_dir := _unique_transaction_dir("backup", pack_id)
+	var backup_absolute := ProjectSettings.globalize_path(backup_dir)
+	var backup_error := DirAccess.rename_absolute(output_absolute, backup_absolute)
+	if backup_error != OK:
+		errors.append("Unable to prepare the existing import for replacement (error %d); no files were changed." % backup_error)
+		return {"ok": false, "status": "", "errors": errors, "warnings": warnings}
+
+	if simulate_baseline_change:
+		var simulated_scene := "%s/%s.world.tscn" % [backup_dir, pack_id]
+		var simulation_file := FileAccess.open(simulated_scene, FileAccess.READ_WRITE)
+		if simulation_file != null:
+			simulation_file.seek_end()
+			simulation_file.store_string("\n# simulated concurrent edit\n")
+			simulation_file.close()
+	var backup_baseline := _inspect_existing_import(
+		backup_dir,
+		pack_id,
+		"%s/%s.tileset.tres" % [backup_dir, pack_id],
+		"%s/%s.world.tscn" % [backup_dir, pack_id],
+		"%s/%s" % [backup_dir, IMPORT_STATE_FILENAME],
+		""
+	)
+	if backup_baseline.status == "conflict" or backup_baseline.baseline_sha256 != expected_baseline_sha256:
+		var baseline_rollback_error := DirAccess.rename_absolute(backup_absolute, output_absolute)
+		if baseline_rollback_error != OK:
+			errors.append(
+				"The existing import changed during commit and recovery failed (error %d). Preserve recovery directory %s and do not import again." % [
+					baseline_rollback_error,
+					backup_dir,
+				]
+			)
+		else:
+			errors.append("The existing import changed during commit; the staged update was not applied and the changed import was restored.")
+		return {"ok": false, "status": "conflict", "errors": errors, "warnings": warnings}
+
+	var promote_error := ERR_CANT_CREATE if simulate_promote_failure else DirAccess.rename_absolute(staging_absolute, output_absolute)
+	if promote_error != OK:
+		var rollback_error := DirAccess.rename_absolute(backup_absolute, output_absolute)
+		if rollback_error != OK:
+			errors.append(
+				"Import commit failed (error %d) and rollback also failed (error %d). Preserve recovery directory %s and do not import again." % [
+					promote_error,
+					rollback_error,
+					backup_dir,
+				]
+			)
+		else:
+			errors.append("Import commit failed (error %d); the previous import was restored without changes." % promote_error)
+		return {"ok": false, "status": "", "errors": errors, "warnings": warnings}
+
+	var cleanup_error := _remove_transaction_directory(backup_dir)
+	if cleanup_error != OK:
+		warnings.append("The import was committed, but stale backup %s could not be removed (error %d)." % [backup_dir, cleanup_error])
+	return {"ok": true, "status": "", "errors": errors, "warnings": warnings}
+
+
+static func _unique_transaction_dir(kind: String, pack_id: String) -> String:
+	return "%s/.mapsoo-%s-%s-%d-%d" % [
+		OUTPUT_ROOT,
+		kind,
+		pack_id,
+		OS.get_process_id(),
+		Time.get_ticks_usec(),
+	]
+
+
+static func _current_godot_serialization() -> String:
+	return "%d.%d" % [
+		int(Engine.get_version_info().get("major", 0)),
+		int(Engine.get_version_info().get("minor", 0)),
+	]
+
+
+static func _cleanup_transaction_directory(transaction_dir: String, warnings: Array[String]) -> void:
+	var cleanup_error := _remove_transaction_directory(transaction_dir)
+	if cleanup_error != OK:
+		warnings.append("Unable to remove transaction directory %s (error %d); inspect it before importing this pack again." % [transaction_dir, cleanup_error])
+
+
+static func _remove_transaction_directory(transaction_dir: String) -> Error:
+	var normalised := _normalise_resource_dir(transaction_dir)
+	var basename := normalised.get_file()
+	if normalised.get_base_dir() != OUTPUT_ROOT or (not basename.begins_with(".mapsoo-staging-") and not basename.begins_with(".mapsoo-backup-")):
+		return ERR_UNAUTHORIZED
+	var absolute_dir := ProjectSettings.globalize_path(normalised)
+	if not DirAccess.dir_exists_absolute(absolute_dir):
+		return OK
+	var directory := DirAccess.open(absolute_dir)
+	if directory == null:
+		return ERR_CANT_OPEN
+	directory.include_hidden = true
+	if not directory.get_directories().is_empty():
+		return ERR_UNAUTHORIZED
+	for filename: String in directory.get_files():
+		var remove_error := DirAccess.remove_absolute(absolute_dir.path_join(filename))
+		if remove_error != OK:
+			return remove_error
+	return DirAccess.remove_absolute(absolute_dir)
 
 
 static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Dictionary:
@@ -681,18 +1179,28 @@ static func _resolve_json_pointer(root: Variant, pointer: Variant) -> Dictionary
 static func _read_json_file(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		return {"ok": false, "value": {}, "error": "Unable to open JSON file: %s" % path}
+		return {"ok": false, "value": {}, "sha256": "", "error": "Unable to open JSON file: %s" % path}
 	if file.get_length() > MAX_JSON_BYTES:
 		file.close()
-		return {"ok": false, "value": {}, "error": "JSON file exceeds the %d-byte limit: %s" % [MAX_JSON_BYTES, path]}
-	var parser := JSON.new()
-	var parse_error := parser.parse(file.get_as_text())
+		return {"ok": false, "value": {}, "sha256": "", "error": "JSON file exceeds the %d-byte limit: %s" % [MAX_JSON_BYTES, path]}
+	var bytes := file.get_buffer(file.get_length())
 	file.close()
+	var parser := JSON.new()
+	var parse_error := parser.parse(bytes.get_string_from_utf8())
 	if parse_error != OK:
-		return {"ok": false, "value": {}, "error": "Invalid JSON in %s at line %d: %s" % [path, parser.get_error_line(), parser.get_error_message()]}
+		return {"ok": false, "value": {}, "sha256": "", "error": "Invalid JSON in %s at line %d: %s" % [path, parser.get_error_line(), parser.get_error_message()]}
 	if typeof(parser.data) != TYPE_DICTIONARY:
-		return {"ok": false, "value": {}, "error": "JSON root must be an object: %s" % path}
-	return {"ok": true, "value": parser.data, "error": ""}
+		return {"ok": false, "value": {}, "sha256": "", "error": "JSON root must be an object: %s" % path}
+	return {"ok": true, "value": parser.data, "sha256": _sha256_bytes(bytes), "error": ""}
+
+
+static func _write_json_file(path: String, value: Dictionary) -> Error:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(JSON.stringify(value, "  ", true) + "\n")
+	file.close()
+	return OK
 
 
 static func _load_png(path: String) -> Dictionary:
@@ -786,6 +1294,61 @@ static func _texture_from_image(image: Image) -> PortableCompressedTexture2D:
 	return texture
 
 
+static func _capture_source_snapshot(
+	manifest_path: String,
+	pack_root: String,
+	manifest: Dictionary,
+	expected_manifest_sha256: String
+) -> Dictionary:
+	var current_manifest_sha256 := _sha256_file(manifest_path)
+	if current_manifest_sha256.is_empty() or current_manifest_sha256 != expected_manifest_sha256:
+		return {
+			"ok": false,
+			"sha256": "",
+			"error": "The manifest changed while it was being validated: %s" % manifest_path,
+		}
+	var records_value: Variant = manifest.get("files")
+	if typeof(records_value) != TYPE_ARRAY:
+		return {"ok": false, "sha256": "", "error": "manifest.files must be an array."}
+	var snapshot_files: Array = []
+	var records: Array = records_value
+	for record_value: Variant in records:
+		if typeof(record_value) != TYPE_DICTIONARY:
+			return {"ok": false, "sha256": "", "error": "The source file baseline contains an invalid record."}
+		var record: Dictionary = record_value
+		var relative_path_value: Variant = record.get("path")
+		if typeof(relative_path_value) != TYPE_STRING or not _is_safe_relative_path(relative_path_value):
+			return {"ok": false, "sha256": "", "error": "The source file baseline contains an unsafe path."}
+		var relative_path: String = relative_path_value
+		var source_path := _resolve_pack_path(pack_root, relative_path)
+		var source_file := FileAccess.open(source_path, FileAccess.READ)
+		if source_file == null:
+			return {"ok": false, "sha256": "", "error": "A validated source file is no longer readable: %s" % relative_path}
+		var actual_bytes := source_file.get_length()
+		source_file.close()
+		var actual_sha256 := _sha256_file(source_path)
+		if (
+			actual_sha256.is_empty()
+			or actual_sha256 != record.get("sha256")
+			or actual_bytes != int(record.get("bytes", -1))
+		):
+			return {"ok": false, "sha256": "", "error": "A validated source file changed during import: %s" % relative_path}
+		snapshot_files.append({
+			"path": relative_path,
+			"bytes": actual_bytes,
+			"sha256": actual_sha256,
+		})
+	snapshot_files.sort_custom(func(left: Dictionary, right: Dictionary) -> bool: return left.path < right.path)
+	return {
+		"ok": true,
+		"sha256": _sha256_text(JSON.stringify({
+			"manifest_sha256": current_manifest_sha256,
+			"files": snapshot_files,
+		}, "", true)),
+		"error": "",
+	}
+
+
 static func _sha256_file(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -797,6 +1360,22 @@ static func _sha256_file(path: String) -> String:
 	while file.get_position() < file.get_length():
 		context.update(file.get_buffer(mini(BUFFER_SIZE, file.get_length() - file.get_position())))
 	file.close()
+	return context.finish().hex_encode()
+
+
+static func _sha256_bytes(value: PackedByteArray) -> String:
+	var context := HashingContext.new()
+	if context.start(HashingContext.HASH_SHA256) != OK:
+		return ""
+	context.update(value)
+	return context.finish().hex_encode()
+
+
+static func _sha256_text(value: String) -> String:
+	var context := HashingContext.new()
+	if context.start(HashingContext.HASH_SHA256) != OK:
+		return ""
+	context.update(value.to_utf8_buffer())
 	return context.finish().hex_encode()
 
 
@@ -901,12 +1480,15 @@ static func _is_sha256(value: String) -> bool:
 static func _result(ok: bool, errors: Array[String], warnings: Array[String]) -> Dictionary:
 	return {
 		"ok": ok,
+		"status": "failed",
 		"errors": errors.duplicate(),
 		"warnings": warnings.duplicate(),
 		"pack_id": "",
 		"output_dir": "",
 		"tileset_path": "",
 		"scene_path": "",
+		"state_path": "",
+		"manifest_sha256": "",
 		"cell_count": 0,
 		"prop_count": 0,
 	}
