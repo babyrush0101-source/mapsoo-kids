@@ -90,6 +90,11 @@ jobs:
       - name: Verify historical alpha.1 video source and committed MP4
         run: pnpm --dir video lint && pnpm --dir video verify:source && pnpm --dir video verify:output
 
+      - name: Generate the Pack 0.6 Godot fixture through the public pipeline
+        env:
+          MAPSOO_ALPHA9_FIXTURE_ROOT: release/godot-pack-set/alpha9
+        run: pnpm exec vitest run --config godot/tests/vitest.alpha9-fixture.config.ts
+
       - name: Bind the public example packs and STOYO bridge pack for Godot jobs
         id: candidate-pack
         shell: bash
@@ -222,6 +227,7 @@ jobs:
             res://addons/mapsoo_importer/mapsoo_importer_plugin.gd
             res://tests/import_smoke.gd
             res://tests/import_pack_cli.gd
+            res://tests/import_alpha9_smoke.gd
           )
           for script in "${scripts[@]}"; do
             log_file="$RUNNER_TEMP/mapsoo-check-$(basename "$script").log"
@@ -245,6 +251,13 @@ jobs:
             exit 1
           fi
 
+      - name: Stage the generated Pack 0.6 fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p godot/tests/.generated/pack-alpha9
+          cp -R "$RUNNER_TEMP/mapsoo-candidate-packs/alpha9/." godot/tests/.generated/pack-alpha9/
+
       - name: Import generated resources in the editor
         shell: bash
         run: |
@@ -265,6 +278,18 @@ jobs:
             --script res://tests/import_smoke.gd 2>&1 | tee "$log_file"
           if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
             echo "Godot emitted an engine error during the smoke test." >&2
+            exit 1
+          fi
+
+      - name: Run Pack 0.6 complete-farm importer contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          log_file="$RUNNER_TEMP/mapsoo-alpha9-godot-${{ matrix.version }}.log"
+          "$GODOT_BIN" --headless --path godot \
+            --script res://tests/import_alpha9_smoke.gd 2>&1 | tee "$log_file"
+          if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
+            echo "Godot emitted an engine error during the Pack 0.6 smoke test." >&2
             exit 1
           fi
 
@@ -380,7 +405,8 @@ jobs:
             'res://addons/mapsoo_importer/mapsoo_importer_plugin.gd',
             'res://tests/generate_fixture.gd',
             'res://tests/import_smoke.gd',
-            'res://tests/import_pack_cli.gd'
+            'res://tests/import_pack_cli.gd',
+            'res://tests/import_alpha9_smoke.gd'
           )
           foreach ($script in $scripts) {
             $output = @(& $env:GODOT_BIN --headless --path godot --check-only --script $script 2>&1)
@@ -394,6 +420,29 @@ jobs:
         shell: pwsh
         run: |
           powershell -ExecutionPolicy Bypass -File godot/tests/run-smoke.ps1 -GodotConsole $env:GODOT_BIN
+
+      - name: Stage and import the generated Pack 0.6 fixture
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fixtureRoot = Join-Path (Resolve-Path godot/tests).Path '.generated/pack-alpha9'
+          New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+          Copy-Item -Path (Join-Path $env:RUNNER_TEMP 'mapsoo-candidate-packs/alpha9/*') -Destination $fixtureRoot -Recurse -Force
+          $output = @(& $env:GODOT_BIN --headless --editor --path godot --import 2>&1)
+          $output | ForEach-Object { Write-Host $_.ToString() }
+          if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
+            throw 'Godot failed to import Pack 0.6 fixture resources.'
+          }
+
+      - name: Run Pack 0.6 complete-farm importer contract on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = @(& $env:GODOT_BIN --headless --path godot --script res://tests/import_alpha9_smoke.gd 2>&1)
+          $output | ForEach-Object { Write-Host $_.ToString() }
+          if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
+            throw 'Pack 0.6 importer contract failed.'
+          }
 
       - name: Import all three exact verified candidate packs
         shell: pwsh
