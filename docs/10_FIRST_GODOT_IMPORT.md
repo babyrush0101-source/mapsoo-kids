@@ -1,140 +1,108 @@
 # First Godot import in 10 minutes / 10 分钟首次导入 Godot
 
-This is the public acceptance path for Mapsoo Worldsmith `v0.1.0-alpha.5`. It uses the same Sunny Meadow pack imported by the release workflow on Linux and Windows with Godot 4.3 and 4.7.
+This is the public acceptance path for Mapsoo Worldsmith `v0.1.0-alpha.9`. It imports the exact complete `topdown-farm` Pack 0.6 archive exercised by release CI on Linux and Windows with Godot 4.3 and 4.7.
 
-这是 Mapsoo Worldsmith `v0.1.0-alpha.5` 的公开验收路径，使用发布工作流在 Linux 与 Windows 的 Godot 4.3、4.7 中验证过的同一个 Sunny Meadow 素材包。
+这是 Mapsoo Worldsmith `v0.1.0-alpha.9` 的公开验收路径。下面导入的正是发布 CI 在 Linux、Windows 的 Godot 4.3 和 4.7 中验证过的完整 `topdown-farm` Pack 0.6 素材包。
 
 ## What you need / 准备
 
-- Godot 4.3 or newer；
-- a new or existing Godot project you can modify；
-- the [audited alpha.5 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.5)；
-- about 10 minutes. No account, backend, or API key is required.
-
-需要 Godot 4.3 或更高版本、一个可修改的 Godot 项目，以及约 10 分钟。无需账号、后端或 API Key。
+- Godot 4.3 or newer / Godot 4.3 或更高版本；
+- a new or disposable Godot project / 一个新建或可用于测试的 Godot 项目；
+- about 10 minutes / 约 10 分钟；
+- no Mapsoo account, backend, API key, or itch.io login.
 
 ## 0–2 min — Download and verify / 下载并校验
 
-Download both official attachments:
+Download these two attachments from the [audited Alpha9 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9):
 
-1. [Sunny Meadow asset pack](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-sunny-meadow-v0.1.0-alpha.5.zip)
-2. [Mapsoo Godot importer](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.5/mapsoo-godot-importer-v0.1.0-alpha.5.zip)
-
-Expected SHA-256:
+1. [Complete farm Pack 0.6](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.9/mapsoo-alpha9-godot-smoke-v0.1.0-alpha.9.zip)
+2. [Mapsoo Godot importer](https://github.com/babyrush0101-source/mapsoo-kids/releases/download/v0.1.0-alpha.9/mapsoo-godot-importer-v0.1.0-alpha.9.zip)
 
 | File | SHA-256 |
 | --- | --- |
-| `mapsoo-sunny-meadow-v0.1.0-alpha.5.zip` | `8d86124a4a37fa4a78487c4e91cb7f5024561f140814a5fd139c5b93fde54f36` |
-| `mapsoo-godot-importer-v0.1.0-alpha.5.zip` | `6020bda92da56aacb924b994990bc6bd20086ddd1370f71eee36f9ee782c9894` |
+| `mapsoo-alpha9-godot-smoke-v0.1.0-alpha.9.zip` | `10d89c7888b70215a14af2b6552fc5237d799df9cd3092aee99541961d9e480c` |
+| `mapsoo-godot-importer-v0.1.0-alpha.9.zip` | `bfb736d044818b01955feb35d84b438fe6c139e77764907847a1f4d89ea7b526` |
 
 PowerShell:
 
 ```powershell
-(Get-FileHash .\mapsoo-sunny-meadow-v0.1.0-alpha.5.zip -Algorithm SHA256).Hash.ToLower()
-(Get-FileHash .\mapsoo-godot-importer-v0.1.0-alpha.5.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\mapsoo-alpha9-godot-smoke-v0.1.0-alpha.9.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\mapsoo-godot-importer-v0.1.0-alpha.9.zip -Algorithm SHA256).Hash.ToLower()
 ```
 
-macOS:
+macOS or Linux:
 
 ```bash
-shasum -a 256 mapsoo-sunny-meadow-v0.1.0-alpha.5.zip
-shasum -a 256 mapsoo-godot-importer-v0.1.0-alpha.5.zip
+shasum -a 256 mapsoo-alpha9-godot-smoke-v0.1.0-alpha.9.zip
+shasum -a 256 mapsoo-godot-importer-v0.1.0-alpha.9.zip
 ```
 
-Linux:
-
-```bash
-sha256sum mapsoo-sunny-meadow-v0.1.0-alpha.5.zip
-sha256sum mapsoo-godot-importer-v0.1.0-alpha.5.zip
-```
-
-The complete attachment list is recorded in the release `SHA256SUMS`. Stop if a digest differs and download the file again from the official release.
-
-完整附件列表记录在 Release 的 `SHA256SUMS` 中。如果哈希不同，请停止操作并从官方 Release 重新下载。
+Linux users may use `sha256sum` instead. Stop and download again from the official release if either digest differs.
 
 ## 2–5 min — Install the importer / 安装导入器
 
-1. Close the Godot editor for the target project if it is already open.
-2. Extract `mapsoo-godot-importer-v0.1.0-alpha.5.zip` into the project root.
-3. Confirm this exact path exists:
+1. Close the target project in Godot.
+2. Extract `mapsoo-godot-importer-v0.1.0-alpha.9.zip` into the project root.
+3. Confirm `<your-project>/addons/mapsoo_importer/plugin.cfg` exists.
+4. Open the project, then choose **Project → Project Settings → Plugins**.
+5. Enable **Mapsoo Pack Importer**.
 
-   ```text
-   <your-project>/addons/mapsoo_importer/plugin.cfg
-   ```
+如果插件没有出现，通常是 ZIP 解压后多套了一层目录。`addons` 必须直接位于 Godot 项目根目录。
 
-4. Open the project in Godot.
-5. Choose **Project → Project Settings → Plugins**.
-6. Enable **Mapsoo Pack Importer**.
+## 5–8 min — Import the complete farm / 导入完整农场包
 
-如果插件没有出现，先确认 `addons/mapsoo_importer/plugin.cfg` 位于项目根目录下，然后重新打开项目。不要从第三方素材包中启用 GDScript。
-
-## 5–8 min — Import the pack / 导入素材包
-
-1. Extract `mapsoo-sunny-meadow-v0.1.0-alpha.5.zip` to any local folder.
+1. Extract `mapsoo-alpha9-godot-smoke-v0.1.0-alpha.9.zip` to a local folder.
 2. In Godot choose **Project → Tools → Import Mapsoo Pack...**.
-3. Select the extracted file:
+3. Select the extracted root `mapsoo.manifest.json`.
+4. Wait for the importer to report `created`.
+5. Repeat the same import once; a clean deterministic re-import should report `unchanged`.
 
-   ```text
-   mapsoo-sunny-meadow-v0.1.0-alpha.5/mapsoo.manifest.json
-   ```
+The asset ZIP contains PNG, JSON and documentation only—no addon or executable GDScript. The importer is installed separately from the official repository release.
 
-4. Wait for **Import complete**. The public fixture should report `384 cells`, `29 props`, and `4 places`.
+素材 ZIP 只包含 PNG、JSON 和文档，不包含 addon 或可执行 GDScript。导入器必须从官方 Release 单独安装。
 
-素材包本身只含 PNG、JSON 与 Markdown，不含 addon 或 GDScript。导入器会在写入资源前检查路径、文件大小、SHA-256、地图尺寸与 atlas 边界。
+## 8–10 min — Open the result / 打开结果
 
-## 8–10 min — Open the generated scene / 打开生成场景
-
-Open:
+Open the generated scene under:
 
 ```text
-res://mapsoo_imports/sunny-meadow/sunny-meadow.world.tscn
+res://mapsoo_imports/alpha9-godot-smoke-pack/
 ```
 
-The derived TileSet is:
+Success means the imported farm scene opens without an importer error and includes terrain, water, paths/fences, soil/crops, props, structures, collision/navigation data, spawn data, and the four-direction character preview. Keep hand-authored work outside `res://mapsoo_imports/<pack-id>/`; that directory is managed output.
 
-```text
-res://mapsoo_imports/sunny-meadow/sunny-meadow.tileset.tres
-```
+成功标准：生成的农场场景可以无导入错误地打开，并包含地形、水域、路径/栅栏、土壤/作物、道具、建筑、碰撞/导航数据、出生点数据和四方向角色预览。手工内容应放在 `res://mapsoo_imports/<pack-id>/` 之外。
 
-Success means the scene opens without an importer error and shows the generated terrain, props, and queryable place markers. Keep manual edits outside `res://mapsoo_imports/<pack-id>/`; the current alpha treats that directory as derived output.
+## Share either success or failure / 提交成功或失败结果
 
-成功标准：场景能无导入错误地打开，并显示生成的地形与道具。手工编辑请放在 `res://mapsoo_imports/<pack-id>/` 之外；当前 alpha 把该目录视为派生产物。
+Use the [structured first-import form](https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml). Record:
 
-## Share the result / 提交结果
+- operating system and exact Godot version;
+- time from download to first opened scene;
+- the exact pack filename and SHA-256;
+- `created → unchanged`, or the complete error and last successful step;
+- one instruction or workflow detail that was confusing.
 
-Use the [structured first-import form](https://github.com/babyrush0101-source/mapsoo-kids/issues/new?template=first-import-feedback.yml) for either success or failure. Record:
-
-- operating system and exact Godot version；
-- time from download to first opened scene；
-- pack filename and SHA-256；
-- generated scene path or the complete importer error；
-- the instruction that was confusing or slow.
-
-成功和失败都很有价值。请勿提交凭据、儿童数据、私有路径、私有 STOYO 内容或未获许可的素材。历史讨论和维护响应统一索引在 [issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)。
+成功和失败都是真实、有效的反馈。请勿提交凭证、儿童数据、私有本地路径、STOYO 私有内容或无权公开的素材。所有独立测试结果统一索引在 [issue #12](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)。
 
 ## Troubleshooting / 排错
 
 ### Plugin is not listed / 插件未显示
 
-Verify that extraction did not add an extra directory level. The required file is `<project>/addons/mapsoo_importer/plugin.cfg`, not `<project>/mapsoo-godot-importer.../addons/...`.
+The required file is `<project>/addons/mapsoo_importer/plugin.cfg`, not `<project>/mapsoo-godot-importer.../addons/...`. Move `addons` to the project root and reopen Godot.
 
-### Import menu is missing / 菜单未显示
+### Import menu is missing / 导入菜单未显示
 
 Confirm the plugin is enabled, then reopen the project. The command appears under **Project → Tools → Import Mapsoo Pack...**.
 
 ### Manifest or checksum error / manifest 或哈希错误
 
-Select the extracted root `mapsoo.manifest.json`, not a schema or world JSON file. Re-extract the complete asset ZIP; do not copy individual files out of the pack.
+Select the extracted root `mapsoo.manifest.json`. Re-extract the complete ZIP instead of copying individual files.
 
-### Re-importing an existing pack / 重复导入
+### Re-import reports conflict / 重复导入报告冲突
 
-Alpha.5 preserves the ownership contract introduced in Alpha.3 and owns only the generated files recorded in `res://mapsoo_imports/<pack-id>/mapsoo.import-state.json`:
+Mapsoo refuses to overwrite manually changed, missing, unexpected, or state-mismatched managed files. Save your work, move the old `res://mapsoo_imports/<pack-id>/` directory aside, and retry with a clean target. See the [safe re-import contract](11_SAFE_GODOT_REIMPORT.md).
 
-- the first clean import returns `created`;
-- repeating the same clean input returns `unchanged` and does not rewrite generated files;
-- importing changed source over clean managed output returns `updated`;
-- manual edits, missing/extra managed files, a damaged state file, or legacy alpha.1/alpha.2 output without state return `conflict` and are not overwritten.
+## Scope boundary / 范围边界
 
-Keep hand-authored scenes and scripts outside the managed directory. For legacy output, save your changes, then move the old derived directory aside before importing Alpha.5. The transaction protects normal in-process commit and rollback; it does not claim power-loss/crash atomicity or concurrent-writer safety. Keep the source pack and managed output still during import. See the full [safe re-import contract](11_SAFE_GODOT_REIMPORT.md).
-
-Alpha.5 延续 Alpha.3 的所有权合同，只管理 `res://mapsoo_imports/<pack-id>/mapsoo.import-state.json` 中登记的生成文件。首次导入为 `created`；相同干净输入为不改写文件的 `unchanged`；干净的源变化为 `updated`；手工修改、文件缺失/新增、状态损坏或没有状态文件的 alpha.1/alpha.2 旧目录都会返回 `conflict`，不会被静默覆盖。请把手工作品放在管理目录之外；迁移旧输出时先保存修改并把旧派生目录移开。当前事务保证正常进程内提交与回滚，不承诺断电/硬崩溃原子性或并发写入安全。
+Alpha9 supports only `topdown-farm`. It is not evidence of external adoption, STOYO production integration, itch.io publication, or support for `side-platformer`, `isometric-action`, or `layered-depth-2d`.

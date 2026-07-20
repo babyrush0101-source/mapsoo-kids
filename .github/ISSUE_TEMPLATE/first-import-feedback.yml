@@ -1,13 +1,13 @@
 name: First Godot import feedback
-description: Share a successful or failed published pack import with reproducible environment details.
+description: Share a successful or failed Alpha9 pack import with reproducible environment details.
 title: "[First import]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for testing a published Mapsoo Worldsmith pack.
+        Thanks for testing Mapsoo Worldsmith Alpha9.
 
-        Use the [10-minute guide](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/docs/10_FIRST_GODOT_IMPORT.md) and download only from the [audited releases](https://github.com/babyrush0101-source/mapsoo-kids/releases). Do not include private paths, credentials, children's data, private STOYO content, or unlicensed assets.
+        Use the [Alpha9 10-minute guide](https://github.com/babyrush0101-source/mapsoo-kids/blob/main/docs/10_FIRST_GODOT_IMPORT.md) and download only from the [audited Alpha9 release](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9). Both success and failure are useful. Do not include private paths, credentials, children's data, private STOYO content, or unlicensed assets.
   - type: dropdown
     id: outcome
     attributes:
@@ -39,41 +39,44 @@ body:
     attributes:
       label: Release tag
       description: Copy the exact tag shown on the GitHub Release page.
-      placeholder: v0.x.y-alpha.n
+      placeholder: v0.1.0-alpha.9
     validations:
       required: true
   - type: dropdown
     id: world
     attributes:
-      label: Example world
-      description: Select the published world you imported, or choose a custom pack.
+      label: Published or generated pack
+      description: Select the exact published pack you imported, or choose a locally generated pack.
       options:
-        - Sunny Meadow
-        - Dustwind Outpost
-        - Frostwatch Vale
-        - Custom or integration-generated pack
+        - Alpha9 complete topdown-farm Pack 0.6
+        - Sunny Meadow compatibility pack
+        - Dustwind Outpost compatibility pack
+        - Frostwatch Vale compatibility pack
+        - Locally generated or integration-generated pack
     validations:
       required: true
   - type: input
     id: pack
     attributes:
       label: Pack filename and SHA-256
-      placeholder: mapsoo-<pack-id>-v0.x.y-alpha.n.zip — <64-character SHA-256>
+      placeholder: mapsoo-alpha9-godot-smoke-v0.1.0-alpha.9.zip — 10d89c…480c
     validations:
       required: true
   - type: textarea
     id: result
     attributes:
       label: Result and exact error text
-      description: For success, confirm the generated scene path and importer status. For failure, paste the complete importer error and the last successful step.
-      placeholder: Import returned created; res://mapsoo_imports/sunny-meadow/sunny-meadow.world.tscn opened successfully.
+      description: For success, confirm the generated scene path and both first/repeated importer statuses. For failure, paste the complete importer error and the last successful step.
+      placeholder: Import returned created, then unchanged; the scene under res://mapsoo_imports/alpha9-godot-smoke-pack/ opened successfully.
     validations:
       required: true
   - type: textarea
     id: friction
     attributes:
       label: What was confusing or slow?
-      description: Mention any instruction, download, extraction, plugin, or import step that should be clearer.
+      description: Mention one instruction, download, extraction, plugin, or import step that should be clearer. “Nothing” is a valid answer.
+    validations:
+      required: true
   - type: textarea
     id: evidence
     attributes:
