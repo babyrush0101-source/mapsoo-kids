@@ -1,13 +1,16 @@
 @tool
 extends RefCounted
 
+const Pack07 = preload("res://addons/mapsoo_importer/mapsoo_pack_07.gd")
+
 const LEGACY_SCHEMA_VERSION := "0.1.0"
 const PLAYABLE_TERRAIN_SCHEMA_VERSION := "0.2.0"
 const SEMANTIC_PLACES_SCHEMA_VERSION := "0.3.0"
 const EXTERIOR_STRUCTURES_SCHEMA_VERSION := "0.4.0"
 const MULTI_WORLD_PACK_SCHEMA_VERSION := "0.5.0"
 const COMPLETE_FARM_SCHEMA_VERSION := "0.6.0"
-const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION, EXTERIOR_STRUCTURES_SCHEMA_VERSION, MULTI_WORLD_PACK_SCHEMA_VERSION, COMPLETE_FARM_SCHEMA_VERSION]
+const SIDE_PLATFORMER_SCHEMA_VERSION := "0.7.0"
+const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION, EXTERIOR_STRUCTURES_SCHEMA_VERSION, MULTI_WORLD_PACK_SCHEMA_VERSION, COMPLETE_FARM_SCHEMA_VERSION, SIDE_PLATFORMER_SCHEMA_VERSION]
 const OUTPUT_ROOT := "res://mapsoo_imports"
 const IMPORTER_VERSION := "0.1.0-alpha.9"
 const ALPHA9_LAYERS := ["ground", "water", "paths", "soil", "props", "structures", "crops"]
@@ -88,7 +91,8 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 		tileset_path,
 		scene_path,
 		state_path,
-		manifest_sha256
+		manifest_sha256,
+		validation.schema_version
 	)
 	warnings.append_array(existing.warnings)
 	if existing.status == "conflict":
@@ -169,7 +173,8 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 		manifest_sha256,
 		generated_hashes,
 		validation.cell_count,
-		validation.props.size()
+		validation.props.size(),
+		validation.schema_version
 	)
 	var state_write_error := _write_json_file(staged_state_path, import_state)
 	if state_write_error != OK:
@@ -202,7 +207,8 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 		tileset_path,
 		scene_path,
 		state_path,
-		manifest_sha256
+		manifest_sha256,
+		validation.schema_version
 	)
 	if baseline_check.status != operation_status or baseline_check.baseline_sha256 != existing.baseline_sha256:
 		_cleanup_transaction_directory(staging_dir, warnings)
@@ -263,7 +269,8 @@ static func _inspect_existing_import(
 	tileset_path: String,
 	scene_path: String,
 	state_path: String,
-	manifest_sha256: String
+	manifest_sha256: String,
+	schema_version: String = ""
 ) -> Dictionary:
 	var errors: Array[String] = []
 	var warnings: Array[String] = []
@@ -359,9 +366,10 @@ static func _inspect_existing_import(
 		"state_file_sha256": _sha256_file(state_path),
 		"generated_files": current_hashes,
 	}, "", true))
+	var expected_importer_version := str(importer.get("version", "")) if schema_version.is_empty() else _importer_version_for_schema(schema_version)
 	var same_generation: bool = (
 		state.get("manifest_sha256") == manifest_sha256
-		and importer.get("version") == IMPORTER_VERSION
+		and importer.get("version") == expected_importer_version
 		and state.get("godot_serialization") == _current_godot_serialization()
 	)
 	inspection.status = "unchanged" if same_generation else "updated"
@@ -373,13 +381,14 @@ static func _create_import_state(
 	manifest_sha256: String,
 	generated_hashes: Dictionary,
 	cell_count: int,
-	prop_count: int
+	prop_count: int,
+	schema_version: String
 ) -> Dictionary:
 	var state := _canonical_import_state_core({
 		"schema_version": IMPORT_STATE_SCHEMA_VERSION,
 		"importer": {
 			"id": "mapsoo_importer",
-			"version": IMPORTER_VERSION,
+			"version": _importer_version_for_schema(schema_version),
 		},
 		"godot_serialization": _current_godot_serialization(),
 		"pack_id": pack_id,
@@ -390,6 +399,10 @@ static func _create_import_state(
 	})
 	state["integrity_sha256"] = _sha256_text(JSON.stringify(state, "", true))
 	return state
+
+
+static func _importer_version_for_schema(schema_version: String) -> String:
+	return "0.1.0-alpha.10" if schema_version == SIDE_PLATFORMER_SCHEMA_VERSION else IMPORTER_VERSION
 
 
 static func _canonical_import_state_core(state: Dictionary) -> Dictionary:
@@ -449,6 +462,10 @@ static func _validate_staged_resources(
 				if not visual.sprite_frames.has_animation(animation_name) or visual.sprite_frames.get_frame_count(animation_name) < 1: alpha9_valid = false
 		world.free()
 		return {"ok": alpha9_valid, "error": "" if alpha9_valid else "Staged Pack 0.6 scene is incomplete."}
+	if schema_version == SIDE_PLATFORMER_SCHEMA_VERSION:
+		var alpha10_result := Pack07.validate_staged_scene(world, expected_props)
+		world.free()
+		return alpha10_result
 	var props := world.get_node_or_null("Props")
 	var places := world.get_node_or_null("Places")
 	var structures := world.get_node_or_null("Structures")
@@ -696,6 +713,11 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 	prepared.schema_version = schema_version
 	if schema_version == COMPLETE_FARM_SCHEMA_VERSION:
 		return _validate_complete_farm(manifest, pack_root, prepared)
+	if schema_version == SIDE_PLATFORMER_SCHEMA_VERSION:
+		var file_index := _validate_file_records(manifest.get("files"), pack_root, errors)
+		if not errors.is_empty():
+			return prepared
+		return Pack07.validate_and_prepare(manifest, pack_root, prepared, file_index)
 	var pack := _dictionary_at(manifest, "pack", errors)
 	var compatibility := _dictionary_at(manifest, "compatibility", errors)
 	var license := _dictionary_at(manifest, "license", errors)
@@ -2073,6 +2095,8 @@ static func _build_complete_farm_scene(prepared: Dictionary, tile_set: TileSet) 
 static func _build_scene(prepared: Dictionary, tile_set: TileSet) -> Dictionary:
 	if prepared.schema_version == COMPLETE_FARM_SCHEMA_VERSION:
 		return _build_complete_farm_scene(prepared, tile_set)
+	if prepared.schema_version == SIDE_PLATFORMER_SCHEMA_VERSION:
+		return Pack07.build_scene(prepared)
 	var root := Node2D.new()
 	root.name = "MapsooWorld"
 	root.set_meta("mapsoo_pack_id", prepared.pack_id)
