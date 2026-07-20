@@ -223,3 +223,24 @@ v0.1 不需要后端。以下情况出现时再引入：
 Godot importer 把 portable pack 的 PNG/JSON 视为权威输入，把 `.tres`、`.tscn` 与本地 ownership state 视为同一代派生输出。alpha.3 开发合同使用输入 snapshot、精确受管文件集合、同父 staging、`final → backup → promote` 和 backup 后 baseline 复核，输出 `created / unchanged / updated / conflict` 四种显式状态。
 
 该机制只承诺正常进程内事务与回滚，不承诺断电原子性或跨进程并发。完整状态机和恢复边界见 [`11_SAFE_GODOT_REIMPORT.md`](11_SAFE_GODOT_REIMPORT.md)。
+
+## 13. Reference World Job 候选管线
+
+Reference World Job 是独立于 World Spec 的受限摄取信封：它接收环境参考图、角色参考图、公开安全描述、精确 asset profile、seed、输出预算和逐输入权利声明。摄取层先验证媒体/文本上限、净化 metadata 并生成不含本地路径或身份信息的公共投影；只有通过隐私、内容与权利门禁的投影才能进入 Provider runner。
+
+```text
+environment image ─┐
+character image ───┼─> isolated decode/sanitize ─> public style contract ─┐
+safe description ──┘                                                       │
+                                                                            v
+profile + seed + rights ─> provider candidate sets ─> normalize/atlas/map ─> completeness validator
+                                                                            │
+                                                                            ├─> portable PNG + JSON pack
+                                                                            └─> Godot importer derived resources
+```
+
+四个公共 profile 为 `side-platformer`、`isometric-action`、`topdown-farm` 和 `layered-depth-2d`。它们共享 job envelope、provenance 与安全规则，但各自拥有独立的投影和 completeness validator；Alpha.9 只允许 `topdown-farm` 通过导出策略。
+
+完整性验证器读取 manifest 绑定的 profile matrix，逐类复核必需资产、atlas region、alpha/pivot、动画方向/帧、地图图层、可行走数据、跨 sidecar 引用、文件大小与 SHA-256。Provider 只能返回分类候选，不能自己声明 pack 完整；exporter 只接受 runner-owned、深冻结且完整性无 error 的单一结果。非确定模型输出按冻结候选审计，seed 只承诺受信后处理、地图解析、packing 和序列化可复现，不能伪称模型像素可重复。
+
+原始参考图、其原始公开 digest、EXIF/OCR、文件名、本地路径和自由文本 Provider 错误默认不进入公共 artifact。公开 receipt 只记录安全投影、Provider/工作流、确定性边界、权利类别、人工选择和输出许可；需要对私有原图做精确审计时使用不随 pack 发布的本地记录。详细合同、Godot matrix 与停止条件见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。

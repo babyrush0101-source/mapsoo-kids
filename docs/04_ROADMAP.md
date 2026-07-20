@@ -143,6 +143,19 @@
 
 本切片提供公开可执行的生产边界，不代表 STOYO 已有运行时消费者或生产采用。完整范围见 [`18_ALPHA8_STOYO_EXPORT_CLI.md`](18_ALPHA8_STOYO_EXPORT_CLI.md)。
 
+### alpha.9 — Reference Images to Top-down Farm Pack（候选）
+
+- [ ] 严格 Reference World Job：环境参考图、角色参考图、公开安全描述、`topdown-farm` profile、seed、预算与逐输入权利声明；
+- [ ] 隔离解码、metadata/OCR/路径净化、公开安全 style contract 与 Provider provenance；
+- [ ] Ground/Water/Paths-Fences/Crops/Structures/Props/Map/Character 八类完整 portable 资产；
+- [ ] 四方向角色 `idle/walk`、透明 atlas、pivot/foot point、作物阶段、分层地图和可行走/阻挡数据；
+- [ ] 版本化 profile completeness matrix 及 schema/像素/动画/引用/摘要/权利负向门禁；
+- [ ] 真实浏览器 ZIP、桌面/390px 视觉验收及同一冻结 run 的逐字节重建；
+- [ ] Linux/Windows × Godot 4.3/4.7 exact-pack、首次导入与安全重导入验收；
+- [ ] Alpha.1–Alpha.8 fixture、hash、tag、附件与合同保持不可变。
+
+项目最终目标包含 `side-platformer`、`isometric-action`、`topdown-farm`、`layered-depth-2d` 四个公开 profile，但 Alpha.9 只实现 `topdown-farm` 纵向闭环。候选状态不表示任一能力已经实现、外部采用或第三方平台上架。完整范围、隐私/权利边界、门禁与停止条件见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。
+
 ## v0.4 — World System
 
 - [ ] 多 biome 与 transition；
