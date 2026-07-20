@@ -10,6 +10,7 @@ import {
 import { bindGenerationRequestV2 } from './generation-request-v2';
 import {
   WorldAssetProviderError,
+  assertTrustedWorldAssetGeneration,
   createTopdownFarmReplayProvider,
   runWorldAssetProvider,
   type GeneratedAssetFile,
@@ -151,6 +152,8 @@ describe('world asset provider v2 runner', () => {
     first[0] = 0;
     expect(result.payloads[0].readBytes()[0]).toBe(137);
     expect(result.provider.capabilities.outputProvenance).toBe('recorded-replay');
+    expect(() => assertTrustedWorldAssetGeneration(result)).not.toThrow();
+    expect(() => assertTrustedWorldAssetGeneration({ ...result })).toThrow(/trusted runner/);
   });
 
   it('rejects unsupported profiles before invoking a top-down provider', async () => {
