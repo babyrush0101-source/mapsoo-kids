@@ -157,6 +157,20 @@
 
 项目最终目标包含 `side-platformer`、`isometric-action`、`topdown-farm`、`layered-depth-2d` 四个公开 profile，但 Alpha.9 只实现 `topdown-farm` 纵向闭环；另外三个仍为计划。Alpha.9 已公开发布，但不表示外部采用、STOYO 生产接入或第三方平台上架。完整范围、隐私/权利边界与验收证据见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。
 
+### Alpha.10 — complete side-platformer contract（进行中）
+
+- [x] 冻结 Generated Asset Bundle `0.2.0` 与 `side-platformer-complete-v1` 的 30 个 canonical role；
+- [x] 冻结左右向 `idle/run/jump/fall/land/hurt` 共 12 个角色 clip；
+- [x] 可信 Provider runner 按 profile 分派完整性合同，并继续拒绝未实现 profile；
+- [x] 逐 role、逐 clip、跨 profile/schema、路径和 atlas 越界负向测试；
+- [ ] Pack Schema 0.7、sidecar schema 与 receipt 新版本；
+- [ ] 程序化 side provider、浏览器一键流程和确定性 ZIP；
+- [ ] Godot 独立 0.7 validator、scene builder 与真实 physics smoke；
+- [ ] Linux/Windows × Godot 4.3/4.7 exact candidate ZIP；
+- [ ] 安全、权利、隐私、兼容与发布独立审计。
+
+Alpha.10 不能修改已发布 Alpha.9 Pack 0.6、receipt 0.1、fixture、附件或摘要，也不能用一张横板概念图冒充完整世界资产包。权威合同与停止条件见 [`21_ALPHA10_SIDE_PLATFORMER.md`](21_ALPHA10_SIDE_PLATFORMER.md)。
+
 ## v0.4 — World System
 
 - [ ] 多 biome 与 transition；

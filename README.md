@@ -90,6 +90,7 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [Executable STOYO Asset Request contract](integrations/stoyo/README.md)
 - [GitHub, itch.io, and Codex for OSS release kit](docs/08_RELEASE_ITCH_AND_OSS_KIT.md)
 - [Alpha9 community test campaign](docs/20_COMMUNITY_ALPHA9_OUTREACH.md)
+- [Alpha10 complete side-platformer contract](docs/21_ALPHA10_SIDE_PLATFORMER.md)
 - [Generation Provider SDK](docs/09_PROVIDER_SDK.md)
 - [10-minute first Godot import](docs/10_FIRST_GODOT_IMPORT.md)
 - [Safe Godot re-import contract](docs/11_SAFE_GODOT_REIMPORT.md)

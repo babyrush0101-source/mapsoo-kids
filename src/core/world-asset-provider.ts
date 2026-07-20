@@ -3,6 +3,7 @@ import {
   assertCompleteTopdownFarmAssetBundle,
   type GeneratedAssetBundle,
 } from './generated-asset-bundle';
+import { assertCompleteSidePlatformerAssetBundle } from './side-platformer-asset-bundle';
 import {
   bindGenerationRequestV2,
   fingerprintGenerationRequestV2,
@@ -263,9 +264,12 @@ async function validateAndSnapshotOutput(
     fail('world-provider.invalid-output', 'Provider bundle does not match the requested job and profile.');
   }
   try {
-    assertCompleteTopdownFarmAssetBundle(bundle);
+    if (profile === 'topdown-farm') assertCompleteTopdownFarmAssetBundle(bundle);
+    else if (profile === 'side-platformer') assertCompleteSidePlatformerAssetBundle(bundle);
+    else fail('world-provider.unsupported-profile', `No complete asset contract is implemented for ${profile}.`);
   } catch (error) {
-    fail('world-provider.invalid-output', 'Provider returned an incomplete top-down farm bundle.', { cause: error });
+    if (error instanceof WorldAssetProviderError) throw error;
+    fail('world-provider.invalid-output', `Provider returned an incomplete ${profile} bundle.`, { cause: error });
   }
   const records = new Map(bundle.assets.map((asset) => [asset.id, asset]));
   if (bundle.assets.some((asset) => asset.sourceReferenceIds.some((id) => !referenceIds.has(id)))) {
