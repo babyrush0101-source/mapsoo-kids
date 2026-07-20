@@ -39,7 +39,7 @@ export async function generateProceduralSidePlatformer(job: GenerationRequestJob
   const worldRefs = [env.id], heroRefs = [env.id, character.id];
   const terrain = png(192, 64, (s) => { s.rect(0, 0, 192, 64, color(worldHash)); s.rect(0, 0, 192, 10, color(worldHash, 7)); for (let x = 4; x < 192; x += 16) s.rect(x, 22 + (x % 3), 7, 7, color(worldHash, 13)); });
   const hazards = png(96, 32, (s) => { for (let x = 0; x < 32; x += 8) for (let y = 28; y > 28 - x % 9; y -= 1) s.pixel(x + 3, y, [235, 70, 65]); s.rect(34, 17, 26, 12, color(worldHash, 4)); s.rect(66, 20, 27, 9, color(worldHash, 9)); });
-  const props = png(160, 32, (s) => { for (let i = 0; i < 5; i += 1) { s.rect(i * 32 + 7, 11, 18, 19, color(worldHash, i * 3)); s.rect(i * 32 + 9, 13, 14, 3, [235, 215, 140]); } });
+  const props = png(192, 32, (s) => { for (let i = 0; i < 6; i += 1) { s.rect(i * 32 + 7, 11, 18, 19, color(worldHash, i * 3)); s.rect(i * 32 + 9, 13, 14, 3, [235, 215, 140]); } });
   const structures = png(96, 64, (s) => { for (let i = 0; i < 3; i += 1) { const x = i * 32; s.rect(x + 5, 16, 22, 47, color(worldHash, 5 + i * 4)); s.rect(x + 9, 24, 14, 32, [42, 38, 54]); s.rect(x + 12, 8, 8, 12, color(worldHash, 16 - i * 2)); } });
   const collectibles = png(64, 32, (s) => { s.circle(16, 16, 8, color(worldHash, 6)); s.circle(48, 16, 9, [215, 65, 95]); s.rect(46, 7, 4, 18, [245, 185, 195]); });
   const layer = (index: number) => png(320, 180, (s) => { s.rect(0, 0, 320, 180, color(worldHash, index * 4)); for (let x = 0; x < 320; x += 24 + index * 5) s.rect(x, 92 + ((x + worldHash) % 45), 18 + index * 2, 88, color(worldHash, 17 - index)); });
@@ -88,7 +88,7 @@ export async function generateProceduralSidePlatformer(job: GenerationRequestJob
   };
   const generated = await Promise.all([
     make('platform-atlas', 'platform-atlas', 'atlases/platforms.png', terrain, worldRefs, [192, 64]), make('hazard-atlas', 'hazard-atlas', 'atlases/hazards.png', hazards, worldRefs, [96, 32]),
-    make('prop-atlas', 'prop-atlas', 'atlases/props.png', props, worldRefs, [160, 32]), make('collectible-atlas', 'collectible-atlas', 'atlases/collectibles.png', collectibles, worldRefs, [64, 32]),
+    make('prop-atlas', 'prop-atlas', 'atlases/props.png', props, worldRefs, [192, 32]), make('collectible-atlas', 'collectible-atlas', 'atlases/collectibles.png', collectibles, worldRefs, [64, 32]),
     make('structure-atlas', 'structure-sprite', 'atlases/structures.png', structures, worldRefs, [96, 64]),
     ...await Promise.all(['sky', 'far', 'mid', 'near'].map((name, i) => make(`background-${name}`, 'background-layer', `layers/background-${name}.png`, layer(i), worldRefs, [320, 180]))),
     make('foreground-overlay', 'foreground-layer', 'layers/foreground-overlay.png', layer(4), worldRefs, [320, 180]), make('character-atlas', 'character-atlas', 'atlases/character.png', atlas, heroRefs, [384, 64]),

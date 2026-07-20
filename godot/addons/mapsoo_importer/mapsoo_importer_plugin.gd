@@ -52,7 +52,7 @@ func _on_manifest_selected(path: String) -> void:
 	}.get(result.status, "Imported")
 	_show_message(
 		"Import %s" % result.status,
-		"%s:\n%s\n%s\n\n%d cells, %d props%s" % [
+		"%s:\n%s\n%s\n\n%d runtime surfaces/cells, %d scene placements/props%s" % [
 			outcome_text,
 			result.tileset_path,
 			result.scene_path,

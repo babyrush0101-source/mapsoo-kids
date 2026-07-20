@@ -27,7 +27,7 @@ describe('reference world generator UI', () => {
     expect(markup).toContain('Generate complete side-platformer pack');
     expect(markup).toContain('Pack 0.7');
     expect(markup).toContain('Alpha10 candidate');
-    expect(markup).toContain('Godot importer planned');
+    expect(markup).toContain('Godot importer candidate');
     expect(markup).not.toContain('Side platformer is implemented end to end');
   });
 });

@@ -22,7 +22,7 @@ const PROFILE_COPY = Object.freeze({
   'side-platformer': Object.freeze({
     pack: 'Pack 0.7', action: 'Generate complete side-platformer pack', alt: 'Generated side-platformer preview',
     placeholder: 'Platforms, hazards, structures, layered backgrounds and the matched player will appear here.',
-    support: 'Godot importer planned', status: 'Alpha10 candidate',
+    support: 'Godot importer candidate', status: 'Alpha10 candidate',
   }),
 });
 

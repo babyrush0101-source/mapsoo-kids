@@ -69,6 +69,16 @@ Each clip has 1–32 bounded atlas frames and an FPS greater than zero and at mo
 
 Pack 0.7 uses a top-left, X-right, Y-down pixel coordinate space. Rectangles are `[x, x + width) × [y, y + height)`. Spawn is the player world origin in pixels and must match between manifest and scene data.
 
+Alpha10 fixes the remaining atlas and placement interpretation as follows so independent importers do not guess:
+
+- background and foreground images fill the declared world bounds;
+- structure and ordinary 32-pixel placement coordinates are bottom-left anchors, rendered with the sprite bottom aligned to `y`;
+- a hazard placement whose ID matches a hazard rectangle is scaled into that top-left half-open rectangle, so its art and `Area2D` cover the same pixels;
+- atlas slots follow canonical role order within their family: six 32-pixel terrain columns, three hazard columns, six prop columns, three 32×64 structure columns and two collectible columns;
+- the traversal sidecar remains an explicit directed platform graph. It is preserved as markers plus edge metadata and is never converted into a top-down `NavigationRegion2D`.
+
+These conventions are frozen for Pack 0.7. A future schema must version any different anchor, atlas-region or traversal interpretation explicitly.
+
 The scene sidecar must describe bounded placement for terrain, one-way platforms, slopes, hazards, props, structures, collectibles, moving platforms, spawn, checkpoints, goal and parallax layers.
 
 The collision sidecar must distinguish solid geometry, one-way surfaces, slopes, hazard regions, kill plane and moving-platform collision. Godot may derive `StaticBody2D`, one-way `CollisionShape2D`, hazard `Area2D` and `AnimatableBody2D`; it must not treat all geometry as Alpha9-style blocked farm cells.

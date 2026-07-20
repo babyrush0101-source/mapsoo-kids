@@ -95,6 +95,11 @@ jobs:
           MAPSOO_ALPHA9_FIXTURE_ROOT: release/godot-pack-set/alpha9
         run: pnpm exec vitest run --config godot/tests/vitest.alpha9-fixture.config.ts
 
+      - name: Generate the Pack 0.7 Godot fixture through the public pipeline
+        env:
+          MAPSOO_ALPHA10_FIXTURE_ROOT: release/godot-pack-set/alpha10
+        run: pnpm exec vitest run --config godot/tests/vitest.alpha10-fixture.config.ts
+
       - name: Bind the public example packs and STOYO bridge pack for Godot jobs
         id: candidate-pack
         shell: bash
@@ -224,10 +229,12 @@ jobs:
           set -euo pipefail
           scripts=(
             res://addons/mapsoo_importer/mapsoo_pack_importer.gd
+            res://addons/mapsoo_importer/mapsoo_pack_07.gd
             res://addons/mapsoo_importer/mapsoo_importer_plugin.gd
             res://tests/import_smoke.gd
             res://tests/import_pack_cli.gd
             res://tests/import_alpha9_smoke.gd
+            res://tests/import_alpha10_smoke.gd
           )
           for script in "${scripts[@]}"; do
             log_file="$RUNNER_TEMP/mapsoo-check-$(basename "$script").log"
@@ -257,6 +264,13 @@ jobs:
           set -euo pipefail
           mkdir -p godot/tests/.generated/pack-alpha9
           cp -R "$RUNNER_TEMP/mapsoo-candidate-packs/alpha9/." godot/tests/.generated/pack-alpha9/
+
+      - name: Stage the generated Pack 0.7 fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p godot/tests/.generated/pack-alpha10
+          cp -R "$RUNNER_TEMP/mapsoo-candidate-packs/alpha10/." godot/tests/.generated/pack-alpha10/
 
       - name: Import generated resources in the editor
         shell: bash
@@ -290,6 +304,18 @@ jobs:
             --script res://tests/import_alpha9_smoke.gd 2>&1 | tee "$log_file"
           if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
             echo "Godot emitted an engine error during the Pack 0.6 smoke test." >&2
+            exit 1
+          fi
+
+      - name: Run Pack 0.7 side-platformer importer contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          log_file="$RUNNER_TEMP/mapsoo-alpha10-godot-${{ matrix.version }}.log"
+          "$GODOT_BIN" --headless --path godot \
+            --script res://tests/import_alpha10_smoke.gd 2>&1 | tee "$log_file"
+          if grep -Eq '^(SCRIPT )?ERROR:' "$log_file"; then
+            echo "Godot emitted an engine error during the Pack 0.7 smoke test." >&2
             exit 1
           fi
 
@@ -402,11 +428,13 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $scripts = @(
             'res://addons/mapsoo_importer/mapsoo_pack_importer.gd',
+            'res://addons/mapsoo_importer/mapsoo_pack_07.gd',
             'res://addons/mapsoo_importer/mapsoo_importer_plugin.gd',
             'res://tests/generate_fixture.gd',
             'res://tests/import_smoke.gd',
             'res://tests/import_pack_cli.gd',
-            'res://tests/import_alpha9_smoke.gd'
+            'res://tests/import_alpha9_smoke.gd',
+            'res://tests/import_alpha10_smoke.gd'
           )
           foreach ($script in $scripts) {
             $output = @(& $env:GODOT_BIN --headless --path godot --check-only --script $script 2>&1)
@@ -442,6 +470,29 @@ jobs:
           $output | ForEach-Object { Write-Host $_.ToString() }
           if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
             throw 'Pack 0.6 importer contract failed.'
+          }
+
+      - name: Stage and import the generated Pack 0.7 fixture
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fixtureRoot = Join-Path (Resolve-Path godot/tests).Path '.generated/pack-alpha10'
+          New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+          Copy-Item -Path (Join-Path $env:RUNNER_TEMP 'mapsoo-candidate-packs/alpha10/*') -Destination $fixtureRoot -Recurse -Force
+          $output = @(& $env:GODOT_BIN --headless --editor --path godot --import 2>&1)
+          $output | ForEach-Object { Write-Host $_.ToString() }
+          if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
+            throw 'Godot failed to import Pack 0.7 fixture resources.'
+          }
+
+      - name: Run Pack 0.7 side-platformer importer contract on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = @(& $env:GODOT_BIN --headless --path godot --script res://tests/import_alpha10_smoke.gd 2>&1)
+          $output | ForEach-Object { Write-Host $_.ToString() }
+          if ($LASTEXITCODE -ne 0 -or ($output | ForEach-Object { $_.ToString() }) -match '^(?:SCRIPT )?ERROR:') {
+            throw 'Pack 0.7 importer contract failed.'
           }
 
       - name: Import all three exact verified candidate packs
