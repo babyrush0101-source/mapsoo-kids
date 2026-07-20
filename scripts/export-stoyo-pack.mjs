@@ -289,12 +289,20 @@ async function exportPack(options) {
     if (!address || typeof address === 'string') fail('STOYO export server did not bind a local TCP port.');
     const port = address.port;
     const url = `http://127.0.0.1:${port}/tests/browser/stoyo-export.html?completedAt=${encodeURIComponent(options.completedAt)}`;
-    const { stdout } = await execFileAsync(chromeExecutable(), [
-      '--headless=new', '--disable-gpu', '--disable-dev-shm-usage',
-      '--disable-background-networking', '--disable-component-update', '--no-first-run',
-      `--user-data-dir=${profile}`, '--virtual-time-budget=120000', '--dump-dom', url,
-    ], { maxBuffer: 64 * 1024 * 1024, timeout: 90_000, windowsHide: true });
-    const result = decodeDom(stdout);
+    let browserDom = '';
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const { stdout } = await execFileAsync(chromeExecutable(), [
+        '--headless=new', '--disable-gpu', '--disable-dev-shm-usage',
+        '--disable-background-networking', '--disable-component-update', '--no-first-run',
+        `--user-data-dir=${profile}`, '--virtual-time-budget=120000', '--dump-dom', url,
+      ], { maxBuffer: 64 * 1024 * 1024, timeout: 90_000, windowsHide: true });
+      browserDom = stdout;
+      // Under concurrent cold starts Chromium can dump the initial HTML before
+      // Vite's module graph has evaluated. No output has been written yet, so a
+      // bounded retry is safe and keeps the transaction fail-closed.
+      if (!/<html\b[^>]*\bdata-state="loading"/i.test(browserDom)) break;
+    }
+    const result = decodeDom(browserDom);
     if (result.schemaVersion !== EXPORT_SCHEMA_VERSION || result.completedAt !== options.completedAt) {
       fail('STOYO browser export envelope is inconsistent.');
     }
