@@ -4,6 +4,19 @@ All notable changes to Mapsoo Worldsmith will be documented here. The project fo
 
 ## [Unreleased]
 
+### Added
+
+- An implemented Alpha.9 candidate workflow from one environment reference, one character reference, and a description to a complete `topdown-farm` Pack Schema 0.6.0 ZIP.
+- Strict Generation Request V2 reference-byte, media-signature, dimension, budget, rights, and runtime-binding checks; reference bytes, local paths, filenames, raw digests, and free text are not embedded in the public pack or receipt.
+- The offline procedural `topdown-farm` provider, `topdown-farm-complete-v1` completeness contract, deterministic ZIP exporter, and one-click browser UI.
+- Godot 4.3+ Pack 0.6 import derivation and exact-pack coverage on Linux/Windows with Godot 4.3/4.7.
+
+### Changed
+
+- Alpha.9 output is limited to user-owned references that explicitly permit adaptation, redistribution, and CC0 dedication; licensed references are rejected instead of being silently relicensed. Generated PNG/runtime JSON assets are CC0-1.0, source and documentation remain MIT, and references keep their original rights.
+- Clarified that current local validation is structural and rights-based, not face/OCR/trademark detection or content-level sanitization.
+- Kept `side-platformer`, `isometric-action`, and `layered-depth-2d` planned. Alpha.9 is implemented on `main` but remains unpublished, with no external adoption or STOYO production-use claim; itch.io remains postponed.
+
 ## [0.1.0-alpha.8] - 2026-07-19
 
 ### Added

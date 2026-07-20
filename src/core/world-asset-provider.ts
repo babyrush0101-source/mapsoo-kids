@@ -5,6 +5,7 @@ import {
 } from './generated-asset-bundle';
 import {
   bindGenerationRequestV2,
+  fingerprintGenerationRequestV2,
   type GenerationRequestJobV2,
 } from './generation-request-v2';
 
@@ -63,6 +64,7 @@ export interface WorldAssetProviderSnapshot {
 export interface WorldAssetGenerationResult {
   readonly provider: WorldAssetProviderSnapshot;
   readonly requestId: string;
+  readonly requestFingerprintSha256: string;
   readonly bundle: GeneratedAssetBundle;
   readonly payloads: readonly TrustedGeneratedAssetPayload[];
 }
@@ -342,6 +344,7 @@ export async function runWorldAssetProvider(
   const result = Object.freeze({
     provider: contract,
     requestId: job.request.id,
+    requestFingerprintSha256: await fingerprintGenerationRequestV2(job.request),
     bundle: accepted.bundle,
     payloads: accepted.payloads,
   });

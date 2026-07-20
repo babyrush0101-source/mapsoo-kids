@@ -35,7 +35,7 @@
     "rights": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["basis", "license", "allowGenerativeAdaptation", "allowOutputRedistribution"],
+      "required": ["basis", "license", "allowGenerativeAdaptation", "allowOutputRedistribution", "allowOutputCc0Dedication"],
       "properties": {
         "basis": { "enum": ["owned", "licensed", "public-domain"] },
         "license": {
@@ -44,6 +44,7 @@
         },
         "allowGenerativeAdaptation": { "const": true },
         "allowOutputRedistribution": { "const": true },
+        "allowOutputCc0Dedication": { "const": true },
         "attribution": { "type": "string", "minLength": 1, "maxLength": 500, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" }
       },
       "allOf": [

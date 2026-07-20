@@ -22,6 +22,7 @@ export interface BrowserReferenceImage {
       readonly license: 'LicenseRef-User-Owned';
       readonly allowGenerativeAdaptation: true;
       readonly allowOutputRedistribution: true;
+      readonly allowOutputCc0Dedication: true;
     };
   };
 }
@@ -62,6 +63,7 @@ export async function readBrowserReferenceImage(file: File, role: ReferenceImage
         license: 'LicenseRef-User-Owned' as const,
         allowGenerativeAdaptation: true as const,
         allowOutputRedistribution: true as const,
+        allowOutputCc0Dedication: true as const,
       }),
     }),
   });

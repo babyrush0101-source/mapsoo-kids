@@ -9,7 +9,7 @@ import {
 
 describe('current public release links', () => {
   it('advances the public ledger to the published alpha.7 exporter', () => {
-    expect(packageJson.version).toBe('0.1.0-alpha.8');
+    expect(packageJson.version).toBe('0.1.0-alpha.9');
     expect(CURRENT_PACK_VERSION).toBe('0.1.0-alpha.7');
     expect(CURRENT_PUBLIC_RELEASE_VERSION).toBe('0.1.0-alpha.7');
     expect(CURRENT_PUBLIC_RELEASE.version).toBe(CURRENT_PUBLIC_RELEASE_VERSION);

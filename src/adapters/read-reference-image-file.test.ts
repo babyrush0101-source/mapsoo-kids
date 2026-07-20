@@ -10,7 +10,7 @@ describe('browser reference image reader', () => {
     const result = await readBrowserReferenceImage(file, 'character');
     expect(result.descriptor).toMatchObject({
       id: 'character-reference', path: 'references/character.png', width: 2, height: 3,
-      rights: { allowGenerativeAdaptation: true, allowOutputRedistribution: true },
+      rights: { allowGenerativeAdaptation: true, allowOutputRedistribution: true, allowOutputCc0Dedication: true },
     });
     expect(JSON.stringify(result.descriptor)).not.toContain('private-child-name');
   });

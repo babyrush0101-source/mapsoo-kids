@@ -38,6 +38,7 @@ function descriptor(bytes: Uint8Array, overrides: Partial<ReferenceImageDescript
       license: 'LicenseRef-User-Owned',
       allowGenerativeAdaptation: true,
       allowOutputRedistribution: true,
+      allowOutputCc0Dedication: true,
     },
     ...overrides,
   };
@@ -94,15 +95,19 @@ describe('reference image safety contract', () => {
     })).toThrow(new RegExp(String(MAX_REFERENCE_IMAGE_PIXELS)));
     expect(() => materializeReferenceImageDescriptor({
       ...descriptor(bytes),
-      rights: { basis: 'owned', license: 'LicenseRef-User-Owned', allowGenerativeAdaptation: false, allowOutputRedistribution: true },
+      rights: { basis: 'owned', license: 'LicenseRef-User-Owned', allowGenerativeAdaptation: false, allowOutputRedistribution: true, allowOutputCc0Dedication: true },
     })).toThrow(/explicitly allow/);
     expect(() => materializeReferenceImageDescriptor({
       ...descriptor(bytes),
-      rights: { basis: 'licensed', license: 'CC-BY-4.0', allowGenerativeAdaptation: true, allowOutputRedistribution: true },
+      rights: { basis: 'licensed', license: 'CC-BY-4.0', allowGenerativeAdaptation: true, allowOutputRedistribution: true, allowOutputCc0Dedication: true },
     })).toThrow(/attribution/);
     expect(() => materializeReferenceImageDescriptor({
       ...descriptor(bytes),
-      rights: { basis: 'owned', license: 'LicenseRef-User-Owned', allowGenerativeAdaptation: true, allowOutputRedistribution: false },
+      rights: { basis: 'owned', license: 'LicenseRef-User-Owned', allowGenerativeAdaptation: true, allowOutputRedistribution: false, allowOutputCc0Dedication: true },
     })).toThrow(/output redistribution/);
+    expect(() => materializeReferenceImageDescriptor({
+      ...descriptor(bytes),
+      rights: { basis: 'owned', license: 'LicenseRef-User-Owned', allowGenerativeAdaptation: true, allowOutputRedistribution: true, allowOutputCc0Dedication: false },
+    })).toThrow(/CC0 dedication/);
   });
 });

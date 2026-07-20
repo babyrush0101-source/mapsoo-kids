@@ -1116,7 +1116,7 @@ export async function verifyReceiptForRelease({
     case 'builtin-world-gallery-alpha7-v0.2':
       assert(
         config.packVersion === '0.1.0-alpha.7'
-          && ['0.1.0-alpha.7', '0.1.0-alpha.8'].includes(config.version),
+          && ['0.1.0-alpha.7', '0.1.0-alpha.8', '0.1.0-alpha.9'].includes(config.version),
         'The builtin-world-gallery-alpha7-v0.2 receipt policy requires the trusted Alpha.7 pack contract',
       );
       verifier = verifyAlpha7WorldGalleryReceipt;

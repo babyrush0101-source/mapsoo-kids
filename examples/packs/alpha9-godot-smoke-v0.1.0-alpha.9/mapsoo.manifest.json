@@ -1,0 +1,418 @@
+{
+  "schema_version": "0.6.0",
+  "pack": {
+    "id": "alpha9-godot-smoke-pack",
+    "title": "alpha9-godot-smoke-pack",
+    "version": "0.1.0-alpha.9",
+    "generator": {
+      "name": "Mapsoo Worldsmith",
+      "version": "0.1.0-alpha.9"
+    },
+    "created_at": "2026-07-20T00:00:00.000Z"
+  },
+  "profile": "topdown-farm",
+  "completeness_policy": "topdown-farm-complete-v1",
+  "compatibility": {
+    "godot_min": "4.3",
+    "grid": "orthogonal",
+    "art_style": "pixel_art",
+    "importer": {
+      "id": "mapsoo_importer",
+      "min_version": "0.1.0-alpha.9"
+    }
+  },
+  "layers": [
+    {
+      "id": "ground",
+      "order": 0
+    },
+    {
+      "id": "water",
+      "order": 1
+    },
+    {
+      "id": "paths",
+      "order": 2
+    },
+    {
+      "id": "soil",
+      "order": 3
+    },
+    {
+      "id": "props",
+      "order": 4
+    },
+    {
+      "id": "structures",
+      "order": 5
+    },
+    {
+      "id": "crops",
+      "order": 6
+    }
+  ],
+  "atlases": [
+    {
+      "id": "terrain",
+      "path": "atlases/terrain.png"
+    },
+    {
+      "id": "props",
+      "path": "atlases/props.png"
+    },
+    {
+      "id": "structures",
+      "path": "atlases/structures.png"
+    },
+    {
+      "id": "crops",
+      "path": "atlases/crops.png"
+    },
+    {
+      "id": "character",
+      "path": "atlases/character.png"
+    }
+  ],
+  "roles": [
+    {
+      "role": "terrain.ground",
+      "path": "atlases/terrain.png"
+    },
+    {
+      "role": "terrain.water",
+      "path": "atlases/terrain.png"
+    },
+    {
+      "role": "terrain.path",
+      "path": "atlases/terrain.png"
+    },
+    {
+      "role": "terrain.soil",
+      "path": "atlases/terrain.png"
+    },
+    {
+      "role": "prop.tree",
+      "path": "atlases/props.png"
+    },
+    {
+      "role": "prop.rock",
+      "path": "atlases/props.png"
+    },
+    {
+      "role": "prop.flower",
+      "path": "atlases/props.png"
+    },
+    {
+      "role": "prop.fence",
+      "path": "atlases/props.png"
+    },
+    {
+      "role": "prop.gate",
+      "path": "atlases/props.png"
+    },
+    {
+      "role": "prop.crate",
+      "path": "atlases/props.png"
+    },
+    {
+      "role": "structure.house",
+      "path": "atlases/structures.png"
+    },
+    {
+      "role": "structure.barn",
+      "path": "atlases/structures.png"
+    },
+    {
+      "role": "crop.basic.stage-1",
+      "path": "atlases/crops.png"
+    },
+    {
+      "role": "crop.basic.stage-2",
+      "path": "atlases/crops.png"
+    },
+    {
+      "role": "crop.basic.stage-3",
+      "path": "atlases/crops.png"
+    },
+    {
+      "role": "crop.basic.stage-4",
+      "path": "atlases/crops.png"
+    },
+    {
+      "role": "character.player.atlas",
+      "path": "atlases/character.png"
+    },
+    {
+      "role": "world.collision",
+      "path": "runtime/collision.json"
+    },
+    {
+      "role": "world.navigation",
+      "path": "runtime/navigation.json"
+    },
+    {
+      "role": "world.scene",
+      "path": "runtime/scene.json"
+    },
+    {
+      "role": "world.preview",
+      "path": "previews/world.png"
+    }
+  ],
+  "character": {
+    "id": "player",
+    "atlas": "atlases/character.png",
+    "frame_size": [
+      32,
+      32
+    ],
+    "pivot": [
+      16,
+      29
+    ],
+    "clips": [
+      {
+        "id": "idle.north",
+        "action": "idle",
+        "direction": "north",
+        "fps": 4,
+        "frames": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 32,
+            "y": 0
+          }
+        ]
+      },
+      {
+        "id": "idle.east",
+        "action": "idle",
+        "direction": "east",
+        "fps": 4,
+        "frames": [
+          {
+            "x": 0,
+            "y": 32
+          },
+          {
+            "x": 32,
+            "y": 32
+          }
+        ]
+      },
+      {
+        "id": "idle.south",
+        "action": "idle",
+        "direction": "south",
+        "fps": 4,
+        "frames": [
+          {
+            "x": 0,
+            "y": 64
+          },
+          {
+            "x": 32,
+            "y": 64
+          }
+        ]
+      },
+      {
+        "id": "idle.west",
+        "action": "idle",
+        "direction": "west",
+        "fps": 4,
+        "frames": [
+          {
+            "x": 0,
+            "y": 96
+          },
+          {
+            "x": 32,
+            "y": 96
+          }
+        ]
+      },
+      {
+        "id": "walk.north",
+        "action": "walk",
+        "direction": "north",
+        "fps": 8,
+        "frames": [
+          {
+            "x": 64,
+            "y": 0
+          },
+          {
+            "x": 96,
+            "y": 0
+          }
+        ]
+      },
+      {
+        "id": "walk.east",
+        "action": "walk",
+        "direction": "east",
+        "fps": 8,
+        "frames": [
+          {
+            "x": 64,
+            "y": 32
+          },
+          {
+            "x": 96,
+            "y": 32
+          }
+        ]
+      },
+      {
+        "id": "walk.south",
+        "action": "walk",
+        "direction": "south",
+        "fps": 8,
+        "frames": [
+          {
+            "x": 64,
+            "y": 64
+          },
+          {
+            "x": 96,
+            "y": 64
+          }
+        ]
+      },
+      {
+        "id": "walk.west",
+        "action": "walk",
+        "direction": "west",
+        "fps": 8,
+        "frames": [
+          {
+            "x": 64,
+            "y": 96
+          },
+          {
+            "x": 96,
+            "y": 96
+          }
+        ]
+      }
+    ]
+  },
+  "runtime": {
+    "scene": {
+      "path": "runtime/scene.json"
+    },
+    "collision": {
+      "path": "runtime/collision.json"
+    },
+    "navigation": {
+      "path": "runtime/navigation.json"
+    },
+    "spawn": {
+      "x": 8,
+      "y": 7
+    }
+  },
+  "files": [
+    {
+      "path": "atlases/character.png",
+      "media_type": "image/png",
+      "bytes": 671,
+      "sha256": "29603e133afc31438522f56da277f9877d02d85e814f791596b99f3dcc365804"
+    },
+    {
+      "path": "atlases/crops.png",
+      "media_type": "image/png",
+      "bytes": 311,
+      "sha256": "9a6337efb16bd255d9c6b0ad400a68b63c7e307267c943ccfb9d3d3cb02f9e90"
+    },
+    {
+      "path": "atlases/props.png",
+      "media_type": "image/png",
+      "bytes": 561,
+      "sha256": "d6afd25773ff23e226280f4feb0032d9425e1f8b9105728d0fd127798672dfe1"
+    },
+    {
+      "path": "atlases/structures.png",
+      "media_type": "image/png",
+      "bytes": 511,
+      "sha256": "2a18bef5e9370fde1fb79c5534160f7b4baf80315dc5aa302cc53c6a85c1e242"
+    },
+    {
+      "path": "atlases/terrain.png",
+      "media_type": "image/png",
+      "bytes": 367,
+      "sha256": "628abef19d611d92f07502414d53580168c226668f5ee9f1745ace047de9e35a"
+    },
+    {
+      "path": "generation-receipt.json",
+      "media_type": "application/json",
+      "bytes": 2669,
+      "sha256": "01d8e723e34b691fcbf09f6f4e7afa931945ed172c6d26068deb999b55f0d142"
+    },
+    {
+      "path": "license-assets.md",
+      "media_type": "text/markdown",
+      "bytes": 255,
+      "sha256": "c7b7d18afb71bfcb025e1b38c8f699605ec076db42905eb4246f7040b5d23462"
+    },
+    {
+      "path": "previews/world.png",
+      "media_type": "image/png",
+      "bytes": 1233,
+      "sha256": "c5819778b4ce64394d960083efd93e08058d63e56f37723d13edae131c2e369a"
+    },
+    {
+      "path": "readme.md",
+      "media_type": "text/markdown",
+      "bytes": 309,
+      "sha256": "b730b8c1e29226e83f6c3f63aa0cca1b6a669c877ddbb0a39b59810a773e50b2"
+    },
+    {
+      "path": "runtime/collision.json",
+      "media_type": "application/json",
+      "bytes": 94,
+      "sha256": "a4aac6cdecce7c87c212b157d6fa9b6664dd697b12c9f8cc95766a3a846ad1e9"
+    },
+    {
+      "path": "runtime/navigation.json",
+      "media_type": "application/json",
+      "bytes": 123,
+      "sha256": "3f12b2f7b259adb4b59e0f258832f735ad5ea7263def2f75f7eb0a9cf2995b9a"
+    },
+    {
+      "path": "runtime/scene.json",
+      "media_type": "application/json",
+      "bytes": 2701,
+      "sha256": "378a1f642ec1db31b9a97d57c85175567ccafadf6827f70ba5535ffdb769d0c0"
+    },
+    {
+      "path": "schema/mapsoo-pack-0.6.schema.json",
+      "media_type": "application/schema+json",
+      "bytes": 21998,
+      "sha256": "9394b3d1690b932b15fd2a09b471dbf6a806899682ea0075d8944cddd562b907"
+    }
+  ],
+  "license": {
+    "output": {
+      "id": "CC0-1.0",
+      "notice_path": "license-assets.md",
+      "permits_redistribution": true
+    }
+  },
+  "provenance": {
+    "provider": {
+      "id": "mapsoo-procedural-topdown-farm",
+      "version": "0.1.0"
+    },
+    "output_provenance": "procedural",
+    "contains_generative_ai": false,
+    "model_provider": null,
+    "model": null,
+    "seed": "alpha9-godot-smoke-001",
+    "human_curated": false
+  }
+}

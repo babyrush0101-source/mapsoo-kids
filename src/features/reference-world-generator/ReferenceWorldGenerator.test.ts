@@ -9,7 +9,8 @@ describe('reference world generator UI', () => {
     const markup = renderToStaticMarkup(createElement(ReferenceWorldGenerator));
     expect(markup).toContain('Environment style');
     expect(markup).toContain('Character reference');
-    expect(markup).toContain('allow generative adaptation plus redistribution');
+    expect(markup).toContain('allow generative adaptation, redistribution, and CC0 dedication');
+    expect(markup).toContain('World ID and seed are public');
     expect(markup).toContain('Generate complete farm pack');
     expect(markup).toContain('Side platformer, isometric action and layered-depth 2D remain planned');
     expect(markup).toContain('No reference images embedded');

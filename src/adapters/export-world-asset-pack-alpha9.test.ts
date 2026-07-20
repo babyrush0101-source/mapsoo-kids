@@ -15,13 +15,20 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function makeJob() {
+async function makeJob(basis: 'owned' | 'licensed' = 'owned') {
   const environment = encodeRgbaPng(1, 1, Uint8Array.from([30, 150, 80, 255]));
   const character = encodeRgbaPng(1, 1, Uint8Array.from([180, 80, 130, 255]));
   const descriptor = async (role: 'environment-style' | 'character', bytes: Uint8Array) => ({
     id: `${role}-reference`, role, path: `private/${role}.png`, mediaType: 'image/png' as const,
     byteLength: bytes.byteLength, width: 1, height: 1, sha256: await sha256(bytes),
-    rights: { basis: 'owned' as const, license: 'LicenseRef-User-Owned', allowGenerativeAdaptation: true as const, allowOutputRedistribution: true as const },
+    rights: {
+      basis,
+      license: basis === 'owned' ? 'LicenseRef-User-Owned' : 'CC-BY-4.0',
+      allowGenerativeAdaptation: true as const,
+      allowOutputRedistribution: true as const,
+      allowOutputCc0Dedication: true as const,
+      ...(basis === 'licensed' ? { attribution: 'Example artist' } : {}),
+    },
   });
   return bindGenerationRequestV2({
     schemaVersion: '1.0.0', id: 'portable-farm-job', profile: 'topdown-farm',
@@ -57,5 +64,31 @@ describe('Alpha.9 Pack 0.6 exporter', () => {
     const first = await buildAlpha9WorldAssetPack(run, job.request, '2026-07-20T12:00:00.000Z');
     const second = await buildAlpha9WorldAssetPack(run, job.request, '2026-07-20T12:00:00.000Z');
     expect(first.bytes).toEqual(second.bytes);
+  });
+
+  it('rejects a substituted same-id request whose rights differ from the trusted run', async () => {
+    const job = await makeJob();
+    const run = await runWorldAssetProvider(PROCEDURAL_TOPDOWN_FARM_PROVIDER, job);
+    const request = structuredClone(job.request) as unknown as {
+      references: [{ rights: { basis: string; license: string; attribution?: string } }, unknown];
+    };
+    request.references[0].rights.basis = 'licensed';
+    request.references[0].rights.license = 'CC-BY-4.0';
+    request.references[0].rights.attribution = 'Example artist';
+    await expect(buildAlpha9WorldAssetPack(
+      run,
+      request as unknown as typeof job.request,
+      '2026-07-20T12:00:00.000Z',
+    )).rejects.toThrow(/fingerprint/);
+  });
+
+  it('rejects a matching licensed-reference run instead of relicensing its output as CC0', async () => {
+    const job = await makeJob('licensed');
+    const run = await runWorldAssetProvider(PROCEDURAL_TOPDOWN_FARM_PROVIDER, job);
+    await expect(buildAlpha9WorldAssetPack(
+      run,
+      job.request,
+      '2026-07-20T12:00:00.000Z',
+    )).rejects.toThrow(/user-owned/);
   });
 });

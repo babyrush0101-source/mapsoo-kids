@@ -127,6 +127,7 @@ async function job(profile: 'topdown-farm' | 'side-platformer' = 'topdown-farm')
       license: 'LicenseRef-User-Owned',
       allowGenerativeAdaptation: true as const,
       allowOutputRedistribution: true as const,
+      allowOutputCc0Dedication: true as const,
     },
   });
   return bindGenerationRequestV2({

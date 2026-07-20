@@ -372,6 +372,21 @@ export async function buildRelease(outputRoot, version = VERSION, options = {}) 
     );
   }
 
+  for (const archive of config.release.directoryArchives ?? []) {
+    const sourceRoot = join(REPOSITORY_ROOT, archive.sourceDirectory);
+    const sourceFiles = await listFiles(sourceRoot);
+    const entries = sourceFiles.map((entry) => ({
+      ...entry,
+      archivePath: `${archive.archiveRoot}/${entry.archivePath}`,
+    }));
+    const bytes = await createDeterministicZip(entries);
+    const actualSha256 = sha256(bytes);
+    if (actualSha256 !== archive.expectedSha256) {
+      throw new Error(`${archive.releaseFileKey} canonical SHA-256 mismatch: ${actualSha256}`);
+    }
+    await writeFile(join(resolvedOutputRoot, releaseFiles[archive.releaseFileKey]), bytes);
+  }
+
   const copiedFiles = [
     [join(REPOSITORY_ROOT, config.release.inputs.exampleWorldSpec), releaseFiles.exampleWorldSpec],
     ...examplePacks.slice(1).map((pack) => [
@@ -423,6 +438,14 @@ export async function buildRelease(outputRoot, version = VERSION, options = {}) 
         file: releaseFiles[pack.releaseFileKey],
         purpose: `Executable-free ${pack.id} PNG + JSON pack CI-gated on Godot 4.3 and 4.7`,
       })),
+      ...((config.release.directoryArchives?.length ?? 0) > 0 ? {
+        additionalPacks: config.release.directoryArchives.map((archive) => ({
+          id: archive.id,
+          file: releaseFiles[archive.releaseFileKey],
+          sha256: archive.expectedSha256,
+          purpose: archive.purpose,
+        })),
+      } : {}),
       ...(releaseFiles.evidenceVideo ? {
         evidenceVideo: {
           file: releaseFiles.evidenceVideo,

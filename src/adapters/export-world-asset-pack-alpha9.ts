@@ -10,7 +10,7 @@ import {
   type Alpha9PackManifest,
 } from '../core/pack-manifest-alpha9';
 import { TOPDOWN_FARM_REQUIRED_ROLES } from '../core/generated-asset-bundle';
-import type { GenerationRequestV2 } from '../core/generation-request-v2';
+import { fingerprintGenerationRequestV2, type GenerationRequestV2 } from '../core/generation-request-v2';
 import { projectWorldAssetReceipt } from '../core/world-asset-receipt';
 import {
   assertTrustedWorldAssetGeneration,
@@ -52,6 +52,14 @@ export async function buildAlpha9WorldAssetPack(
   assertTrustedWorldAssetGeneration(run);
   if (run.requestId !== request.id || request.profile !== 'topdown-farm') {
     throw new Error('Alpha.9 export requires the matching topdown-farm request.');
+  }
+  if (await fingerprintGenerationRequestV2(request) !== run.requestFingerprintSha256) {
+    throw new Error('Alpha.9 export request fingerprint does not match the trusted generation run.');
+  }
+  if (request.references.some(({ rights }) => (
+    rights.basis !== 'owned' || rights.allowOutputCc0Dedication !== true
+  ))) {
+    throw new Error('Alpha.9 CC0 export requires user-owned references with explicit CC0 dedication permission.');
   }
   const receipt = await projectWorldAssetReceipt(run, request, completedAt);
   const generatedEntries = await Promise.all(run.payloads.map(async (payload) => {

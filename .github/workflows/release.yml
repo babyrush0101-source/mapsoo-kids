@@ -123,6 +123,12 @@ jobs:
             --input examples/integrations/stoyo/river-valley-asset-request.json \
             --out-dir release/godot-pack-set/stoyo \
             --completed-at 2026-07-19T12:00:00.000Z
+          alpha9_zip="$(node --input-type=module --eval "import { CURRENT_RELEASE_CONFIG as c } from './scripts/release-config.mjs'; process.stdout.write(c.release.files.completeFarmPack)")"
+          alpha9_root="$(node --input-type=module --eval "import { CURRENT_RELEASE_CONFIG as c } from './scripts/release-config.mjs'; process.stdout.write(c.release.directoryArchives[0].archiveRoot)")"
+          mkdir -p release/godot-pack-set/alpha9 release/godot-pack-set/.alpha9-extracted
+          unzip -q "release/$GITHUB_REF_NAME/$alpha9_zip" -d release/godot-pack-set/.alpha9-extracted
+          cp -R "release/godot-pack-set/.alpha9-extracted/$alpha9_root/." release/godot-pack-set/alpha9/
+          rm -rf release/godot-pack-set/.alpha9-extracted
 
       - name: Preserve the verified release pack set for Godot jobs
         uses: actions/upload-artifact@v4
@@ -222,6 +228,7 @@ jobs:
           scripts=(
             res://addons/mapsoo_importer/mapsoo_pack_importer.gd
             res://tests/import_pack_cli.gd
+            res://tests/import_alpha9_smoke.gd
           )
           for script in "${scripts[@]}"; do
             log_file="$RUNNER_TEMP/mapsoo-release-check-$(basename "$script").log"
@@ -253,6 +260,14 @@ jobs:
           & scripts/run-stoyo-pack-godot.ps1 `
             -ArtifactRoot (Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs/stoyo') `
             -GodotConsole $env:GODOT_BIN
+
+      - name: Import the exact Alpha.9 complete farm pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p godot/tests/.generated/pack-alpha9
+          cp -R "$RUNNER_TEMP/mapsoo-release-packs/alpha9/." godot/tests/.generated/pack-alpha9/
+          "$GODOT_BIN" --headless --path godot --script res://tests/import_alpha9_smoke.gd
 
   godot-release-windows-smoke:
     name: Godot ${{ matrix.version }} Windows release transaction
@@ -343,7 +358,8 @@ jobs:
             'res://addons/mapsoo_importer/mapsoo_importer_plugin.gd',
             'res://tests/generate_fixture.gd',
             'res://tests/import_smoke.gd',
-            'res://tests/import_pack_cli.gd'
+            'res://tests/import_pack_cli.gd',
+            'res://tests/import_alpha9_smoke.gd'
           )
           foreach ($script in $scripts) {
             $output = @(& $env:GODOT_BIN --headless --path godot --check-only --script $script 2>&1)
@@ -372,6 +388,15 @@ jobs:
           & scripts/run-stoyo-pack-godot.ps1 `
             -ArtifactRoot (Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs/stoyo') `
             -GodotConsole $env:GODOT_BIN
+
+      - name: Import the exact Alpha.9 complete farm pack
+        shell: pwsh
+        run: |
+          $fixtureRoot = Join-Path (Resolve-Path godot/tests).Path '.generated/pack-alpha9'
+          New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+          Copy-Item -Path (Join-Path $env:RUNNER_TEMP 'mapsoo-release-packs/alpha9/*') -Destination $fixtureRoot -Recurse -Force
+          & $env:GODOT_BIN --headless --path godot --script res://tests/import_alpha9_smoke.gd
+          if ($LASTEXITCODE -ne 0) { throw 'Alpha.9 Godot release smoke failed.' }
 
   publish-draft:
     name: Publish verified GitHub release draft

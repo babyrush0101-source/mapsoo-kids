@@ -1,0 +1,86 @@
+{
+  "schema_version": "0.1.0",
+  "completed_at": "2026-07-20T00:00:00.000Z",
+  "request": {
+    "fingerprint_sha256": "9224e1fe667f4e21a9a617aeb7c03a03ed3c04ab1ef193e3cfc7ebfa99c37d7e",
+    "profile": "topdown-farm",
+    "seed": "alpha9-godot-smoke-001",
+    "reference_rights": [
+      {
+        "role": "environment-style",
+        "basis": "owned",
+        "license": "LicenseRef-User-Owned",
+        "permits_cc0_dedication": true
+      },
+      {
+        "role": "character",
+        "basis": "owned",
+        "license": "LicenseRef-User-Owned",
+        "permits_cc0_dedication": true
+      }
+    ]
+  },
+  "provider": {
+    "id": "mapsoo-procedural-topdown-farm",
+    "version": "0.1.0",
+    "execution": "local",
+    "determinism": "seeded",
+    "output_provenance": "procedural"
+  },
+  "output": {
+    "completeness_policy": "topdown-farm-complete-v1",
+    "license": "CC0-1.0",
+    "files": [
+      {
+        "path": "atlases/character.png",
+        "bytes": 671,
+        "sha256": "29603e133afc31438522f56da277f9877d02d85e814f791596b99f3dcc365804"
+      },
+      {
+        "path": "atlases/crops.png",
+        "bytes": 311,
+        "sha256": "9a6337efb16bd255d9c6b0ad400a68b63c7e307267c943ccfb9d3d3cb02f9e90"
+      },
+      {
+        "path": "atlases/props.png",
+        "bytes": 561,
+        "sha256": "d6afd25773ff23e226280f4feb0032d9425e1f8b9105728d0fd127798672dfe1"
+      },
+      {
+        "path": "atlases/structures.png",
+        "bytes": 511,
+        "sha256": "2a18bef5e9370fde1fb79c5534160f7b4baf80315dc5aa302cc53c6a85c1e242"
+      },
+      {
+        "path": "atlases/terrain.png",
+        "bytes": 367,
+        "sha256": "628abef19d611d92f07502414d53580168c226668f5ee9f1745ace047de9e35a"
+      },
+      {
+        "path": "previews/world.png",
+        "bytes": 1233,
+        "sha256": "c5819778b4ce64394d960083efd93e08058d63e56f37723d13edae131c2e369a"
+      },
+      {
+        "path": "runtime/collision.json",
+        "bytes": 94,
+        "sha256": "a4aac6cdecce7c87c212b157d6fa9b6664dd697b12c9f8cc95766a3a846ad1e9"
+      },
+      {
+        "path": "runtime/navigation.json",
+        "bytes": 123,
+        "sha256": "3f12b2f7b259adb4b59e0f258832f735ad5ea7263def2f75f7eb0a9cf2995b9a"
+      },
+      {
+        "path": "runtime/scene.json",
+        "bytes": 2701,
+        "sha256": "378a1f642ec1db31b9a97d57c85175567ccafadf6827f70ba5535ffdb769d0c0"
+      }
+    ]
+  },
+  "disclosures": [
+    "Reference images are not embedded in this pack.",
+    "Reference paths, original image digests, attribution text, and the source description are omitted from public fields.",
+    "The request fingerprint is a one-way binding for local audit comparison."
+  ]
+}
