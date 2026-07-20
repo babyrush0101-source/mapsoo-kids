@@ -6,9 +6,14 @@ const PLAYABLE_TERRAIN_SCHEMA_VERSION := "0.2.0"
 const SEMANTIC_PLACES_SCHEMA_VERSION := "0.3.0"
 const EXTERIOR_STRUCTURES_SCHEMA_VERSION := "0.4.0"
 const MULTI_WORLD_PACK_SCHEMA_VERSION := "0.5.0"
-const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION, EXTERIOR_STRUCTURES_SCHEMA_VERSION, MULTI_WORLD_PACK_SCHEMA_VERSION]
+const COMPLETE_FARM_SCHEMA_VERSION := "0.6.0"
+const SUPPORTED_SCHEMA_VERSIONS := [LEGACY_SCHEMA_VERSION, PLAYABLE_TERRAIN_SCHEMA_VERSION, SEMANTIC_PLACES_SCHEMA_VERSION, EXTERIOR_STRUCTURES_SCHEMA_VERSION, MULTI_WORLD_PACK_SCHEMA_VERSION, COMPLETE_FARM_SCHEMA_VERSION]
 const OUTPUT_ROOT := "res://mapsoo_imports"
 const IMPORTER_VERSION := "0.1.0-alpha.8"
+const ALPHA9_LAYERS := ["ground", "water", "paths", "soil", "props", "structures", "crops"]
+const ALPHA9_ATLASES := ["terrain", "props", "structures", "crops", "character"]
+const ALPHA9_ROLES := ["terrain.ground", "terrain.water", "terrain.path", "terrain.soil", "prop.tree", "prop.rock", "prop.flower", "prop.fence", "prop.gate", "prop.crate", "structure.house", "structure.barn", "crop.basic.stage-1", "crop.basic.stage-2", "crop.basic.stage-3", "crop.basic.stage-4", "character.player.atlas", "world.collision", "world.navigation", "world.scene", "world.preview"]
+const ALPHA9_CLIPS := ["idle.north", "idle.east", "idle.south", "idle.west", "walk.north", "walk.east", "walk.south", "walk.west"]
 const IMPORT_STATE_SCHEMA_VERSION := "1.0.0"
 const IMPORT_STATE_FILENAME := "mapsoo.import-state.json"
 const BUFFER_SIZE := 1024 * 1024
@@ -178,7 +183,8 @@ static func import_pack(manifest_path: String, output_root: String = OUTPUT_ROOT
 		validation.props.size(),
 		validation.places.size(),
 		validation.structures.size(),
-		_has_structures(validation.schema_version)
+		_has_structures(validation.schema_version),
+		validation.schema_version
 	)
 	if not staged_validation.ok:
 		_cleanup_transaction_directory(staging_dir, warnings)
@@ -416,7 +422,8 @@ static func _validate_staged_resources(
 	expected_props: int,
 	expected_places: int = 0,
 	expected_structures: int = 0,
-	expect_structures_container: bool = false
+	expect_structures_container: bool = false,
+	schema_version: String = ""
 ) -> Dictionary:
 	var tile_set := ResourceLoader.load(tileset_path, "TileSet", ResourceLoader.CACHE_MODE_IGNORE_DEEP) as TileSet
 	if tile_set == null:
@@ -425,6 +432,23 @@ static func _validate_staged_resources(
 	if packed == null:
 		return {"ok": false, "error": "Staged scene could not be loaded before commit: %s" % scene_path}
 	var world := packed.instantiate()
+	if schema_version == COMPLETE_FARM_SCHEMA_VERSION:
+		var alpha9_valid := world.get_node_or_null("Ground") is TileMapLayer and world.get_node_or_null("Water") is TileMapLayer and world.get_node_or_null("Paths") is TileMapLayer and world.get_node_or_null("Soil") is TileMapLayer
+		alpha9_valid = alpha9_valid and world.get_node_or_null("Props") is Node2D and world.get_node_or_null("Structures") is Node2D and world.get_node_or_null("Crops") is Node2D
+		var navigation_region := world.get_node_or_null("WorldNavigation") as NavigationRegion2D
+		var spawn := world.get_node_or_null("PlayerSpawn") as Marker2D
+		var player := world.get_node_or_null("Player") as CharacterBody2D
+		alpha9_valid = alpha9_valid and navigation_region != null and navigation_region.navigation_polygon != null and navigation_region.navigation_polygon.get_polygon_count() > 0
+		alpha9_valid = alpha9_valid and spawn != null and player != null and player.position == spawn.position and world.get_node_or_null("Player/CollisionShape2D") is CollisionShape2D
+		var visual := world.get_node_or_null("Player/Visual") as AnimatedSprite2D
+		if visual == null or visual.sprite_frames == null:
+			alpha9_valid = false
+		else:
+			for clip_id: String in ALPHA9_CLIPS:
+				var animation_name := clip_id.replace(".", "_")
+				if not visual.sprite_frames.has_animation(animation_name) or visual.sprite_frames.get_frame_count(animation_name) < 1: alpha9_valid = false
+		world.free()
+		return {"ok": alpha9_valid, "error": "" if alpha9_valid else "Staged Pack 0.6 scene is incomplete."}
 	var props := world.get_node_or_null("Props")
 	var places := world.get_node_or_null("Places")
 	var structures := world.get_node_or_null("Structures")
@@ -670,6 +694,8 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		return prepared
 	var schema_version: String = schema_version_value
 	prepared.schema_version = schema_version
+	if schema_version == COMPLETE_FARM_SCHEMA_VERSION:
+		return _validate_complete_farm(manifest, pack_root, prepared)
 	var pack := _dictionary_at(manifest, "pack", errors)
 	var compatibility := _dictionary_at(manifest, "compatibility", errors)
 	var license := _dictionary_at(manifest, "license", errors)
@@ -718,6 +744,9 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 		return prepared
 
 	var file_index := _validate_file_records(manifest.get("files"), pack_root, errors)
+	for record_value: Variant in manifest.get("files", []):
+		if typeof(record_value) != TYPE_DICTIONARY or not _has_exact_keys(record_value, ["path", "media_type", "bytes", "sha256"]) or record_value.get("media_type") not in ["image/png", "application/json", "application/schema+json", "text/markdown"] or int(record_value.get("bytes", 0)) < 1:
+			errors.append("Pack 0.6 file records must use the exact integrity fields and supported media types.")
 	if not errors.is_empty():
 		return prepared
 	var referenced_paths := _collect_referenced_paths(manifest, errors)
@@ -915,6 +944,141 @@ static func _validate_and_prepare(manifest: Dictionary, pack_root: String) -> Di
 			manifest, file_index, pack_root, world_spec, world_path, prepared, errors
 		)
 	return prepared
+
+
+static func _validate_complete_farm(manifest: Dictionary, pack_root: String, prepared: Dictionary) -> Dictionary:
+	var errors: Array[String] = prepared.errors
+	var pack := _dictionary_at(manifest, "pack", errors)
+	var compatibility := _dictionary_at(manifest, "compatibility", errors)
+	var output_license := _dictionary_at(_dictionary_at(manifest, "license", errors), "output", errors)
+	if errors.is_empty():
+		if not _is_pack_id(str(pack.get("id", ""))): errors.append("pack.id must be lowercase kebab-case ASCII.")
+		else: prepared.pack_id = pack.id
+		var generator := _dictionary_at(pack, "generator", errors)
+		if pack.get("version") != "0.1.0-alpha.9" or not _has_exact_keys(generator, ["name", "version"]) or generator.get("name") != "Mapsoo Worldsmith" or generator.get("version") != "0.1.0-alpha.9": errors.append("Pack 0.6 must identify Mapsoo Worldsmith Alpha.9.")
+		var importer := _dictionary_at(compatibility, "importer", errors)
+		if compatibility.get("godot_min") != "4.3" or compatibility.get("grid") != "orthogonal" or compatibility.get("art_style") != "pixel_art" or importer.get("id") != "mapsoo_importer" or importer.get("min_version") != "0.1.0-alpha.9": errors.append("Pack 0.6 compatibility contract is unsupported.")
+		if manifest.get("profile") != "topdown-farm" or manifest.get("completeness_policy") != "topdown-farm-complete-v1": errors.append("Pack 0.6 must use the complete top-down farm profile.")
+		if output_license.get("permits_redistribution") != true or typeof(output_license.get("id")) != TYPE_STRING or str(output_license.get("id")).is_empty(): errors.append("Pack 0.6 output must permit redistribution.")
+	if not errors.is_empty(): return prepared
+
+	var file_index := _validate_file_records(manifest.get("files"), pack_root, errors)
+	var atlas_paths := {}
+	var atlases: Variant = manifest.get("atlases")
+	if typeof(atlases) != TYPE_ARRAY or atlases.size() != ALPHA9_ATLASES.size():
+		errors.append("Pack 0.6 requires exactly five canonical atlases.")
+	else:
+		for index: int in ALPHA9_ATLASES.size():
+			var atlas: Variant = atlases[index]
+			if typeof(atlas) != TYPE_DICTIONARY or atlas.get("id") != ALPHA9_ATLASES[index] or typeof(atlas.get("path")) != TYPE_STRING or not _is_safe_relative_path(atlas.path): errors.append("Pack 0.6 atlas %d is not canonical." % index)
+			else: atlas_paths[atlas.id] = atlas.path
+	var layers: Variant = manifest.get("layers")
+	if typeof(layers) != TYPE_ARRAY or layers.size() != ALPHA9_LAYERS.size(): errors.append("Pack 0.6 requires seven canonical layers.")
+	else:
+		for index: int in ALPHA9_LAYERS.size():
+			if typeof(layers[index]) != TYPE_DICTIONARY or layers[index].get("id") != ALPHA9_LAYERS[index] or layers[index].get("order") != index: errors.append("Pack 0.6 layers must use canonical order.")
+	var role_paths := {}
+	var roles: Variant = manifest.get("roles")
+	if typeof(roles) != TYPE_ARRAY or roles.size() != ALPHA9_ROLES.size(): errors.append("Pack 0.6 requires all 21 canonical roles.")
+	else:
+		for index: int in ALPHA9_ROLES.size():
+			if typeof(roles[index]) != TYPE_DICTIONARY or roles[index].get("role") != ALPHA9_ROLES[index] or typeof(roles[index].get("path")) != TYPE_STRING: errors.append("Pack 0.6 roles must use canonical order.")
+			else: role_paths[roles[index].role] = roles[index].path
+	var runtime := _dictionary_at(manifest, "runtime", errors)
+	var runtime_paths := {}
+	for key: String in ["scene", "collision", "navigation"]:
+		var reference := _dictionary_at(runtime, key, errors)
+		if not _has_exact_keys(reference, ["path"]) or typeof(reference.get("path")) != TYPE_STRING or not _is_safe_relative_path(reference.path): errors.append("runtime.%s must contain one safe path." % key)
+		else: runtime_paths[key] = reference.path
+	var spawn := _dictionary_at(runtime, "spawn", errors)
+	if not _has_exact_keys(spawn, ["x", "y"]) or not _is_json_integer(spawn.get("x")) or not _is_json_integer(spawn.get("y")) or spawn.get("x") < 0 or spawn.get("y") < 0: errors.append("runtime.spawn must contain non-negative integer x/y coordinates.")
+	var notice_path: Variant = output_license.get("notice_path")
+	var canonical_role_paths := [atlas_paths.get("terrain"), atlas_paths.get("terrain"), atlas_paths.get("terrain"), atlas_paths.get("terrain"), atlas_paths.get("props"), atlas_paths.get("props"), atlas_paths.get("props"), atlas_paths.get("props"), atlas_paths.get("props"), atlas_paths.get("props"), atlas_paths.get("structures"), atlas_paths.get("structures"), atlas_paths.get("crops"), atlas_paths.get("crops"), atlas_paths.get("crops"), atlas_paths.get("crops"), atlas_paths.get("character"), runtime_paths.get("collision"), runtime_paths.get("navigation"), runtime_paths.get("scene"), role_paths.get("world.preview")]
+	for index: int in ALPHA9_ROLES.size():
+		if role_paths.get(ALPHA9_ROLES[index]) != canonical_role_paths[index]: errors.append("Role %s is not bound to its canonical asset." % ALPHA9_ROLES[index])
+	var referenced: Array = atlas_paths.values() + role_paths.values() + runtime_paths.values() + [notice_path]
+	for path_value: Variant in referenced:
+		if typeof(path_value) != TYPE_STRING or not _is_safe_relative_path(path_value) or not file_index.has(path_value): errors.append("Referenced file is absent or unsafe: %s" % path_value)
+	if not errors.is_empty(): return prepared
+	for atlas_id: String in ALPHA9_ATLASES:
+		var path: String = atlas_paths[atlas_id]
+		if file_index[path].get("media_type") != "image/png": errors.append("Atlas must be PNG: %s" % path)
+		var loaded := _load_png(_resolve_pack_path(pack_root, path))
+		if not loaded.ok: errors.append(loaded.error)
+		else:
+			prepared.textures[path] = _texture_from_image(loaded.image)
+			var expected_size: Vector2i = {"terrain": Vector2i(128, 32), "props": Vector2i(192, 32), "structures": Vector2i(128, 64), "crops": Vector2i(128, 32), "character": Vector2i(128, 128)}[atlas_id]
+			if loaded.image.get_size() != expected_size: errors.append("Atlas %s must have canonical dimensions %s." % [atlas_id, expected_size])
+	for key: String in ["scene", "collision", "navigation"]:
+		if file_index[runtime_paths[key]].get("media_type") != "application/json": errors.append("Runtime sidecar must be JSON: %s" % runtime_paths[key])
+	if not errors.is_empty(): return prepared
+
+	var scene_read := _read_json_file(_resolve_pack_path(pack_root, runtime_paths.scene))
+	var collision_read := _read_json_file(_resolve_pack_path(pack_root, runtime_paths.collision))
+	var navigation_read := _read_json_file(_resolve_pack_path(pack_root, runtime_paths.navigation))
+	if not scene_read.ok: errors.append(scene_read.error)
+	if not collision_read.ok: errors.append(collision_read.error)
+	if not navigation_read.ok: errors.append(navigation_read.error)
+	if not errors.is_empty(): return prepared
+	var scene: Dictionary = scene_read.value
+	var map := _dictionary_at(scene, "map", errors)
+	if scene.get("schemaVersion") != "0.1.0" or not _is_json_integer(map.get("width")) or not _is_json_integer(map.get("height")) or map.get("width") < 1 or map.get("height") < 1 or map.get("tileSize") != 32: errors.append("Pack 0.6 scene sidecar map is invalid.")
+	prepared.width = int(map.get("width", 0)); prepared.height = int(map.get("height", 0)); prepared.tile_size = Vector2i(32, 32)
+	var scene_layers := _dictionary_at(scene, "layers", errors)
+	for layer_id: String in ["ground", "water", "path", "soil"]:
+		var cells: Variant = scene_layers.get(layer_id)
+		if typeof(cells) != TYPE_ARRAY or cells.size() != prepared.width * prepared.height: errors.append("Scene layer %s has invalid dimensions." % layer_id)
+		else:
+			for value: Variant in cells:
+				if not _is_json_integer(value) or int(value) not in [-1, 0, 1, 2, 3]: errors.append("Scene layer %s contains an invalid tile." % layer_id); break
+			prepared.layer_cells[layer_id] = cells
+			prepared.layer_cell_counts[layer_id] = cells.filter(func(value: Variant) -> bool: return int(value) != -1).size()
+	prepared.tile_layer_ids = ["ground", "water", "path", "soil"]
+	prepared.cells = prepared.layer_cells.get("ground", []); prepared.cell_count = int(prepared.layer_cell_counts.get("ground", 0))
+	for group: String in ["props", "structures", "crops"]:
+		var entries: Variant = scene.get(group)
+		if typeof(entries) != TYPE_ARRAY: errors.append("Scene %s must be an array." % group)
+		else:
+			for entry: Variant in entries:
+				if typeof(entry) != TYPE_DICTIONARY or not role_paths.has(entry.get("role")) or _non_negative_int_pair(entry.get("cell"), "%s cell" % group, errors).x >= prepared.width or int(entry.cell[1]) >= prepared.height: errors.append("Scene %s placement is invalid." % group)
+		prepared[group] = entries
+	if scene.get("spawn") != spawn: errors.append("Manifest and scene spawn coordinates must match.")
+	var collision: Dictionary = collision_read.value
+	if collision.get("schemaVersion") != "0.1.0" or collision.get("coordinateSpace") != "map-cells" or typeof(collision.get("blocked")) != TYPE_ARRAY: errors.append("Collision sidecar is invalid.")
+	else:
+		prepared.collisions = collision.blocked
+		for cell: Variant in prepared.collisions:
+			var collision_cell := _non_negative_int_pair(cell, "collision blocked cell", errors)
+			if collision_cell.x >= prepared.width or collision_cell.y >= prepared.height: errors.append("Collision blocked cell is outside the map.")
+	var navigation: Dictionary = navigation_read.value
+	if navigation.get("schemaVersion") != "0.1.0" or navigation.get("coordinateSpace") != "map-pixels" or typeof(navigation.get("outlines")) != TYPE_ARRAY or navigation.outlines.is_empty(): errors.append("Navigation sidecar is invalid.")
+	else: prepared.navigation_outlines = navigation.outlines
+	prepared.spawn = Vector2i(int(spawn.x), int(spawn.y)); prepared.role_paths = role_paths; prepared.atlas_paths = atlas_paths
+	var character := _dictionary_at(manifest, "character", errors)
+	if character.get("atlas") != atlas_paths.get("character") or _positive_int_pair(character.get("frame_size"), "character.frame_size", errors) != Vector2i(32, 32): errors.append("Character atlas or frame size is invalid.")
+	var clips: Variant = character.get("clips")
+	if typeof(clips) != TYPE_ARRAY or clips.size() != ALPHA9_CLIPS.size(): errors.append("Character must contain eight canonical clips.")
+	else:
+		for index: int in ALPHA9_CLIPS.size():
+			var clip: Dictionary = clips[index] if typeof(clips[index]) == TYPE_DICTIONARY else {}
+			if clip.get("id") != ALPHA9_CLIPS[index] or typeof(clip.get("fps")) not in [TYPE_INT, TYPE_FLOAT] or float(clip.get("fps", 0)) <= 0 or typeof(clip.get("frames")) != TYPE_ARRAY or clip.frames.is_empty(): errors.append("Character clip %s is invalid." % ALPHA9_CLIPS[index])
+			else:
+				for frame: Variant in clip.frames:
+					var frame_pos := _non_negative_int_pair([frame.get("x") if typeof(frame) == TYPE_DICTIONARY else -1, frame.get("y") if typeof(frame) == TYPE_DICTIONARY else -1], "character frame", errors)
+					if frame_pos.x + 32 > 128 or frame_pos.y + 32 > 128: errors.append("Character frame is outside the canonical atlas.")
+	prepared.character = character
+	if errors.is_empty(): prepared.tile_set = _build_complete_farm_tileset(prepared)
+	return prepared
+
+
+static func _build_complete_farm_tileset(prepared: Dictionary) -> TileSet:
+	var tile_set := TileSet.new(); tile_set.tile_size = Vector2i(32, 32)
+	var source := TileSetAtlasSource.new(); source.texture = prepared.textures[prepared.atlas_paths.terrain]; source.texture_region_size = Vector2i(32, 32)
+	for tile_id: int in 4:
+		var coords := Vector2i(tile_id, 0); source.create_tile(coords)
+		prepared.tile_lookup[tile_id] = {"source_id": 0, "coords": coords, "alternative_id": 0}
+	tile_set.add_source(source, 0)
+	return tile_set
 
 
 static func _validate_places_runtime(
@@ -1837,7 +2001,78 @@ static func _validate_props(
 			prop.y = int(y)
 
 
+static func _alpha9_role_region(role: String) -> Rect2:
+	if role.begins_with("prop."): return Rect2(ALPHA9_ROLES.slice(4, 10).find(role) * 32, 0, 32, 32)
+	if role == "structure.house": return Rect2(0, 0, 64, 64)
+	if role == "structure.barn": return Rect2(64, 0, 64, 64)
+	if role.begins_with("crop.basic.stage-"): return Rect2((int(role.trim_prefix("crop.basic.stage-")) - 1) * 32, 0, 32, 32)
+	return Rect2()
+
+
+static func _alpha9_add_placement_group(root: Node2D, prepared: Dictionary, group: String, name: String, atlas_id: String, z: int) -> void:
+	var container := Node2D.new(); container.name = name; container.z_index = z; container.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	root.add_child(container); container.owner = root
+	var texture: Texture2D = prepared.textures[prepared.atlas_paths[atlas_id]]
+	var index := 0
+	for entry_value: Variant in prepared[group]:
+		var entry: Dictionary = entry_value
+		var region := _alpha9_role_region(entry.role)
+		var atlas_texture := AtlasTexture.new(); atlas_texture.atlas = texture; atlas_texture.region = region; atlas_texture.filter_clip = true
+		var sprite := Sprite2D.new(); sprite.name = "%s_%04d" % [name.trim_suffix("s"), index]; sprite.texture = atlas_texture; sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.position = Vector2((int(entry.cell[0]) + 0.5) * 32, (int(entry.cell[1]) + 1.0) * 32); sprite.offset = Vector2(0, -region.size.y * 0.5 + 16)
+		sprite.set_meta("mapsoo_role", entry.role); sprite.set_meta("mapsoo_cell", Vector2i(int(entry.cell[0]), int(entry.cell[1])))
+		container.add_child(sprite); sprite.owner = root; index += 1
+
+
+static func _build_complete_farm_scene(prepared: Dictionary, tile_set: TileSet) -> Dictionary:
+	var root := Node2D.new(); root.name = "MapsooWorld"; root.set_meta("mapsoo_pack_id", prepared.pack_id); root.set_meta("mapsoo_profile", "topdown-farm")
+	var width: int = prepared.width
+	var layer_names := {"ground": "Ground", "water": "Water", "path": "Paths", "soil": "Soil"}
+	for layer_index: int in prepared.tile_layer_ids.size():
+		var layer_id: String = prepared.tile_layer_ids[layer_index]
+		var layer := TileMapLayer.new(); layer.name = layer_names[layer_id]; layer.tile_set = tile_set; layer.z_index = layer_index; layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		root.add_child(layer); layer.owner = root
+		var cells: Array = prepared.layer_cells[layer_id]
+		for index: int in cells.size():
+			var tile_id := int(cells[index]); if tile_id >= 0: layer.set_cell(Vector2i(index % width, index / width), 0, Vector2i(tile_id, 0), 0)
+	_alpha9_add_placement_group(root, prepared, "props", "Props", "props", 4)
+	_alpha9_add_placement_group(root, prepared, "structures", "Structures", "structures", 5)
+	_alpha9_add_placement_group(root, prepared, "crops", "Crops", "crops", 6)
+
+	var navigation_region := NavigationRegion2D.new(); navigation_region.name = "WorldNavigation"
+	var polygon := NavigationPolygon.new()
+	for outline_value: Variant in prepared.navigation_outlines:
+		if typeof(outline_value) != TYPE_ARRAY or outline_value.size() < 3: continue
+		var outline := PackedVector2Array()
+		for point: Variant in outline_value:
+			var pair := _non_negative_int_pair(point, "navigation point", prepared.errors); outline.append(Vector2(pair.x, pair.y))
+		polygon.add_outline(outline)
+	polygon.make_polygons_from_outlines(); navigation_region.navigation_polygon = polygon
+	root.add_child(navigation_region); navigation_region.owner = root
+
+	var collisions_root := StaticBody2D.new(); collisions_root.name = "WorldCollision"; root.add_child(collisions_root); collisions_root.owner = root
+	for index: int in prepared.collisions.size():
+		var cell: Array = prepared.collisions[index]
+		var shape_node := CollisionShape2D.new(); shape_node.name = "Blocked_%04d" % index; shape_node.position = Vector2((int(cell[0]) + 0.5) * 32, (int(cell[1]) + 0.5) * 32)
+		var shape := RectangleShape2D.new(); shape.size = Vector2(32, 32); shape_node.shape = shape; collisions_root.add_child(shape_node); shape_node.owner = root
+
+	var spawn := Marker2D.new(); spawn.name = "PlayerSpawn"; spawn.position = Vector2((prepared.spawn.x + 0.5) * 32, (prepared.spawn.y + 0.5) * 32); root.add_child(spawn); spawn.owner = root
+	var player := CharacterBody2D.new(); player.name = "Player"; player.position = spawn.position; root.add_child(player); player.owner = root
+	var frames := SpriteFrames.new(); frames.remove_animation("default")
+	var atlas: Texture2D = prepared.textures[prepared.atlas_paths.character]
+	for clip_value: Variant in prepared.character.clips:
+		var clip: Dictionary = clip_value; var animation_name := str(clip.id).replace(".", "_"); frames.add_animation(animation_name); frames.set_animation_speed(animation_name, float(clip.fps)); frames.set_animation_loop(animation_name, true)
+		for frame_value: Variant in clip.frames:
+			var frame: Dictionary = frame_value; var texture := AtlasTexture.new(); texture.atlas = atlas; texture.region = Rect2(int(frame.x), int(frame.y), 32, 32); texture.filter_clip = true; frames.add_frame(animation_name, texture)
+	var visual := AnimatedSprite2D.new(); visual.name = "Visual"; visual.sprite_frames = frames; visual.animation = "idle_south"; visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST; visual.offset = Vector2(16 - float(prepared.character.pivot[0]), 16 - float(prepared.character.pivot[1]))
+	player.add_child(visual); visual.owner = root
+	var player_collision := CollisionShape2D.new(); player_collision.name = "CollisionShape2D"; var capsule := CapsuleShape2D.new(); capsule.radius = 8; capsule.height = 20; player_collision.shape = capsule; player_collision.position = Vector2(0, 6); player.add_child(player_collision); player_collision.owner = root
+	return {"ok": prepared.errors.is_empty(), "root": root, "error": "Navigation data is invalid." if not prepared.errors.is_empty() else ""}
+
+
 static func _build_scene(prepared: Dictionary, tile_set: TileSet) -> Dictionary:
+	if prepared.schema_version == COMPLETE_FARM_SCHEMA_VERSION:
+		return _build_complete_farm_scene(prepared, tile_set)
 	var root := Node2D.new()
 	root.name = "MapsooWorld"
 	root.set_meta("mapsoo_pack_id", prepared.pack_id)
