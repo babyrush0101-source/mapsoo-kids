@@ -10,6 +10,7 @@ import {
 
 const PROVIDER_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+const trustedWorldAssetRuns = new WeakSet<object>();
 
 export interface WorldAssetProviderCapabilities {
   readonly execution: 'local' | 'remote';
@@ -338,12 +339,20 @@ export async function runWorldAssetProvider(
     new Set(job.request.references.map((reference) => reference.id)),
   );
   abortIfNeeded(options.signal, contract.id);
-  return Object.freeze({
+  const result = Object.freeze({
     provider: contract,
     requestId: job.request.id,
     bundle: accepted.bundle,
     payloads: accepted.payloads,
   });
+  trustedWorldAssetRuns.add(result);
+  return result;
+}
+
+export function assertTrustedWorldAssetGeneration(value: unknown): asserts value is WorldAssetGenerationResult {
+  if (typeof value !== 'object' || value === null || !trustedWorldAssetRuns.has(value)) {
+    fail('world-provider.invalid-output', 'World asset generation result was not created by the trusted runner.');
+  }
 }
 
 export function createTopdownFarmReplayProvider(
