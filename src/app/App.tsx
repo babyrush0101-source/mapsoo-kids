@@ -25,6 +25,7 @@ import {
 import { validateGeneratedWorld, validateWorldSpec } from '../core/validate-world';
 import { WorldPreview } from '../features/world-preview/WorldPreview';
 import { WorldGallery } from '../features/world-gallery/WorldGallery';
+import { ReferenceWorldGenerator } from '../features/reference-world-generator/ReferenceWorldGenerator';
 import { DEFAULT_GENERATION_PROVIDER } from '../providers/provider-registry';
 import { CURRENT_PUBLIC_RELEASE } from './current-public-release';
 import { GenerationSession, type GenerationRequest } from './generation-session';
@@ -355,6 +356,8 @@ export function App() {
           disabled={operationBusy}
           onSelect={(id) => void loadWorldExample(id)}
         />
+
+        <ReferenceWorldGenerator />
 
         <section className="workbench" aria-label="World generator workbench">
           <aside className="panel controls-panel">
