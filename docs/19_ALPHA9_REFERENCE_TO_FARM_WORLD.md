@@ -1,6 +1,6 @@
 # Alpha.9 参考图到 Top-down Farm 世界包
 
-状态：候选实现已合入 `main`；尚未创建 Alpha.9 公共 tag、尚未发布、尚无外部采用证据。
+状态：[`v0.1.0-alpha.9`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9) 已于 2026-07-20 公开发布；tag commit `7e0a254e59e5d49fda87fb52b91aecc46f32e3ae`，24 个附件，仍无外部采用证据。
 
 ## 1. 用户结果
 
@@ -10,7 +10,7 @@ Alpha.9 要验证一条公开、中立、可审核的资产生产链：
 
 “参考图”只提供作者有权使用的视觉约束，不是要求复制原图、品牌、角色或构图。输出是可继续编辑的 2D 游戏资产集合，而不是一张看起来像游戏的合成图。环境与角色必须进入同一 palette、像素密度、光照方向、轮廓和比例合同，同时保留各自独立的来源与权利记录。
 
-本里程碑属于通用开源工作流，不是任何私有产品的导出器。当前已实现离线程序化 Provider、完整 `topdown-farm` Pack Schema 0.6.0、一键本地浏览器流程和 Godot 4.3+ 派生；这不表示模型图像 Provider、另外三个 profile、外部消费端或公共 Alpha.9 release 已经存在。
+本里程碑属于通用开源工作流，不是任何私有产品的导出器。当前已发布离线程序化 Provider、完整 `topdown-farm` Pack Schema 0.6.0、一键本地浏览器流程和 Godot 4.3+ 派生；这不表示模型图像 Provider、另外三个 profile 或外部消费端已经存在。
 
 ## 2. 四个公开资产 Profile 的最终目标
 
@@ -20,14 +20,14 @@ Alpha.9 要验证一条公开、中立、可审核的资产生产链：
 | --- | --- | --- |
 | `side-platformer` | 正交侧视平台、单向平台/危险区、视差平面与侧视角色动画 | 未来独立里程碑；不在 Alpha.9 实现 |
 | `isometric-action` | 菱形等距地形、高度、Y-sort 道具、斜向表现与战斗可读性 | 未来独立里程碑；不在 Alpha.9 实现 |
-| `topdown-farm` | 正交俯视农场地形、耕地/作物、建筑、道具、可行走数据与四方向角色动画 | Alpha.9 已实现的唯一端到端候选 |
+| `topdown-farm` | 正交俯视农场地形、耕地/作物、建筑、道具、可行走数据与四方向角色动画 | Alpha.9 已发布的唯一端到端 profile |
 | `layered-depth-2d` | 前景、玩法层、背景、光照与景深平面组成的分层 2D 场景 | 未来独立里程碑；不在 Alpha.9 实现 |
 
 四个 profile 是最终产品覆盖面，不是“一个 Provider 的四种滤镜”。每个 profile 必须有独立的投影、坐标、atlas、角色朝向、遮挡/排序与 Godot 验收合同。Alpha.9 不得用一个成功的 farm 包证明其他三类视角已经支持。
 
 ## 3. Reference World Job 输入合同
 
-当前实现使用 Generation Request V2 `1.0.0`、Pack Schema `0.6.0` 与 completeness policy `topdown-farm-complete-v1`。这些是 `main` 上通过测试的 Alpha.9 候选合同，但在公共 tag 创建前仍不是已发布稳定 API。
+当前实现使用 Generation Request V2 `1.0.0`、Pack Schema `0.6.0` 与 completeness policy `topdown-farm-complete-v1`。这些合同随 Alpha.9 prerelease 发布并受该 tag 的兼容证据约束；prerelease 不等于稳定 API 承诺。
 
 ### 3.1 必需输入
 
@@ -56,7 +56,7 @@ Alpha.9 要验证一条公开、中立、可审核的资产生产链：
 
 ## 4. `topdown-farm` 完整包合同
 
-Alpha.9 的“完整”由版本化 `topdown-farm-complete-v1` completeness matrix 定义，不是人工觉得画面丰富。已实现候选包包含以下类别：
+Alpha.9 的“完整”由版本化 `topdown-farm-complete-v1` completeness matrix 定义，不是人工觉得画面丰富。已发布包包含以下类别：
 
 ### 4.1 环境与地图
 
@@ -90,7 +90,7 @@ Alpha.9 的“完整”由版本化 `topdown-farm-complete-v1` completeness matr
 
 1. **本地摄取**：分别校验环境图与角色图的真实 PNG/JPEG 签名、字节数、像素尺寸、摘要、运行时绑定和明确权利声明，并限制描述长度。当前不执行人脸识别、OCR、商标识别或其他内容级净化。
 2. **隐私投影**：公开 receipt 不保留原图字节、本地路径、文件名、原始参考摘要、自由文本或 attribution 文本；World ID 与 seed 必须由用户填写公开安全值，ID 会进入 ZIP 文件名、manifest 与 README，receipt 会投影 profile、seed、角色、owned 权利、许可、CC0 dedication 与不可逆的完整请求 fingerprint。
-3. **候选生成**：当前离线程序化 Provider 使用 seed、描述和参考摘要派生 palette/视觉变体，再按 `topdown-farm-complete-v1` 返回分类资产；它不进行模型级图像理解，也不允许只返回一张整图。
+3. **程序化生成**：当前离线程序化 Provider 使用 seed、描述和参考摘要派生 palette/视觉变体，再按 `topdown-farm-complete-v1` 返回分类资产；它不进行模型级图像理解，也不允许只返回一张整图。
 4. **标准化**：执行切图、透明背景、nearest-neighbor 缩放、palette 约束、tile 对齐、pivot/foot point、atlas packing、autotile masks 和动画帧整理。
 5. **地图解析**：使用受信 seed 算法建立图层、地点、建筑、作物、道具和可行走数据；不得从参考图中的私人位置或人物关系推断玩法语义。
 6. **完整性校验**：在导出前执行 schema、语义、像素、引用、权限/provenance 和 profile completeness 门禁；任何 error 阻止下载。
@@ -100,7 +100,7 @@ Alpha.9 的“完整”由版本化 `topdown-farm-complete-v1` completeness matr
 
 ## 6. 机器完整性门禁
 
-Alpha.9 发布前，验证器必须从文件本身证明以下事实，不能依赖截图、人工说明或文件名猜测：
+Alpha.9 发布门禁要求验证器从文件本身证明以下事实，不能依赖截图、人工说明或文件名猜测；这些门禁已由 tag workflow 执行：
 
 ### Schema 与引用
 
@@ -134,7 +134,7 @@ Alpha.9 发布前，验证器必须从文件本身证明以下事实，不能依
 
 ## 7. Godot 4 验收
 
-Alpha.9 只有在以下 Godot 证据全部成立后才可进入候选发布：
+Alpha.9 的 tag workflow 已验证以下 Godot 证据：
 
 - 使用公开、可安装的 importer addon 归档，从全新项目完成校验、安装、启用和导入；不声称已上架 Godot Asset Library；
 - Linux/Windows × Godot 4.3/4.7 对同一个真实浏览器 exact pack 执行 headless matrix；
@@ -152,7 +152,7 @@ Alpha.9 只有在以下 Godot 证据全部成立后才可进入候选发布：
 - 参考图必须在本地完成结构、预算、摘要、绑定和权利验证；原图默认不进入导出包、示例、截图、测试夹具或公开日志。当前没有内容级自动净化能力；
 - 不执行或保存人脸识别、人物姓名推断、年龄精确推断、地理定位、OCR 身份提取或用户画像；
 - 不接收儿童姓名、照片、声音、学校、家庭关系、账户/设备 ID、学习记录、对话或精确位置作为资产合同字段；
-- 若输入包含人物、私人环境、文字或商标，当前候选依赖用户先在本地裁剪/清理并确认权利；系统不声称自动识别这些内容。不能把敏感内容藏在 seed、slug、文件名、prompt、metadata、receipt 或 digest ledger 中；
+- 若输入包含人物、私人环境、文字或商标，当前版本依赖用户先在本地裁剪/清理并确认权利；系统不声称自动识别这些内容。不能把敏感内容藏在 seed、slug、文件名、prompt、metadata、receipt 或 digest ledger 中；
 - 私有原图的原始 SHA-256 默认只留在本地私有审计记录；公开 receipt 使用不可反推出原图的 run-local reference ID 与公开安全投影摘要。
 
 ### 权利与再分发
@@ -175,11 +175,11 @@ Alpha.9 不包含：
 - 对任意输入图都能生成、对所有模型输出可商用或达到特定美术质量的保证；
 - 自动上传 itch.io、Godot Asset Library 或其他第三方平台；
 - 任何外部团队已经接入、生产采用、真实儿童使用或社区使用量声明；
-- 改写 Alpha.1–Alpha.8 已发布 artifact，或把候选字段伪装成稳定 API。
+- 改写 Alpha.1–Alpha.9 已发布 artifact，或把 prerelease 字段伪装成稳定 API。
 
-## 10. 发布门禁与停止条件
+## 10. 已通过的发布门禁与后续停止条件
 
-### 发布门禁
+### 已通过的发布门禁
 
 - 公开 PR 明确列出 job/schema/profile/completeness/receipt 版本和兼容决策；
 - TypeScript、schema、Provider、图像净化、完整性、ZIP、浏览器与负向套件全部通过；
@@ -189,9 +189,11 @@ Alpha.9 不包含：
 - 安全/依赖审计、release attachment 清单、远端 digest 和已发布历史不可变检查通过；
 - README、路线图和 release notes 只描述门禁证明的能力，并保留 AI/provenance/许可、隐私和未采用声明。
 
+公共证据：[GitHub prerelease](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9) 与 [tag workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29727475555)。最终门禁覆盖 45 个测试文件 / 256 个测试、221 个负向案例、Linux/Windows × Godot 4.3/4.7 exact-pack 路径和 24 个远端附件摘要；Pack 0.6 ZIP SHA-256 为 `10d89c7888b70215a14af2b6552fc5237d799df9cd3092aee99541961d9e480c`。
+
 ### 停止条件
 
-出现以下任一情况，不得创建 Alpha.9 公共 tag：
+后续版本若出现以下任一情况，不得基于 Alpha.9 能力创建新的公共 tag：
 
 1. 只能输出概念图，不能得到八类必需资产、sidecar、完整性矩阵和 Godot 可用地图；
 2. 环境与角色不能统一为同一 style contract，或四方向角色动画、farm autotile/crop stages 有缺口；
@@ -200,7 +202,7 @@ Alpha.9 不包含：
 5. 参考图权利、Provider 条款、输出许可或 AI disclosure 任一不清楚；
 6. 同一冻结 generation result 不能复现，或失败会留下可误认成完整包的部分输出；
 7. Godot exact-pack matrix、首次导入、安全重导入或历史回归任一失败；
-8. 实现必须修改 Alpha.1–Alpha.8 已发布字节、合同、fixture、tag 或摘要；
+8. 实现必须修改 Alpha.1–Alpha.9 已发布字节、合同、fixture、tag 或摘要；
 9. 文档或演示需要声称另外三个 profile 已实现、第三方平台已上架、外部采用或私人消费端已接入才能成立。
 
-停止后应把失败固化为最小、公开安全的负向 fixture 或 issue；在证据补齐前保持候选状态。
+停止后应把失败固化为最小、公开安全的负向 fixture 或 issue；在证据补齐前保持新版本候选状态。

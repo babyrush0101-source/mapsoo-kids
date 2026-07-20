@@ -122,12 +122,12 @@ v0.1 不追求注册量，优先测量：
 - 外部开发者能否不求助完成一次导入；
 - issue 中“资产不可用”与“文档不清楚”的比例。
 
-## 9. Reference World Job Alpha.9 候选
+## 9. Reference World Job Alpha.9（已发布）
 
-`main` 已实现 Alpha.9 候选：创作者提供一张环境参考图、一张角色参考图和一段短描述，由离线程序化 Provider 通过参考摘要与 seed 派生 palette/视觉变体，生成一份完整的 `topdown-farm` 世界美术资产包。它不执行模型级图像理解，也不表示复制原图、品牌、角色或构图；候选尚未发布为公共 tag。
+[`v0.1.0-alpha.9`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9) 已公开发布：创作者提供一张环境参考图、一张角色参考图和一段短描述，由离线程序化 Provider 通过参考摘要与 seed 派生 palette/视觉变体，生成一份完整的 `topdown-farm` 世界美术资产包。它不执行模型级图像理解，也不表示复制原图、品牌、角色或构图。
 
 产品最终覆盖四个中立 asset profile：`side-platformer`、`isometric-action`、`topdown-farm` 与 `layered-depth-2d`。每个 profile 都有独立投影、atlas、动画、排序和 Godot 合同；首个纵向切片只覆盖 `topdown-farm`，不得据此声称另外三个 profile 已实现。
 
-`topdown-farm` 的完整结果不是单张合成图。候选包需要同时具备地形、水域、道路/田埂与围栏、作物阶段、建筑、道具、分层地图、可行走/阻挡数据、四方向角色 `idle/walk`、preview、严格 sidecar、manifest、receipt、许可与使用说明。下载前由版本化 completeness matrix 逐类证明文件、像素、动画、引用、摘要和权利信息完整；任何 error 阻止导出。
+`topdown-farm` 的完整结果不是单张合成图。发布包同时具备地形、水域、道路/田埂与围栏、作物阶段、建筑、道具、分层地图、可行走/阻挡数据、四方向角色 `idle/walk`、preview、严格 sidecar、manifest、receipt、许可与使用说明。下载前由版本化 completeness matrix 逐类证明文件、像素、动画、引用、摘要和权利信息完整；任何 error 阻止导出。
 
-参考图在本地执行字节、媒体签名、尺寸、预算和权利验证，不进入示例、ZIP、截图或公开日志；这不是人脸、OCR、商标或其他内容级净化。当前候选只接受用户拥有且明确允许衍生、输出再分发和 CC0 dedication 的环境图与角色图，licensed 参考输入拒绝导出。候选已经实现但尚未公开发布，也不表示外部团队已经采用。详细范围见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。
+参考图在本地执行字节、媒体签名、尺寸、预算和权利验证，不进入示例、ZIP、截图或公开日志；这不是人脸、OCR、商标或其他内容级净化。Alpha.9 只接受用户拥有且明确允许衍生、输出再分发和 CC0 dedication 的环境图与角色图，licensed 参考输入拒绝导出。公开发布不表示外部团队已经采用、STOYO 已生产接入或 itch.io 已上架。详细范围见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。
