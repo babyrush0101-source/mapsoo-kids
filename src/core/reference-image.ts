@@ -222,6 +222,25 @@ function jpegDimensions(bytes: Uint8Array): { width: number; height: number } | 
   return null;
 }
 
+export function inspectReferenceImageBytes(
+  bytes: Uint8Array,
+  mediaType: ReferenceImageMediaType,
+): { readonly width: number; readonly height: number } {
+  if (!(bytes instanceof Uint8Array) || bytes.byteLength < 1 || bytes.byteLength > MAX_REFERENCE_IMAGE_BYTES) {
+    fail('reference.invalid-bytes', 'Reference image bytes are missing or exceed the size limit.');
+  }
+  const dimensions = mediaType === 'image/png' ? pngDimensions(bytes) : jpegDimensions(bytes);
+  if (!dimensions) fail('reference.mime-mismatch', `Reference image bytes do not match ${mediaType}.`);
+  if (
+    dimensions.width < 1 || dimensions.height < 1
+    || dimensions.width > MAX_REFERENCE_IMAGE_DIMENSION || dimensions.height > MAX_REFERENCE_IMAGE_DIMENSION
+    || dimensions.width * dimensions.height > MAX_REFERENCE_IMAGE_PIXELS
+  ) {
+    fail('reference.dimension-mismatch', 'Reference image dimensions exceed the supported budget.');
+  }
+  return Object.freeze(dimensions);
+}
+
 async function sha256(bytes: Uint8Array): Promise<string> {
   const input = new Uint8Array(bytes.byteLength);
   input.set(bytes);
@@ -237,8 +256,7 @@ export async function bindReferenceImage(descriptorValue: unknown, byteValue: Ui
   if (byteValue.byteLength !== descriptor.byteLength) {
     fail('reference.invalid-bytes', 'Reference image byteLength does not match the runtime bytes.');
   }
-  const dimensions = descriptor.mediaType === 'image/png' ? pngDimensions(byteValue) : jpegDimensions(byteValue);
-  if (!dimensions) fail('reference.mime-mismatch', `Reference image bytes do not match ${descriptor.mediaType}.`);
+  const dimensions = inspectReferenceImageBytes(byteValue, descriptor.mediaType);
   if (dimensions.width !== descriptor.width || dimensions.height !== descriptor.height) {
     fail('reference.dimension-mismatch', 'Reference image dimensions do not match the descriptor.');
   }
