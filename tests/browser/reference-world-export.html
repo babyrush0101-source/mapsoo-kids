@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-state="loading">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapsoo reference-world browser export harness</title>
+  </head>
+  <body>
+    <main>
+      <p>Local-only fixed-input harness for the same profile router used by the product UI.</p>
+      <pre id="result"></pre>
+      <pre id="error"></pre>
+    </main>
+    <script>
+      window.addEventListener('error', (event) => {
+        document.querySelector('#error').textContent = event.error?.stack || event.message;
+        document.documentElement.dataset.state = 'failed';
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        document.querySelector('#error').textContent = event.reason?.stack || String(event.reason);
+        document.documentElement.dataset.state = 'failed';
+      });
+    </script>
+    <script type="module" src="./reference-world-export.ts"></script>
+  </body>
+</html>
