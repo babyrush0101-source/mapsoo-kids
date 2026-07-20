@@ -9,6 +9,10 @@
 
 Mapsoo Worldsmith is evolving from the original `mapsoo-kids` website into a local-first tool that turns a compact world specification into previewable, versioned game-art asset packs for Godot. itch.io distribution is intentionally postponed; GitHub Releases is the audited public channel for this alpha.
 
+`main` now also contains the implemented **Alpha.9 release candidate**, which is not yet a public tag or immutable release. Its one-click local workflow accepts one environment image, one character image, and a short description, then uses the offline procedural provider to build a complete `topdown-farm` Pack Schema 0.6.0 ZIP. That pack includes terrain, water, paths/fences, crops, structures, props, layered scene/collision/navigation data, a four-direction `idle`/`walk` character, and a preview. The separately installed importer supports Godot 4.3+ and the candidate exact-pack path is tested on Linux/Windows with Godot 4.3/4.7. `side-platformer`, `isometric-action`, and `layered-depth-2d` remain planned and are not supported by Alpha.9.
+
+Reference bytes stay local and are not embedded in the ZIP; local paths, filenames, raw reference digests, and the free-text description are excluded from the public receipt. The World ID and seed are intentionally public and appear in pack metadata, so users must choose public-safe values. The current browser path accepts only user-owned references with explicit generative-adaptation, output-redistribution, and **CC0 dedication** permission. Licensed references are rejected rather than silently relicensed. Generated PNG/runtime JSON output is CC0-1.0, repository code and documentation are MIT, and the original references retain their own rights. Current checks validate file bytes, media signatures, dimensions, budgets, and declared rights; they do not perform face recognition, OCR, trademark detection, or content-level sanitization. The current provider is procedural and truthfully records `contains_generative_ai: false`; that statement does not apply to future model providers. No external adoption, STOYO production use, Godot Asset Library listing, or itch.io publication is claimed.
+
 ## Project status
 
 The **v0.1.0-alpha.8 prerelease** is the current immutable public toolchain release. Its three asset-pack compatibility fixtures remain the byte-identical Alpha.7 public baseline, preserving the account-free, backend-free, API-key-free loop:
@@ -88,6 +92,8 @@ Release tooling now resolves `package.json` through a fail-closed, immutable ver
 - [Generation Provider SDK](docs/09_PROVIDER_SDK.md)
 - [10-minute first Godot import](docs/10_FIRST_GODOT_IMPORT.md)
 - [Safe Godot re-import contract](docs/11_SAFE_GODOT_REIMPORT.md)
+- [Alpha.9 reference-to-farm candidate scope](docs/19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)
+- [v0.1.0-alpha.9 candidate release notes](docs/releases/v0.1.0-alpha.9.md)
 - [Deterministic itch.io release visuals](docs/release-visuals/README.md)
 - [Verified itch.io operator upload kit](docs/itch-kit/README.md)
 - [75-second evidence video source and verification](video/README.md)

@@ -112,6 +112,14 @@ export function materializeGenerationRequestV2(value: unknown): GenerationReques
   });
 }
 
+/** One-way binding for the complete validated request, including reference rights and digests. */
+export async function fingerprintGenerationRequestV2(value: unknown): Promise<string> {
+  const request = materializeGenerationRequestV2(value);
+  const bytes = new TextEncoder().encode(JSON.stringify(request));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export interface RuntimeReferenceBytes {
   readonly path: string;
   readonly bytes: Uint8Array;

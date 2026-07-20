@@ -1,4 +1,4 @@
-import type { GenerationRequestV2 } from './generation-request-v2';
+import { fingerprintGenerationRequestV2, type GenerationRequestV2 } from './generation-request-v2';
 import {
   assertTrustedWorldAssetGeneration,
   type WorldAssetGenerationResult,
@@ -15,8 +15,9 @@ export interface WorldAssetReceipt {
     readonly seed: string;
     readonly reference_rights: readonly {
       readonly role: 'environment-style' | 'character';
-      readonly basis: 'owned' | 'licensed' | 'public-domain';
-      readonly license: string;
+      readonly basis: 'owned';
+      readonly license: 'LicenseRef-User-Owned';
+      readonly permits_cc0_dedication: true;
     }[];
   };
   readonly provider: {
@@ -32,15 +33,6 @@ export interface WorldAssetReceipt {
     readonly files: readonly { readonly path: string; readonly bytes: number; readonly sha256: string }[];
   };
   readonly disclosures: readonly string[];
-}
-
-function canonical(value: unknown): Uint8Array {
-  return new TextEncoder().encode(JSON.stringify(value));
-}
-
-async function sha256(bytes: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes.slice().buffer);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function canonicalTimestamp(value: string): string {
@@ -68,18 +60,19 @@ export async function projectWorldAssetReceipt(
   if (run.provider.capabilities.outputProvenance !== 'procedural') {
     throw new Error('Alpha.9 portable export currently accepts only locally generated procedural assets.');
   }
-  const fingerprint = await sha256(canonical({
-    schemaVersion: request.schemaVersion,
-    id: request.id,
-    profile: request.profile,
-    description: request.description,
-    seed: request.seed,
-    references: request.references.map((reference) => ({
-      role: reference.role,
-      sha256: reference.sha256,
-      rights: reference.rights,
-    })),
-  }));
+  if (request.references.some(({ rights }) => (
+    rights.basis !== 'owned'
+    || rights.license !== 'LicenseRef-User-Owned'
+    || rights.allowGenerativeAdaptation !== true
+    || rights.allowOutputRedistribution !== true
+    || rights.allowOutputCc0Dedication !== true
+  ))) {
+    throw new Error('Alpha.9 CC0 receipt requires user-owned references with explicit adaptation, redistribution, and CC0 dedication permission.');
+  }
+  const fingerprint = await fingerprintGenerationRequestV2(request);
+  if (fingerprint !== run.requestFingerprintSha256) {
+    throw new Error('World asset receipt request fingerprint does not match the trusted run.');
+  }
   return Object.freeze({
     schema_version: WORLD_ASSET_RECEIPT_SCHEMA_VERSION,
     completed_at: canonicalTimestamp(completedAt),
@@ -89,8 +82,9 @@ export async function projectWorldAssetReceipt(
       seed: request.seed,
       reference_rights: Object.freeze(request.references.map((reference) => Object.freeze({
         role: reference.role,
-        basis: reference.rights.basis,
-        license: reference.rights.license,
+        basis: 'owned' as const,
+        license: 'LicenseRef-User-Owned' as const,
+        permits_cc0_dedication: true as const,
       }))),
     }),
     provider: Object.freeze({

@@ -39,6 +39,7 @@ function reference(bytes: Uint8Array, role: 'environment-style' | 'character') {
       license: 'LicenseRef-User-Owned',
       allowGenerativeAdaptation: true,
       allowOutputRedistribution: true,
+      allowOutputCc0Dedication: true,
     },
   } as const;
 }

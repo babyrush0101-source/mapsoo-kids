@@ -131,10 +131,11 @@ export function ReferenceWorldGenerator() {
             <label>World ID<input value={worldId} maxLength={80} onChange={(event) => setWorldId(event.target.value)} /></label>
             <label>Seed<input value={seed} maxLength={160} onChange={(event) => setSeed(event.target.value)} /></label>
           </div>
+          <p className="reference-generator-status">World ID and seed are public: they are written into the ZIP name, manifest, README, and receipt.</p>
           <label>Description<textarea rows={4} maxLength={2000} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
           <label className="rights-confirmation">
             <input type="checkbox" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} />
-            <span>I own both references and allow generative adaptation plus redistribution of generated output.</span>
+            <span>I own both references and allow generative adaptation, redistribution, and CC0 dedication of the newly generated output.</span>
           </label>
           <button className="primary-action" type="button" disabled={!canGenerate} onClick={() => void generate()}>
             <span>{state === 'generating' ? 'Generating complete pack…' : 'Generate complete farm pack'}</span><span>→</span>

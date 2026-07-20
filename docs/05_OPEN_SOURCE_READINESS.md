@@ -6,9 +6,9 @@
 
 Mapsoo 应以一个核心仓库申请，不需要用两个刚公开的网站凑数量。申请叙事应围绕 Godot 世界资产管线、开放格式、计划中的 STOYO 首个消费场景和对独立开发者的价值；在真正接入前不得把 STOYO 写成已采用。
 
-公开 `main` 已达到 Godot-importable alpha：三种世界配方、确定性生成、Canvas 预览、严格校验、不含可执行代码的 PNG + JSON ZIP、独立可信安装的 EditorPlugin、安全重导入、四层可编辑地形、确定性语义地点、地点关联透明建筑外观、桌面/390px 浏览器视觉验收，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线 smoke 均已运行。GitHub Pages Demo、公开 CI、`v0.1.0-alpha.1` 至 `v0.1.0-alpha.6` 六个 prerelease、75 秒中英双语 alpha.1 证据视频已经可匿名访问；itch.io 页面按维护者决定延期，真实外部使用反馈仍未完成。当前继续以 GitHub Release/Pages 积累公开维护证据，不把 alpha 描述成成熟的跨平台一键管线。
+公开 `main` 已达到 Godot-importable alpha。当前公开版本仍是 `v0.1.0-alpha.8`；此外 `main` 已实现但尚未发布 Alpha.9 候选：一键本地双参考图输入、离线程序化 `topdown-farm` 完整资产、Pack Schema 0.6.0、隐私最小化 receipt，以及 Godot 4.3+ 派生和 Linux/Windows × Godot 4.3/4.7 exact-pack 验收。另外三个 profile 仍为计划。GitHub Pages Demo、公开 CI 与八个不可变 prerelease 可匿名访问；itch.io 页面延期，真实外部使用反馈仍未完成。候选实现不能写成第九个 release、成熟通用图像生成器、STOYO 采用或外部采用。
 
-当前公开证据：[仓库](https://github.com/babyrush0101-source/mapsoo-kids)、[Demo](https://babyrush0101-source.github.io/mapsoo-kids/)、[`v0.1.0-alpha.6` GitHub prerelease](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.6)、[tag release workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29685960441)、[发布后 main CI](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29686395018)、[已合并 PR #40](https://github.com/babyrush0101-source/mapsoo-kids/pull/40)、[公开发布台账 PR #41](https://github.com/babyrush0101-source/mapsoo-kids/pull/41)、[反馈入口](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)。
+当前已发布证据：[仓库](https://github.com/babyrush0101-source/mapsoo-kids)、[Demo](https://babyrush0101-source.github.io/mapsoo-kids/)、[`v0.1.0-alpha.8` GitHub prerelease](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.8)、[Alpha.8 tag workflow](https://github.com/babyrush0101-source/mapsoo-kids/actions/runs/29691179168)、[已合并 PR #46](https://github.com/babyrush0101-source/mapsoo-kids/pull/46) 与[反馈入口](https://github.com/babyrush0101-source/mapsoo-kids/issues/12)。Alpha.9 只有 `main` 上的候选代码和 PR/CI 证据，在 tag 成功前不列入已发布证据。
 
 独立使用与维护响应只记录在 [`14_COMMUNITY_EVIDENCE.md`](14_COMMUNITY_EVIDENCE.md)。当前台账明确为空，不把维护者测试、机器人下载、star/fork 或 STOYO 计划计作采用。
 
@@ -109,6 +109,8 @@ itch.io 是未来可选的额外分发面，当前已延期。当前查阅的官
 ### Anything else（500 字符内候选稿）
 
 > The repository has public CI, eight immutable prereleases, three audited world packs, reproducible release ledgers, a live browser demo, a Godot addon, security and contribution policies, and structured feedback. The published Alpha.8 release adds a reproducible STOYO request-to-pack CLI, but we do not claim production or external adoption: maintainer/CI tests are excluded, itch.io is postponed, and the evidence ledger remains explicitly empty.
+
+Alpha.9 remains an implemented, unpublished candidate and therefore is not counted among the eight public prereleases in the application text above. Its current offline procedural path produces only `topdown-farm` Pack 0.6 output, accepts only owned references with explicit CC0 dedication permission, performs structural/rights checks rather than content-level image screening, and provides no evidence of external adoption.
 
 ### Role
 

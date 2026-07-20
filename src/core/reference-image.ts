@@ -21,6 +21,8 @@ export interface ReferenceImageRights {
   readonly license: string;
   readonly allowGenerativeAdaptation: true;
   readonly allowOutputRedistribution: true;
+  /** Explicit permission to dedicate newly generated output under CC0-1.0. */
+  readonly allowOutputCc0Dedication: true;
   readonly attribution?: string;
 }
 
@@ -107,7 +109,7 @@ function positiveInteger(value: unknown, label: string, maximum: number): number
 
 function materializeRights(value: unknown): ReferenceImageRights {
   if (!isRecord(value)) fail('reference.invalid-rights', 'Reference image rights must be an object.');
-  const required = ['basis', 'license', 'allowGenerativeAdaptation', 'allowOutputRedistribution'];
+  const required = ['basis', 'license', 'allowGenerativeAdaptation', 'allowOutputRedistribution', 'allowOutputCc0Dedication'];
   const optional = ['attribution'];
   const keys = Object.keys(value);
   if (required.some((key) => !Object.hasOwn(value, key)) || keys.some((key) => !required.includes(key) && !optional.includes(key))) {
@@ -125,6 +127,9 @@ function materializeRights(value: unknown): ReferenceImageRights {
   if (value.allowOutputRedistribution !== true) {
     fail('reference.invalid-rights', 'Reference image rights must explicitly allow generated output redistribution.');
   }
+  if (value.allowOutputCc0Dedication !== true) {
+    fail('reference.invalid-rights', 'Reference image rights must explicitly allow generated output CC0 dedication.');
+  }
   const attribution = value.attribution === undefined
     ? undefined
     : boundedText(value.attribution, 'Reference image attribution', 500);
@@ -136,6 +141,7 @@ function materializeRights(value: unknown): ReferenceImageRights {
     license: value.license,
     allowGenerativeAdaptation: true,
     allowOutputRedistribution: true,
+    allowOutputCc0Dedication: true,
     ...(attribution === undefined ? {} : { attribution }),
   });
 }

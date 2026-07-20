@@ -1,6 +1,6 @@
 # Alpha.9 参考图到 Top-down Farm 世界包
 
-状态：候选范围；尚未实现、尚未发布、尚无外部采用证据。
+状态：候选实现已合入 `main`；尚未创建 Alpha.9 公共 tag、尚未发布、尚无外部采用证据。
 
 ## 1. 用户结果
 
@@ -10,7 +10,7 @@ Alpha.9 要验证一条公开、中立、可审核的资产生产链：
 
 “参考图”只提供作者有权使用的视觉约束，不是要求复制原图、品牌、角色或构图。输出是可继续编辑的 2D 游戏资产集合，而不是一张看起来像游戏的合成图。环境与角色必须进入同一 palette、像素密度、光照方向、轮廓和比例合同，同时保留各自独立的来源与权利记录。
 
-本里程碑属于通用开源工作流，不是任何私有产品的导出器。候选文档不表示图像 Provider、完整 farm pack、Godot 派生或外部消费端已经存在。
+本里程碑属于通用开源工作流，不是任何私有产品的导出器。当前已实现离线程序化 Provider、完整 `topdown-farm` Pack Schema 0.6.0、一键本地浏览器流程和 Godot 4.3+ 派生；这不表示模型图像 Provider、另外三个 profile、外部消费端或公共 Alpha.9 release 已经存在。
 
 ## 2. 四个公开资产 Profile 的最终目标
 
@@ -20,14 +20,14 @@ Alpha.9 要验证一条公开、中立、可审核的资产生产链：
 | --- | --- | --- |
 | `side-platformer` | 正交侧视平台、单向平台/危险区、视差平面与侧视角色动画 | 未来独立里程碑；不在 Alpha.9 实现 |
 | `isometric-action` | 菱形等距地形、高度、Y-sort 道具、斜向表现与战斗可读性 | 未来独立里程碑；不在 Alpha.9 实现 |
-| `topdown-farm` | 正交俯视农场地形、耕地/作物、建筑、道具、可行走数据与四方向角色动画 | Alpha.9 唯一端到端目标 |
+| `topdown-farm` | 正交俯视农场地形、耕地/作物、建筑、道具、可行走数据与四方向角色动画 | Alpha.9 已实现的唯一端到端候选 |
 | `layered-depth-2d` | 前景、玩法层、背景、光照与景深平面组成的分层 2D 场景 | 未来独立里程碑；不在 Alpha.9 实现 |
 
 四个 profile 是最终产品覆盖面，不是“一个 Provider 的四种滤镜”。每个 profile 必须有独立的投影、坐标、atlas、角色朝向、遮挡/排序与 Godot 验收合同。Alpha.9 不得用一个成功的 farm 包证明其他三类视角已经支持。
 
 ## 3. Reference World Job 输入合同
 
-最终字段名和版本号以实现 PR 中通过测试的 JSON Schema 为准；以下是候选语义，不是已发布 API。
+当前实现使用 Generation Request V2 `1.0.0`、Pack Schema `0.6.0` 与 completeness policy `topdown-farm-complete-v1`。这些是 `main` 上通过测试的 Alpha.9 候选合同，但在公共 tag 创建前仍不是已发布稳定 API。
 
 ### 3.1 必需输入
 
@@ -56,7 +56,7 @@ Alpha.9 要验证一条公开、中立、可审核的资产生产链：
 
 ## 4. `topdown-farm` 完整包合同
 
-Alpha.9 的“完整”是由版本化 completeness matrix 定义的机器事实，不是人工觉得画面丰富。候选包至少包含以下类别：
+Alpha.9 的“完整”由版本化 `topdown-farm-complete-v1` completeness matrix 定义，不是人工觉得画面丰富。已实现候选包包含以下类别：
 
 ### 4.1 环境与地图
 
@@ -88,9 +88,9 @@ Alpha.9 的“完整”是由版本化 completeness matrix 定义的机器事实
 
 ## 5. 生成与标准化流程
 
-1. **隔离摄取**：分别校验、解码和净化环境图、角色图及描述；在任何 Provider 调用前完成权利声明与内容边界检查。
-2. **公共安全投影**：从输入提取 palette、材质、形状语言、比例、光照和角色轮廓等允许约束；不保留可识别人物、文字、商标或原始构图。
-3. **候选生成**：Provider 按 `topdown-farm` completeness matrix 返回分类候选，不允许只返回一张整图；环境与角色共享同一不可变 style contract。
+1. **本地摄取**：分别校验环境图与角色图的真实 PNG/JPEG 签名、字节数、像素尺寸、摘要、运行时绑定和明确权利声明，并限制描述长度。当前不执行人脸识别、OCR、商标识别或其他内容级净化。
+2. **隐私投影**：公开 receipt 不保留原图字节、本地路径、文件名、原始参考摘要、自由文本或 attribution 文本；World ID 与 seed 必须由用户填写公开安全值，ID 会进入 ZIP 文件名、manifest 与 README，receipt 会投影 profile、seed、角色、owned 权利、许可、CC0 dedication 与不可逆的完整请求 fingerprint。
+3. **候选生成**：当前离线程序化 Provider 使用 seed、描述和参考摘要派生 palette/视觉变体，再按 `topdown-farm-complete-v1` 返回分类资产；它不进行模型级图像理解，也不允许只返回一张整图。
 4. **标准化**：执行切图、透明背景、nearest-neighbor 缩放、palette 约束、tile 对齐、pivot/foot point、atlas packing、autotile masks 和动画帧整理。
 5. **地图解析**：使用受信 seed 算法建立图层、地点、建筑、作物、道具和可行走数据；不得从参考图中的私人位置或人物关系推断玩法语义。
 6. **完整性校验**：在导出前执行 schema、语义、像素、引用、权限/provenance 和 profile completeness 门禁；任何 error 阻止下载。
@@ -149,16 +149,17 @@ Alpha.9 只有在以下 Godot 证据全部成立后才可进入候选发布：
 
 ### 隐私最小化
 
-- 参考图必须优先在本地净化；原图默认不进入导出包、示例、截图、测试夹具或公开日志；
+- 参考图必须在本地完成结构、预算、摘要、绑定和权利验证；原图默认不进入导出包、示例、截图、测试夹具或公开日志。当前没有内容级自动净化能力；
 - 不执行或保存人脸识别、人物姓名推断、年龄精确推断、地理定位、OCR 身份提取或用户画像；
 - 不接收儿童姓名、照片、声音、学校、家庭关系、账户/设备 ID、学习记录、对话或精确位置作为资产合同字段；
-- 若输入包含人物或私人环境，必须提供明确拒绝/本地裁剪路径；不能把敏感内容藏在 seed、slug、文件名、prompt、metadata、receipt 或 digest ledger 中；
+- 若输入包含人物、私人环境、文字或商标，当前候选依赖用户先在本地裁剪/清理并确认权利；系统不声称自动识别这些内容。不能把敏感内容藏在 seed、slug、文件名、prompt、metadata、receipt 或 digest ledger 中；
 - 私有原图的原始 SHA-256 默认只留在本地私有审计记录；公开 receipt 使用不可反推出原图的 run-local reference ID 与公开安全投影摘要。
 
 ### 权利与再分发
 
-- 用户必须分别确认环境图、角色图的使用权、衍生权与输出再分发权；“能上传”不等于“可以开源发布”；
-- Provider 必须披露模型/工作流和适用条款；输出许可由真实来源链决定，不能由 UI 默认值覆盖；
+- 当前 Alpha.9 exporter 只接受用户拥有的环境图与角色图，并要求分别明确确认使用权、衍生权、输出再分发权和将生成输出 dedicated under CC0-1.0 的权利；“能上传”不等于“可以开源发布”；
+- 当前离线程序化 Provider 披露 `contains_generative_ai: false`；未来模型 Provider 必须披露模型/工作流和适用条款，不能继承该声明；
+- `licensed` 参考图（包括 CC-BY/CC-BY-SA）在 Alpha.9 中 fail closed，不会被静默重新许可为 CC0。生成 PNG/runtime JSON 在满足显式 dedication 条件后使用 CC0-1.0；源码与文档使用 MIT；参考原图不进入包并保留原权利；
 - 不接受要求复刻受保护角色、商标、logo、界面、具体作品构图或在世艺术家个人风格的描述；检测到可识别文字/标记时阻止公开导出并要求清理；
 - 第三方素材与模型输出使用独立资产许可和 attribution/disclosure；MIT 源码许可不覆盖生成资产；
 - 只有来源清楚且允许再分发的安全示例才能进入仓库和 release。真实用户输入永不成为默认 fixture。

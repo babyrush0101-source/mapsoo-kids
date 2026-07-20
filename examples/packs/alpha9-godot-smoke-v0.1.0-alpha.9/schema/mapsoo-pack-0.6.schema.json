@@ -1,0 +1,1142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-pack-0.6.0.json",
+  "title": "Mapsoo Complete Top-down Farm Pack Manifest 0.6",
+  "description": "Strict, privacy-safe Alpha.9 contract for a complete Godot top-down farm world asset pack.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack",
+    "profile",
+    "completeness_policy",
+    "compatibility",
+    "layers",
+    "atlases",
+    "roles",
+    "character",
+    "runtime",
+    "files",
+    "license",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.6.0"
+    },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "version",
+        "generator",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmpty"
+        },
+        "version": {
+          "const": "0.1.0-alpha.9"
+        },
+        "generator": {
+          "const": {
+            "name": "Mapsoo Worldsmith",
+            "version": "0.1.0-alpha.9"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "profile": {
+      "const": "topdown-farm"
+    },
+    "completeness_policy": {
+      "const": "topdown-farm-complete-v1"
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "godot_min",
+        "grid",
+        "art_style",
+        "importer"
+      ],
+      "properties": {
+        "godot_min": {
+          "const": "4.3"
+        },
+        "grid": {
+          "const": "orthogonal"
+        },
+        "art_style": {
+          "const": "pixel_art"
+        },
+        "importer": {
+          "const": {
+            "id": "mapsoo_importer",
+            "min_version": "0.1.0-alpha.9"
+          }
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "prefixItems": [
+        {
+          "const": {
+            "id": "ground",
+            "order": 0
+          }
+        },
+        {
+          "const": {
+            "id": "water",
+            "order": 1
+          }
+        },
+        {
+          "const": {
+            "id": "paths",
+            "order": 2
+          }
+        },
+        {
+          "const": {
+            "id": "soil",
+            "order": 3
+          }
+        },
+        {
+          "const": {
+            "id": "props",
+            "order": 4
+          }
+        },
+        {
+          "const": {
+            "id": "structures",
+            "order": 5
+          }
+        },
+        {
+          "const": {
+            "id": "crops",
+            "order": 6
+          }
+        }
+      ],
+      "items": false
+    },
+    "atlases": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/terrainAtlas"
+        },
+        {
+          "$ref": "#/$defs/propsAtlas"
+        },
+        {
+          "$ref": "#/$defs/structuresAtlas"
+        },
+        {
+          "$ref": "#/$defs/cropsAtlas"
+        },
+        {
+          "$ref": "#/$defs/characterAtlas"
+        }
+      ],
+      "items": false
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 21,
+      "maxItems": 21,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/roleTerrainGround"
+        },
+        {
+          "$ref": "#/$defs/roleTerrainWater"
+        },
+        {
+          "$ref": "#/$defs/roleTerrainPath"
+        },
+        {
+          "$ref": "#/$defs/roleTerrainSoil"
+        },
+        {
+          "$ref": "#/$defs/rolePropTree"
+        },
+        {
+          "$ref": "#/$defs/rolePropRock"
+        },
+        {
+          "$ref": "#/$defs/rolePropFlower"
+        },
+        {
+          "$ref": "#/$defs/rolePropFence"
+        },
+        {
+          "$ref": "#/$defs/rolePropGate"
+        },
+        {
+          "$ref": "#/$defs/rolePropCrate"
+        },
+        {
+          "$ref": "#/$defs/roleStructureHouse"
+        },
+        {
+          "$ref": "#/$defs/roleStructureBarn"
+        },
+        {
+          "$ref": "#/$defs/roleCrop1"
+        },
+        {
+          "$ref": "#/$defs/roleCrop2"
+        },
+        {
+          "$ref": "#/$defs/roleCrop3"
+        },
+        {
+          "$ref": "#/$defs/roleCrop4"
+        },
+        {
+          "$ref": "#/$defs/roleCharacter"
+        },
+        {
+          "$ref": "#/$defs/roleCollision"
+        },
+        {
+          "$ref": "#/$defs/roleNavigation"
+        },
+        {
+          "$ref": "#/$defs/roleScene"
+        },
+        {
+          "$ref": "#/$defs/rolePreview"
+        }
+      ],
+      "items": false
+    },
+    "character": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "atlas",
+        "frame_size",
+        "pivot",
+        "clips"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "atlas": {
+          "$ref": "#/$defs/path"
+        },
+        "frame_size": {
+          "$ref": "#/$defs/positivePair"
+        },
+        "pivot": {
+          "$ref": "#/$defs/numberPair"
+        },
+        "clips": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/idleNorth"
+            },
+            {
+              "$ref": "#/$defs/idleEast"
+            },
+            {
+              "$ref": "#/$defs/idleSouth"
+            },
+            {
+              "$ref": "#/$defs/idleWest"
+            },
+            {
+              "$ref": "#/$defs/walkNorth"
+            },
+            {
+              "$ref": "#/$defs/walkEast"
+            },
+            {
+              "$ref": "#/$defs/walkSouth"
+            },
+            {
+              "$ref": "#/$defs/walkWest"
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene",
+        "collision",
+        "navigation",
+        "spawn"
+      ],
+      "properties": {
+        "scene": {
+          "$ref": "#/$defs/pathObject"
+        },
+        "collision": {
+          "$ref": "#/$defs/pathObject"
+        },
+        "navigation": {
+          "$ref": "#/$defs/pathObject"
+        },
+        "spawn": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            }
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "$ref": "#/$defs/fileRecord"
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "output"
+      ],
+      "properties": {
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "notice_path",
+            "permits_redistribution"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/nonEmpty"
+            },
+            "notice_path": {
+              "$ref": "#/$defs/path"
+            },
+            "permits_redistribution": {
+              "const": true
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "output_provenance",
+        "contains_generative_ai",
+        "model_provider",
+        "model",
+        "seed",
+        "human_curated"
+      ],
+      "properties": {
+        "provider": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "version"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/id"
+            },
+            "version": {
+              "$ref": "#/$defs/nonEmpty"
+            }
+          }
+        },
+        "output_provenance": {
+          "enum": [
+            "procedural",
+            "generative-ai",
+            "hybrid"
+          ]
+        },
+        "contains_generative_ai": {
+          "type": "boolean"
+        },
+        "model_provider": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "seed": {
+          "$ref": "#/$defs/nonEmpty"
+        },
+        "human_curated": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$"
+    },
+    "nonEmpty": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^.*\\S.*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*(?:/[A-Za-z0-9][A-Za-z0-9._+!#$&^~-]*)*$"
+    },
+    "positivePair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 8192
+      }
+    },
+    "numberPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number",
+        "minimum": -8192,
+        "maximum": 8192
+      }
+    },
+    "pathObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "atlas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "terrainAtlas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/atlas"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "const": "terrain"
+            }
+          }
+        }
+      ]
+    },
+    "propsAtlas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/atlas"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "props"
+            }
+          }
+        }
+      ]
+    },
+    "structuresAtlas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/atlas"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "structures"
+            }
+          }
+        }
+      ]
+    },
+    "cropsAtlas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/atlas"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "crops"
+            }
+          }
+        }
+      ]
+    },
+    "characterAtlas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/atlas"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "character"
+            }
+          }
+        }
+      ]
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "path"
+      ],
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "path": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "roleTerrainGround": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "terrain.ground"
+            }
+          }
+        }
+      ]
+    },
+    "roleTerrainWater": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "terrain.water"
+            }
+          }
+        }
+      ]
+    },
+    "roleTerrainPath": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "terrain.path"
+            }
+          }
+        }
+      ]
+    },
+    "roleTerrainSoil": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "terrain.soil"
+            }
+          }
+        }
+      ]
+    },
+    "rolePropTree": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "prop.tree"
+            }
+          }
+        }
+      ]
+    },
+    "rolePropRock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "prop.rock"
+            }
+          }
+        }
+      ]
+    },
+    "rolePropFlower": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "prop.flower"
+            }
+          }
+        }
+      ]
+    },
+    "rolePropFence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "prop.fence"
+            }
+          }
+        }
+      ]
+    },
+    "rolePropGate": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "prop.gate"
+            }
+          }
+        }
+      ]
+    },
+    "rolePropCrate": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "prop.crate"
+            }
+          }
+        }
+      ]
+    },
+    "roleStructureHouse": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "structure.house"
+            }
+          }
+        }
+      ]
+    },
+    "roleStructureBarn": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "structure.barn"
+            }
+          }
+        }
+      ]
+    },
+    "roleCrop1": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "crop.basic.stage-1"
+            }
+          }
+        }
+      ]
+    },
+    "roleCrop2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "crop.basic.stage-2"
+            }
+          }
+        }
+      ]
+    },
+    "roleCrop3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "crop.basic.stage-3"
+            }
+          }
+        }
+      ]
+    },
+    "roleCrop4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "crop.basic.stage-4"
+            }
+          }
+        }
+      ]
+    },
+    "roleCharacter": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "character.player.atlas"
+            }
+          }
+        }
+      ]
+    },
+    "roleCollision": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "world.collision"
+            }
+          }
+        }
+      ]
+    },
+    "roleNavigation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "world.navigation"
+            }
+          }
+        }
+      ]
+    },
+    "roleScene": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "world.scene"
+            }
+          }
+        }
+      ]
+    },
+    "rolePreview": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/role"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "world.preview"
+            }
+          }
+        }
+      ]
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8191
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8191
+        }
+      }
+    },
+    "clip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "action",
+        "direction",
+        "fps",
+        "frames"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "idle",
+            "walk"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "north",
+            "east",
+            "south",
+            "west"
+          ]
+        },
+        "fps": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 60
+        },
+        "frames": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/frame"
+          }
+        }
+      }
+    },
+    "idleNorth": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "idle.north"
+            },
+            "action": {
+              "const": "idle"
+            },
+            "direction": {
+              "const": "north"
+            }
+          }
+        }
+      ]
+    },
+    "idleEast": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "idle.east"
+            },
+            "action": {
+              "const": "idle"
+            },
+            "direction": {
+              "const": "east"
+            }
+          }
+        }
+      ]
+    },
+    "idleSouth": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "idle.south"
+            },
+            "action": {
+              "const": "idle"
+            },
+            "direction": {
+              "const": "south"
+            }
+          }
+        }
+      ]
+    },
+    "idleWest": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "idle.west"
+            },
+            "action": {
+              "const": "idle"
+            },
+            "direction": {
+              "const": "west"
+            }
+          }
+        }
+      ]
+    },
+    "walkNorth": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "walk.north"
+            },
+            "action": {
+              "const": "walk"
+            },
+            "direction": {
+              "const": "north"
+            }
+          }
+        }
+      ]
+    },
+    "walkEast": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "walk.east"
+            },
+            "action": {
+              "const": "walk"
+            },
+            "direction": {
+              "const": "east"
+            }
+          }
+        }
+      ]
+    },
+    "walkSouth": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "walk.south"
+            },
+            "action": {
+              "const": "walk"
+            },
+            "direction": {
+              "const": "south"
+            }
+          }
+        }
+      ]
+    },
+    "walkWest": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/clip"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "walk.west"
+            },
+            "action": {
+              "const": "walk"
+            },
+            "direction": {
+              "const": "west"
+            }
+          }
+        }
+      ]
+    },
+    "fileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "media_type",
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "media_type": {
+          "enum": [
+            "image/png",
+            "application/json",
+            "application/schema+json",
+            "text/markdown"
+          ]
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

@@ -435,6 +435,15 @@ async function expectedExamplePackEntries(pack = examplePacksForConfig()[0]) {
   return result;
 }
 
+async function expectedDirectoryArchiveEntries(archive) {
+  const result = new Map();
+  for (const entry of await listFiles(join(REPOSITORY_ROOT, archive.sourceDirectory))) {
+    const archivePath = `${archive.archiveRoot}/${entry.archivePath}`;
+    result.set(archivePath, await readPortableFile(entry.absolutePath, archivePath));
+  }
+  return result;
+}
+
 async function verifyChecksums() {
   const checksumText = normalizeText(
     await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES.checksums), 'utf8'),
@@ -546,6 +555,14 @@ async function verify() {
       sha256(await readFile(join(DEFAULT_RELEASE_ROOT, RELEASE_FILES[pack.releaseFileKey]))) === pack.expectedSha256,
       `${pack.id} ZIP differs from the configured immutable hash for ${RELEASE_TAG}`,
     );
+  }
+  for (const archive of CURRENT_RELEASE_CONFIG.release.directoryArchives ?? []) {
+    const fileName = RELEASE_FILES[archive.releaseFileKey];
+    assert(
+      sha256(await readFile(join(DEFAULT_RELEASE_ROOT, fileName))) === archive.expectedSha256,
+      `${archive.id} ZIP differs from the configured immutable hash for ${RELEASE_TAG}`,
+    );
+    await assertZipMatches(fileName, await expectedDirectoryArchiveEntries(archive));
   }
   await assertZipMatches(RELEASE_FILES.web, await expectedWebEntries());
   await assertZipMatches(RELEASE_FILES.godotImporter, await expectedImporterEntries());
@@ -667,6 +684,7 @@ async function verify() {
     'schemas',
     'web',
     ...((CURRENT_RELEASE_CONFIG.release.extraFiles?.length ?? 0) > 0 ? ['integrationContracts'] : []),
+    ...((CURRENT_RELEASE_CONFIG.release.directoryArchives?.length ?? 0) > 0 ? ['additionalPacks'] : []),
     ...(RELEASE_FILES.evidenceVideo ? ['evidenceVideo'] : []),
   ].sort(comparePortablePaths);
   assert(
@@ -706,6 +724,18 @@ async function verify() {
           file: RELEASE_FILES[releaseFileKey], source,
         }))),
       'Release manifest integration contract artifacts mismatch',
+    );
+  }
+  if ((CURRENT_RELEASE_CONFIG.release.directoryArchives?.length ?? 0) > 0) {
+    assert(
+      JSON.stringify(manifest.artifacts?.additionalPacks)
+        === JSON.stringify(CURRENT_RELEASE_CONFIG.release.directoryArchives.map((archive) => ({
+          id: archive.id,
+          file: RELEASE_FILES[archive.releaseFileKey],
+          sha256: archive.expectedSha256,
+          purpose: archive.purpose,
+        }))),
+      'Release manifest additional pack artifacts mismatch',
     );
   }
   if (RELEASE_FILES.evidenceVideo) {

@@ -4,7 +4,7 @@
 
 当前已发布版本：`v0.1.0-alpha.8`
 
-当前开发候选：无；下一切片尚未登记（Alpha.8 STOYO CLI 输出保持 Alpha.7 Pack Schema 0.5）
+当前开发候选：`v0.1.0-alpha.9`；代码已实现但尚未登记 release registry、创建公共 tag 或发布附件。候选仅支持 `topdown-farm` Pack Schema 0.6.0 和 Godot 4.3+；另外三个 profile 仍为计划。
 
 当前三个公开示例包 SHA-256：Sunny Meadow `6113b30fec3615b72730d8d775919aa3c5552285c614b6916a109b887ab8012c`、Dustwind Outpost `d6dd38a47522f45d24184d9b6869d92b89cc2ae3ad1c2ca1eab0b9cf4b13a502`、Frostwatch Vale `35a49edd901becae1422731a132803eebaf07659fc3d69efa7d39cd1e87b9e12`。Alpha.8 的 20 个 GitHub Release 附件摘要已登记；itch.io operator kit 继续只作离线验证，不执行登录或上传。
 
@@ -13,6 +13,8 @@
 目标仓库：`babyrush0101-source/mapsoo-kids`
 
 > 本文同时记录已完成的公开证据和仍待执行的 itch.io / Codex for OSS 模板。2026-07-19 维护者决定暂缓 itch.io 页面：GitHub Release/Pages 是当前主渠道，已验证的 itch 上传套件继续保留，但页面不是 GitHub alpha 或申请准备的必需前置。只有带权威 URL 的项目才算完成；模板中的 `[REPLACE: ...]` 仍必须在正式提交或公开页面粘贴前替换，不能把不存在的外部反馈写成已完成。
+
+Alpha.9 候选的当前事实边界：离线程序化 Provider、`contains_generative_ai: false`、完整 `topdown-farm` Pack 0.6、Godot 4.3+，以及不嵌入参考原图/本地路径/原始摘要/自由文本的公开包。World ID 与 seed 是公开字段，必须使用公开安全值。当前只允许 owned 且明确同意衍生、再分发与 CC0 dedication 的参考图；licensed 输入拒绝导出。字节与权利验证不是人脸、OCR、商标检测或内容级净化。生成 PNG/runtime JSON 为 CC0-1.0，源码/文档为 MIT，参考原图保留原权利。没有外部采用、STOYO 生产接入、itch.io 或 Godot Asset Library 上架声明。
 
 ## 0G. Alpha.8 发布执行状态（2026-07-19）
 

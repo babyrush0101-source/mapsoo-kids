@@ -633,7 +633,7 @@ export function App() {
             <ul className="target-list">
               <li><span>Portable source</span><small>Current · one PNG + JSON ZIP</small></li>
               <li><span>Godot 4.3+</span><small>Official importer + TileMapLayer</small></li>
-              <li><span>itch.io</span><small>Same versioned asset ZIP</small></li>
+              <li><span>itch.io</span><small>Planned · publication postponed</small></li>
             </ul>
 
             <div className="export-actions">

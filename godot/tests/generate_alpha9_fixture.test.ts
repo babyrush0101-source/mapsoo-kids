@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import JSZip from 'jszip';
@@ -38,6 +38,7 @@ async function buildFixture() {
       license: 'LicenseRef-User-Owned',
       allowGenerativeAdaptation: true as const,
       allowOutputRedistribution: true as const,
+      allowOutputCc0Dedication: true as const,
     },
   });
   const request = await bindGenerationRequestV2({
@@ -80,6 +81,7 @@ async function extractFixture(bytes: Uint8Array, outputRoot: string): Promise<vo
 describe('Alpha.9 Godot fixture', () => {
   it('comes from the procedural provider and Pack 0.6 exporter', async () => {
     const pack = await buildFixture();
+    expect(await sha256(pack.bytes)).toBe('10d89c7888b70215a14af2b6552fc5237d799df9cd3092aee99541961d9e480c');
     expect(pack.manifest).toMatchObject({
       schema_version: '0.6.0',
       pack: { id: 'alpha9-godot-smoke-pack' },
@@ -96,7 +98,16 @@ describe('Alpha.9 Godot fixture', () => {
       'crop.basic.stage-1', 'crop.basic.stage-2', 'crop.basic.stage-3', 'crop.basic.stage-4',
     ]));
 
+    const archive = await JSZip.loadAsync(pack.bytes);
+    const root = 'mapsoo-alpha9-godot-smoke-pack-v0.1.0-alpha.9/';
+    const committedRoot = join(process.cwd(), 'examples', 'packs', 'alpha9-godot-smoke-v0.1.0-alpha.9');
     const outputRoot = process.env.MAPSOO_ALPHA9_FIXTURE_ROOT;
     if (outputRoot) await extractFixture(pack.bytes, outputRoot);
+    for (const entry of Object.values(archive.files).filter((candidate) => !candidate.dir)) {
+      expect(entry.name.startsWith(root)).toBe(true);
+      const relative = entry.name.slice(root.length);
+      expect(Buffer.from(await entry.async('uint8array'))).toEqual(await readFile(join(committedRoot, ...relative.split('/'))));
+    }
+
   });
 });

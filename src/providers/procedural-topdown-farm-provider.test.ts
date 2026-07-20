@@ -34,6 +34,7 @@ async function createJob(description = 'A bright riverside farm.', characterMark
       license: 'LicenseRef-User-Owned',
       allowGenerativeAdaptation: true as const,
       allowOutputRedistribution: true as const,
+      allowOutputCc0Dedication: true as const,
     },
   });
   return bindGenerationRequestV2({
