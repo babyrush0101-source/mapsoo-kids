@@ -163,8 +163,9 @@
 - [x] 冻结左右向 `idle/run/jump/fall/land/hurt` 共 12 个角色 clip；
 - [x] 可信 Provider runner 按 profile 分派完整性合同，并继续拒绝未实现 profile；
 - [x] 逐 role、逐 clip、跨 profile/schema、路径和 atlas 越界负向测试；
-- [ ] Pack Schema 0.7、sidecar schema 与 receipt 新版本；
-- [ ] 程序化 side provider、浏览器一键流程和确定性 ZIP；
+- [x] Pack Schema 0.7、scene/collision/navigation sidecar schema 与 receipt 0.2；
+- [x] 程序化 side provider、30-role/12-clip 输出与确定性 Pack 0.7 ZIP exporter；
+- [ ] 浏览器一键选择 `side-platformer`、真实下载与固定 fixture；
 - [ ] Godot 独立 0.7 validator、scene builder 与真实 physics smoke；
 - [ ] Linux/Windows × Godot 4.3/4.7 exact candidate ZIP；
 - [ ] 安全、权利、隐私、兼容与发布独立审计。

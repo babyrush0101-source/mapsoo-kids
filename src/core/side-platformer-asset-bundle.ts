@@ -53,6 +53,22 @@ export const SIDE_PLATFORMER_DIRECTIONS = Object.freeze([
   'left', 'right',
 ] as const satisfies readonly CharacterDirection[]);
 
+export function requiredSidePlatformerKind(role: string): GeneratedAssetKind | undefined {
+  if (role.startsWith('terrain.')) return 'platform-atlas';
+  if (role.startsWith('hazard.')) return 'hazard-atlas';
+  if (role.startsWith('prop.')) return 'prop-atlas';
+  if (role.startsWith('structure.')) return 'structure-sprite';
+  if (role.startsWith('collectible.')) return 'collectible-atlas';
+  if (role.startsWith('background.')) return 'background-layer';
+  if (role === 'foreground.overlay') return 'foreground-layer';
+  if (role === 'character.player.atlas') return 'character-atlas';
+  if (role === 'world.collision') return 'collision-map';
+  if (role === 'world.navigation') return 'navigation-map';
+  if (role === 'world.scene') return 'scene-data';
+  if (role === 'world.preview') return 'preview';
+  return undefined;
+}
+
 const SAFE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 
@@ -135,7 +151,14 @@ export function validateSidePlatformerAssetBundle(bundle: GeneratedAssetBundle):
     }
   }
   for (const role of SIDE_PLATFORMER_REQUIRED_ROLES) {
-    if (!roles.has(role)) issues.push({ code: 'completeness.missing-role', message: `Required role is missing: ${role}.`, role });
+    if (!roles.has(role)) {
+      issues.push({ code: 'completeness.missing-role', message: `Required role is missing: ${role}.`, role });
+      continue;
+    }
+    const asset = assets.get(roles.get(role) as string);
+    if (asset?.kind !== requiredSidePlatformerKind(role)) {
+      issues.push({ code: 'completeness.role-kind', message: `Role ${role} references the wrong asset kind.`, role });
+    }
   }
   const unexpectedRoles = [...roles.keys()].filter((role) => !(SIDE_PLATFORMER_REQUIRED_ROLES as readonly string[]).includes(role));
   for (const role of unexpectedRoles) {
