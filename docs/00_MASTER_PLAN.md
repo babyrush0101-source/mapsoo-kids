@@ -136,7 +136,7 @@
 
 ## 9. 当前下一步
 
-1. 继续通过 Pages、Alpha.8 发布说明和结构化反馈入口邀请第一轮外部用户，并把真实结果记录在社区证据台账；没有反馈前不声明外部采用或 STOYO 已接入；
-2. 以 Alpha.8 的真实 release、20 个附件、三个公开素材包和八个不可变 prerelease 为维护证据更新 Codex for OSS 申请草稿；meaningful usage 仍为空，提交时必须如实说明；
-3. 为 STOYO 实际消费仓库准备公开安全的 contract test；在消费者存在之前不声明 production adoption；
-4. 道路关系留到后续独立切片；itch.io 页面创建与公开发布继续延期，不阻塞 GitHub 路线。
+1. 按 [`Alpha.9 参考图到 Top-down Farm 世界包`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md) 建立公开中立的 Reference World Job：环境参考图、角色参考图与描述进入严格净化/权利边界，再生成可机器证明完整的 `topdown-farm` portable pack；当前仅为候选，不声称已实现或采用；
+2. 四个公开 asset profile 是长期目标；Alpha.9 只交付 `topdown-farm` 纵向闭环，不能用该结果声称侧视平台、等距动作或分层景深 profile 已支持；
+3. Alpha.9 发布前必须通过 profile completeness、隐私/权利、真实浏览器 ZIP、桌面/390px 视觉、Linux/Windows × Godot 4.3/4.7 exact-pack、安全重导入和 Alpha.1–Alpha.8 历史不可变门禁；
+4. 继续邀请第一轮外部用户并如实记录结果；没有独立证据前不声明外部采用或生产接入；第三方平台发布继续延期，不阻塞 GitHub 路线。

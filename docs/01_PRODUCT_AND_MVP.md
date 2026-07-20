@@ -121,3 +121,13 @@ v0.1 不追求注册量，优先测量：
 - 示例 spec 的确定性测试通过率；
 - 外部开发者能否不求助完成一次导入；
 - issue 中“资产不可用”与“文档不清楚”的比例。
+
+## 9. Reference World Job 候选方向
+
+后续候选能力允许创作者提供一张环境参考图、一张角色参考图和一段公开安全描述，生成一份完整的 `topdown-farm` 世界美术资产包。参考输入用于约束 palette、形状语言、比例和角色轮廓，不表示复制原图、品牌、角色或构图。
+
+产品最终覆盖四个中立 asset profile：`side-platformer`、`isometric-action`、`topdown-farm` 与 `layered-depth-2d`。每个 profile 都有独立投影、atlas、动画、排序和 Godot 合同；首个纵向切片只覆盖 `topdown-farm`，不得据此声称另外三个 profile 已实现。
+
+`topdown-farm` 的完整结果不是单张合成图。候选包需要同时具备地形、水域、道路/田埂与围栏、作物阶段、建筑、道具、分层地图、可行走/阻挡数据、四方向角色 `idle/walk`、preview、严格 sidecar、manifest、receipt、许可与使用说明。下载前由版本化 completeness matrix 逐类证明文件、像素、动画、引用、摘要和权利信息完整；任何 error 阻止导出。
+
+参考图默认只在本地净化，不进入示例、ZIP、截图或公开日志。合同不接收人物姓名、照片身份、声音、学校、家庭关系、账户/设备 ID、学习记录或精确位置；用户必须分别声明环境图、角色图的使用权、衍生权和输出再分发权。候选能力尚未实现，也不表示外部团队已经采用。详细范围见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-generation-request-1.0.0.json",
+  "title": "Mapsoo generation request 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "profile", "description", "seed", "references"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "$ref": "#/$defs/id" },
+    "profile": {
+      "enum": ["side-platformer", "isometric-action", "topdown-farm", "layered-depth-2d"]
+    },
+    "description": { "type": "string", "minLength": 1, "maxLength": 2000, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" },
+    "seed": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" },
+    "references": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/reference" },
+      "allOf": [
+        { "contains": { "type": "object", "properties": { "role": { "const": "environment-style" } }, "required": ["role"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "role": { "const": "character" } }, "required": ["role"] }, "minContains": 1, "maxContains": 1 }
+      ]
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 80 },
+    "referenceId": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 64 },
+    "safePath": {
+      "type": "string",
+      "maxLength": 240,
+      "pattern": "^[a-z0-9][a-z0-9._-]*(?:/[a-z0-9][a-z0-9._-]*)*$"
+    },
+    "rights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["basis", "license", "allowGenerativeAdaptation", "allowOutputRedistribution"],
+      "properties": {
+        "basis": { "enum": ["owned", "licensed", "public-domain"] },
+        "license": {
+          "type": "string",
+          "pattern": "^(?:CC0-1\\.0|CC-BY-4\\.0|CC-BY-SA-4\\.0|LicenseRef-[A-Za-z0-9][A-Za-z0-9.-]{0,79})$"
+        },
+        "allowGenerativeAdaptation": { "const": true },
+        "allowOutputRedistribution": { "const": true },
+        "attribution": { "type": "string", "minLength": 1, "maxLength": 500, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "basis": { "const": "licensed" } }, "required": ["basis"] },
+          "then": {
+            "properties": {
+              "attribution": { "type": "string", "minLength": 1, "maxLength": 500, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" }
+            },
+            "required": ["attribution"]
+          }
+        }
+      ]
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "path", "mediaType", "byteLength", "width", "height", "sha256", "rights"],
+      "properties": {
+        "id": { "$ref": "#/$defs/referenceId" },
+        "role": { "enum": ["environment-style", "character"] },
+        "path": { "$ref": "#/$defs/safePath" },
+        "mediaType": { "enum": ["image/png", "image/jpeg"] },
+        "byteLength": { "type": "integer", "minimum": 1, "maximum": 8388608 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "rights": { "$ref": "#/$defs/rights" }
+      }
+    }
+  }
+}
