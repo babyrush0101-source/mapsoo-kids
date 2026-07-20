@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapsoo.dev/schemas/mapsoo-side-platformer-navigation-0.2.0.json",
+  "title": "Mapsoo Side-platformer Navigation 0.2",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "profile", "completeness_policy", "bounds", "spawn", "nodes", "edges", "exit_node_id"],
+  "properties": {
+    "schema_version": { "const": "0.2.0" }, "profile": { "const": "side-platformer" }, "completeness_policy": { "const": "side-platformer-complete-v1" },
+    "bounds": { "$ref": "#/$defs/rect" }, "spawn": { "$ref": "#/$defs/point" },
+    "nodes": { "type": "array", "minItems": 2, "maxItems": 2048, "items": { "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "kind"], "properties": { "id": { "$ref": "#/$defs/id" }, "x": { "type": "integer", "minimum": 0, "maximum": 8191 }, "y": { "type": "integer", "minimum": 0, "maximum": 8191 }, "kind": { "enum": ["spawn", "platform", "checkpoint", "exit"] } } } },
+    "edges": { "type": "array", "minItems": 1, "maxItems": 4096, "items": { "type": "object", "additionalProperties": false, "required": ["from", "to", "kind"], "properties": { "from": { "$ref": "#/$defs/id" }, "to": { "$ref": "#/$defs/id" }, "kind": { "enum": ["walk", "jump", "drop", "moving-platform"] } } } },
+    "exit_node_id": { "$ref": "#/$defs/id" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 80, "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$" },
+    "point": { "type": "object", "additionalProperties": false, "required": ["x", "y"], "properties": { "x": { "type": "integer", "minimum": 0, "maximum": 8191 }, "y": { "type": "integer", "minimum": 0, "maximum": 8191 } } },
+    "rect": { "type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"], "properties": { "x": { "type": "integer", "minimum": 0, "maximum": 8191 }, "y": { "type": "integer", "minimum": 0, "maximum": 8191 }, "width": { "type": "integer", "minimum": 1, "maximum": 8192 }, "height": { "type": "integer", "minimum": 1, "maximum": 8192 } } }
+  }
+}

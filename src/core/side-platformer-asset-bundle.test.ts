@@ -131,4 +131,17 @@ describe('side-platformer-complete-v1', () => {
       'asset.path', 'completeness.unexpected-role', 'character.frame-bounds',
     ]));
   });
+
+  it('rejects a required role bound to the wrong asset kind', () => {
+    const bundle = completeSideBundle();
+    const prop = bundle.roles.find((binding) => binding.role === 'prop.crate')!;
+    const platform = bundle.roles.find((binding) => binding.role === 'terrain.solid')!;
+    const invalid = {
+      ...bundle,
+      roles: bundle.roles.map((binding) => binding === prop ? { ...binding, assetId: platform.assetId } : binding),
+    };
+    expect(validateSidePlatformerAssetBundle(invalid)).toContainEqual(expect.objectContaining({
+      code: 'completeness.role-kind', role: 'prop.crate',
+    }));
+  });
 });
