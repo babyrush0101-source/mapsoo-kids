@@ -105,10 +105,15 @@ export async function buildAlpha9WorldAssetPack(
     character: {
       id: character.id, atlas: atlasPaths.character,
       frame_size: [character.frameWidth, character.frameHeight], pivot: character.pivot,
-      clips: character.clips.map((clip) => ({
-        id: `${clip.action}.${clip.direction}`, action: clip.action, direction: clip.direction,
-        fps: clip.fps, frames: clip.frames.map((frame) => ({ x: frame.x, y: frame.y })),
-      })),
+      clips: character.clips.map((clip) => {
+        // Alpha9's trusted farm validator has already proven this narrower matrix.
+        const action = clip.action as 'idle' | 'walk';
+        const direction = clip.direction as 'north' | 'east' | 'south' | 'west';
+        return {
+          id: `${action}.${direction}` as const, action, direction,
+          fps: clip.fps, frames: clip.frames.map((frame) => ({ x: frame.x, y: frame.y })),
+        };
+      }),
     },
     runtime: {
       scene: { path: assetPath.get(run.bundle.scene.dataAssetId) ?? '' },

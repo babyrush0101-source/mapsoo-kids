@@ -1,6 +1,10 @@
 import type { WorldAssetProfile } from './asset-profile';
 
 export const GENERATED_ASSET_BUNDLE_SCHEMA_VERSION = '0.1.0' as const;
+export const SIDE_PLATFORMER_ASSET_BUNDLE_SCHEMA_VERSION = '0.2.0' as const;
+export type GeneratedAssetBundleSchemaVersion =
+  | typeof GENERATED_ASSET_BUNDLE_SCHEMA_VERSION
+  | typeof SIDE_PLATFORMER_ASSET_BUNDLE_SCHEMA_VERSION;
 export const TOPDOWN_FARM_COMPLETENESS_POLICY = 'topdown-farm-complete-v1' as const;
 
 export const GENERATED_ASSET_KINDS = Object.freeze([
@@ -13,6 +17,11 @@ export const GENERATED_ASSET_KINDS = Object.freeze([
   'navigation-map',
   'scene-data',
   'preview',
+  'platform-atlas',
+  'hazard-atlas',
+  'collectible-atlas',
+  'background-layer',
+  'foreground-layer',
 ] as const);
 export type GeneratedAssetKind = typeof GENERATED_ASSET_KINDS[number];
 
@@ -41,8 +50,8 @@ export const TOPDOWN_FARM_REQUIRED_ROLES = Object.freeze([
 ] as const);
 
 export type TopdownFarmAssetRole = typeof TOPDOWN_FARM_REQUIRED_ROLES[number];
-export type CharacterDirection = 'north' | 'east' | 'south' | 'west';
-export type CharacterAction = 'idle' | 'walk';
+export type CharacterDirection = 'north' | 'east' | 'south' | 'west' | 'left' | 'right';
+export type CharacterAction = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land' | 'hurt';
 
 export interface GeneratedAssetRecord {
   readonly id: string;
@@ -87,7 +96,7 @@ export interface GeneratedSceneDefinition {
 }
 
 export interface GeneratedAssetBundle {
-  readonly schemaVersion: typeof GENERATED_ASSET_BUNDLE_SCHEMA_VERSION;
+  readonly schemaVersion: GeneratedAssetBundleSchemaVersion;
   readonly jobId: string;
   readonly profile: WorldAssetProfile;
   readonly completenessPolicy: string;
