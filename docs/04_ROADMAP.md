@@ -143,7 +143,7 @@
 
 本切片提供公开可执行的生产边界，不代表 STOYO 已有运行时消费者或生产采用。完整范围见 [`18_ALPHA8_STOYO_EXPORT_CLI.md`](18_ALPHA8_STOYO_EXPORT_CLI.md)。
 
-### alpha.9 — Reference Images to Top-down Farm Pack（已实现、待发布）
+### alpha.9 — Reference Images to Top-down Farm Pack（已发布）
 
 - [x] 严格 Generation Request V2：环境参考图、角色参考图、短描述、精确 `topdown-farm` profile、seed、预算与逐输入权利声明；
 - [x] 本地字节、媒体签名、尺寸、预算、路径与权利验证，以及公开 receipt 隐私投影和 Provider provenance；当前不声称 OCR、人脸、商标检测或内容级净化；
@@ -153,9 +153,9 @@
 - [x] 一键浏览器生成、预览、确定性 ZIP 与桌面/390px 视觉验收；
 - [x] Godot 4.3+ importer 与 Linux/Windows × Godot 4.3/4.7 exact-pack `created → unchanged` 验收；
 - [x] Alpha.1–Alpha.8 fixture、hash、tag、附件与合同保持不可变；
-- [ ] Alpha.9 release registry、固定附件、公共 tag、发布工作流与发布后远端摘要审计。
+- [x] Alpha.9 release registry、24 个固定附件、公共 tag、发布工作流与发布后远端摘要审计。
 
-项目最终目标包含 `side-platformer`、`isometric-action`、`topdown-farm`、`layered-depth-2d` 四个公开 profile，但 Alpha.9 只实现 `topdown-farm` 纵向闭环；另外三个仍为计划。实现候选不等于已经公开发布，也不表示外部采用、STOYO 生产接入或第三方平台上架。完整范围、隐私/权利边界、门禁与停止条件见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。
+项目最终目标包含 `side-platformer`、`isometric-action`、`topdown-farm`、`layered-depth-2d` 四个公开 profile，但 Alpha.9 只实现 `topdown-farm` 纵向闭环；另外三个仍为计划。Alpha.9 已公开发布，但不表示外部采用、STOYO 生产接入或第三方平台上架。完整范围、隐私/权利边界与验收证据见 [`19_ALPHA9_REFERENCE_TO_FARM_WORLD.md`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md)。
 
 ## v0.4 — World System
 

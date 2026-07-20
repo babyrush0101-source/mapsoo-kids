@@ -2,7 +2,7 @@
 
 状态：执行中
 
-当前阶段：[`v0.1.0-alpha.8`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.8) 是当前公开 prerelease。`main` 已实现但尚未发布 Alpha.9 候选：本地参考图输入、程序化 `topdown-farm` 完整资产、Pack Schema 0.6.0 与 Godot 4.3+ 派生路径；另外三个 profile 仍为计划。候选实现不等于公共 tag、外部采用或 STOYO 生产接入。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
+当前阶段：[`v0.1.0-alpha.9`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9) 已于 2026-07-20 公开发布：本地参考图输入、程序化 `topdown-farm` 完整资产、Pack Schema 0.6.0 与 Godot 4.3+ 派生路径；另外三个 profile 仍为计划。公开 release 不等于外部采用或 STOYO 生产接入。GitHub Release/Pages 是主发布渠道，itch.io 页面按维护者决定延期。
 
 主分支：`main`
 
@@ -92,7 +92,7 @@
 
 表中的 `v0.1`–`v1.0` 是能力轨标签，不预留或预测 `package.json`、Git tag 或 GitHub Release 的 SemVer。公开发布序列和兼容事实只由 release registry、tag、不可变附件及其 digest 证明；例如 Alpha.6 可以推进 World System 能力，但不因此等同于能力轨 `v0.4` 或 SemVer `0.4.0`。
 
-当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、四层可编辑地形、语义地点、地点关联建筑外观、三世界画廊、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1` 至 [`v0.1.0-alpha.8`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.8) 八个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.7 发布三个独立世界包，alpha.8 发布脱敏 `StoyoAssetRequest` 到 Alpha.7 兼容 Godot 包及外部回执的可复现无 UI CLI，但这不是 STOYO 生产采用证明。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
+当前状态：Phase 0 已完成；v0.1 已具备编辑、严格 World Spec JSON 保存/加载、确定性生成、Canvas 预览、portable ZIP、Godot importer、安全重导入、四层可编辑地形、语义地点、地点关联建筑外观、三世界画廊、示例工程、桌面/390px 浏览器视觉验收、可重复 release bundle，以及真实浏览器 ZIP 在 Linux/Windows Godot 4.3/4.7 中的跨管线验收。`v0.1.0-alpha.1` 至 [`v0.1.0-alpha.9`](https://github.com/babyrush0101-source/mapsoo-kids/releases/tag/v0.1.0-alpha.9) 九个不可变 prerelease、Pages Demo、公开 CI、发布视频和反馈入口均已完成；alpha.7 发布三个独立世界包，alpha.8 发布脱敏 `StoyoAssetRequest` 到 Alpha.7 兼容 Godot 包及外部回执的可复现无 UI CLI，alpha.9 发布仅 `topdown-farm` 的参考图到 Pack 0.6 纵向闭环，但这些都不是 STOYO 生产采用证明。itch.io 页面按决策延期且不再作为当前 release gate；外部反馈尚未形成。
 
 ## 6. 总控节奏
 
@@ -136,7 +136,7 @@
 
 ## 9. 当前下一步
 
-1. 按 [`Alpha.9 参考图到 Top-down Farm 世界包`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md) 完成发布前审计：Reference World Job、程序化 `topdown-farm` 完整包、Pack 0.6 和 Godot 4.3+ 派生已在 `main` 实现，但尚未创建公共 tag，也不声称外部采用；
+1. 维护 [`Alpha.9 参考图到 Top-down Farm 世界包`](19_ALPHA9_REFERENCE_TO_FARM_WORLD.md) 的已发布证据：公共 tag、24 个附件、远端 digest 和 Godot 4.3/4.7 四平台验收已经完成，但仍不声称外部采用；
 2. 四个公开 asset profile 是长期目标；Alpha.9 只交付 `topdown-farm` 纵向闭环，不能用该结果声称侧视平台、等距动作或分层景深 profile 已支持；
-3. Alpha.9 发布前必须通过 profile completeness、隐私/权利、真实浏览器 ZIP、桌面/390px 视觉、Linux/Windows × Godot 4.3/4.7 exact-pack、安全重导入和 Alpha.1–Alpha.8 历史不可变门禁；
+3. 后续版本继续保持 profile completeness、隐私/权利、真实浏览器 ZIP、桌面/390px 视觉、Linux/Windows × Godot 4.3/4.7 exact-pack、安全重导入和已发布历史不可变门禁；
 4. 继续邀请第一轮外部用户并如实记录结果；没有独立证据前不声明外部采用或生产接入；第三方平台发布继续延期，不阻塞 GitHub 路线。
